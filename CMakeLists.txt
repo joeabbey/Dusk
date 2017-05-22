@@ -1,6 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2 FATAL_ERROR)
-
-ADD_SUBDIRECTORY(depend)
+CMAKE_POLICY(SET CMP0048 NEW)
 
 PROJECT(Dusk VERSION 0.0.1)
 
@@ -10,7 +9,7 @@ PROJECT(Dusk VERSION 0.0.1)
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Allow for custom FindXXX.cmake files
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}/cmake")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 ### MSVC fixes
 
@@ -47,16 +46,17 @@ IF(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 
     IF(COMPILER_SUPPORTS_CXX11)
-        ADD_COMPILE_OPTIONS("-std=c++11")
+        SET(CMAKE_CXX_FLAGS "-std=c++11")
     ELSEIF(COMPILER_SUPPORTS_CXX0X)
-        ADD_COMPILE_OPTIONS("-std=c++0x")
+        SET(CMAKE_CXX_FLAGS "-std=c++0x")
     ELSE()
         MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++11 support")
     ENDIF()
 
     ADD_DEFINITIONS(-D_XOPEN_SOURCE=700)
     ADD_COMPILE_OPTIONS(-Wall -Wextra -pedantic -Wno-unused-parameter
-        -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-braces)
+        -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-braces
+        -Wno-gnu-statement-expression -Wno-keyword-macro)
 
 # VisualStudio
 ELSEIF(MSVC)
@@ -68,22 +68,61 @@ ELSEIF(MSVC)
 
 ENDIF()
 
+### Required packages
+
+FIND_PACKAGE(OpenGL      REQUIRED)
+FIND_PACKAGE(GLEW        REQUIRED)
+FIND_PACKAGE(ZLIB        REQUIRED)
+FIND_PACKAGE(FlatBuffers REQUIRED)
+FIND_PACKAGE(Lua         REQUIRED)
+FIND_PACKAGE(SDL2        REQUIRED COMPONENTS image ttf)
+
+INCLUDE_DIRECTORIES(
+    ${OPENGL_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_DIRS}
+    ${GLM_INCLUDE_DIRS}
+    ${JSON_INCLUDE_DIRS}
+)
+
 ### Dusk library
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include
                     ${CMAKE_BINARY_DIR}/include)
 
+# Allow imgui to #include "imgui.h"
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/imgui)
+# Disable imconfig.h
+ADD_DEFINITIONS(-DIMGUI_DISABLE_INCLUDE_IMCONFIG_H)
+
 SET(Dusk_OUT Dusk)
 
-SET(Dusk_CONFIG_IN include/dusk/config.hpp.in)
-SET(Dusk_CONFIG    include/dusk/config.hpp)
+SET(Dusk_CONFIG_IN include/dusk/Config.hpp.in)
+SET(Dusk_CONFIG    include/dusk/Config.hpp)
 
 SET(Dusk_INCLUDES
-    include/dusk/dusk.hpp
+    include/dusk/Dusk.hpp
+
+    # imgui
+    include/imgui/imgui.h
+    include/imgui/imgui_internal.h
+    include/imgui/imgui_impl_sdl_gl3.h
+
+    # glad
+    include/glad/glad.h
+    include/KHR/khrplatform.h
 )
 
 SET(Dusk_SOURCES
-    src/dusk.cpp
+    src/Dusk.cpp
+
+    # imgui
+    src/imgui/imgui.cpp
+    src/imgui/imgui_draw.cpp
+    src/imgui/imgui_demo.cpp
+    src/imgui/imgui_impl_sdl_gl3.cpp
+
+    # glad
+    src/glad.c
 )
 
 CONFIGURE_FILE(${Dusk_CONFIG_IN} ${Dusk_CONFIG})
@@ -93,8 +132,24 @@ ADD_LIBRARY(${Dusk_OUT}
     ${Dusk_INCLUDES}
     ${Dusk_SOURCES}
 )
+ADD_DEPENDENCIES(${Dusk_OUT} glm nlohmann_json)
 
 SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
+
+# Copy includes to build directory
+ADD_CUSTOM_TARGET(copy-includes)
+ADD_DEPENDENCIES(${Dusk_OUT} copy-includes)
+FOREACH(inc ${Dusk_INCLUDES})
+    ADD_CUSTOM_COMMAND(
+        TARGET copy-includes PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E
+            copy ${CMAKE_SOURCE_DIR}/${inc} ${CMAKE_BINARY_DIR}/${inc}
+    )
+ENDFOREACH()
+
+### Dependencies
+
+ADD_SUBDIRECTORY(depend)
 
 ### Example projects
 

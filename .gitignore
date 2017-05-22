@@ -161,3 +161,4 @@ build
 config.h
 *.bin
 vgcore.*
+imgui.ini

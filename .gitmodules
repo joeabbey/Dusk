@@ -6,3 +6,7 @@
 	path = depend/glm
 	url = https://github.com/g-truc/glm.git
 	branch = 0.9.8
+[submodule "depend/json"]
+	path = depend/json
+	url = https://github.com/nlohmann/json.git
+	branch = master

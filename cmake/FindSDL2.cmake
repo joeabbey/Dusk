@@ -1,0 +1,89 @@
+# Copyright 2017 Stephen Lane-Walsh
+# Licensed under the MIT License
+
+# Find SDL2
+#
+# Output Variables
+# - SDL2_FOUND
+# - SDL2_INCLUDE_DIRS
+#
+
+# Determine 32-bit or 64-bit library path suffixes
+IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	SET(LIB_PATH_SUFFIXES lib64 lib)
+ELSE()
+	set(LIB_PATH_SUFFIXES lib)
+ENDIF()
+
+# Search SDL2_PATH
+FIND_PATH(
+  SDL2_INCLUDE_DIRS
+  NAMES SDL2/SDL.h SDL.h
+  PATHS ${SDL2_PATH}
+  PATH_SUFFIXES include
+  NO_DEFAULT_PATH
+)
+FIND_LIBRARY(
+  SDL2_LIBRARIES
+  NAMES SDL2
+  PATHS ${SDL2_PATH}
+  PATH_SUFFIXES ${LIB_PATH_SUFFIXES}
+  NO_DEFAULT_PATH
+)
+
+# Search pkg-config
+FIND_PACKAGE(PkgConfig QUIET)
+PKG_CHECK_MODULES(sdl2 QUIET SDL2)
+
+# Search CMake standard paths
+FIND_PATH(
+  SDL2_INCLUDE_DIRS
+  NAMES SDL2/SDL.h SDL.h
+)
+FIND_LIBRARY(
+  SDL2_LIBRARIES
+  NAMES SDL2
+)
+
+FOREACH(comp ${SDL2_FIND_COMPONENTS})
+  # Search SDL2_PATH
+  FIND_PATH(
+    SDL2_${comp}_INCLUDE_DIRS
+    NAMES SDL2/SDL2_${comp}.h SDL2_${comp}.h
+    PATHS ${SDL2_PATH}
+    PATH_SUFFIXES include
+    NO_DEFAULT_PATH
+  )
+  FIND_LIBRARY(
+    SDL2_${comp}_LIBRARIES
+    NAMES SDL2_${comp}
+    PATHS ${SDL2_PATH}
+    PATH_SUFFIXES ${LIB_PATH_SUFFIXES}
+    NO_DEFAULT_PATH
+  )
+
+  # Search pkg-config
+  PKG_CHECK_MODULES(SDL2_${comp} QUIET SDL2_${comp})
+
+  # Search CMake standard paths
+  FIND_PATH(
+    SDL2_${comp}_INCLUDE_DIRS
+    NAMES SDL2/SDL2_${comp}.h SDL2_${comp}.h
+  )
+  FIND_LIBRARY(
+    SDL2_${comp}_LIBRARIES
+    NAMES SDL2_${comp}
+  )
+
+  LIST(APPEND SDL2_INCLUDE_DIRS ${SDL2_${comp}_INCLUDE_DIRS})
+  LIST(APPEND SDL2_LIBRARIES ${SDL2_${comp}_LIBRARIES})
+ENDFOREACH()
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+  SDL2
+  HANDLE_COMPONENTS
+  REQUIRED_VARS
+  SDL2_LIBRARIES
+  SDL2_INCLUDE_DIRS
+)
