@@ -1,0 +1,8 @@
+[submodule "examples"]
+	path = examples
+	url = https://github.com/WhoBrokeTheBuild/Dusk-examples.git
+	branch = master
+[submodule "depend/glm"]
+	path = depend/glm
+	url = https://github.com/g-truc/glm.git
+	branch = 0.9.8
