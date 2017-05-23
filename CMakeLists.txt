@@ -101,6 +101,11 @@ SET(Dusk_CONFIG    include/dusk/Config.hpp)
 
 SET(Dusk_INCLUDES
     include/dusk/Dusk.hpp
+    include/dusk/Platform.hpp
+    include/dusk/Util.hpp
+    include/dusk/Timer.hpp
+    include/dusk/UI.hpp
+    include/dusk/App.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -113,7 +118,13 @@ SET(Dusk_INCLUDES
 )
 
 SET(Dusk_SOURCES
+    src/Debug.hpp
+    src/Benchmark.hpp
+
     src/Dusk.cpp
+    src/Util.cpp
+    src/App.cpp
+    src/UI.cpp
 
     # imgui
     src/imgui/imgui.cpp
@@ -122,7 +133,7 @@ SET(Dusk_SOURCES
     src/imgui/imgui_impl_sdl_gl3.cpp
 
     # glad
-    src/glad.c
+    src/glad/glad.c
 )
 
 CONFIGURE_FILE(${Dusk_CONFIG_IN} ${Dusk_CONFIG})
