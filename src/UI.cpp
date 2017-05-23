@@ -1,5 +1,7 @@
 #include "dusk/UI.hpp"
 
+#include <dusk/App.hpp>
+
 namespace dusk {
 
 bool UI::ConsoleShown = false;
@@ -9,7 +11,8 @@ void UI::Render()
 {
     if (ImGui::BeginMainMenuBar())
     {
-        ImGui::SameLine(1024 - 150, 0.0f);
+        // TODO: Decouple from App
+        ImGui::SameLine(App::Inst()->WindowWidth - 150, 0.0f);
         ImGui::Text("%.2f FPS (%.2f ms)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
         ImGui::EndMainMenuBar();
     }

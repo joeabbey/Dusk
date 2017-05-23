@@ -1,7 +1,7 @@
 #include "dusk/Dusk.hpp"
 
-#include "Debug.hpp"
-#include "Benchmark.hpp"
+#include <dusk/Log.hpp>
+#include <dusk/Benchmark.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -22,7 +22,7 @@ bool LoadModelFromOBJ(const std::string& filename, Model * outModel)
 
     if (!ret)
     {
-        DebugError("Failed to load %s: %s\n", filename.c_str(), err.c_str());
+        DuskLogError("Failed to load %s: %s\n", filename.c_str(), err.c_str());
         return false;
     }
 
@@ -91,10 +91,10 @@ bool LoadModelFromOBJ(const std::string& filename, Model * outModel)
 bool LoadModelFromFile(const std::string& filename, Model * outModel)
 {
     DuskBenchStart();
-    DebugInfo("Loading model '%s'", filename.c_str());
+    DuskLogInfo("Loading model '%s'", filename.c_str());
 
     bool ret = false;
-    
+
     std::string ext = GetExtension(filename);
     if (ext == "obj")
     {

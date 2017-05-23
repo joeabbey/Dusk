@@ -77,13 +77,6 @@ FIND_PACKAGE(FlatBuffers REQUIRED)
 FIND_PACKAGE(Lua         REQUIRED)
 FIND_PACKAGE(SDL2        REQUIRED COMPONENTS image ttf)
 
-INCLUDE_DIRECTORIES(
-    ${OPENGL_INCLUDE_DIRS}
-    ${GLEW_INCLUDE_DIRS}
-    ${GLM_INCLUDE_DIRS}
-    ${JSON_INCLUDE_DIRS}
-)
-
 ### Dusk library
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include
@@ -102,12 +95,16 @@ SET(Dusk_CONFIG    include/dusk/Config.hpp)
 SET(Dusk_INCLUDES
     include/dusk/Dusk.hpp
     include/dusk/Platform.hpp
+    include/dusk/Benchmark.hpp
+    include/dusk/Log.hpp
     include/dusk/Util.hpp
     include/dusk/Timer.hpp
     include/dusk/UI.hpp
     include/dusk/App.hpp
+    include/dusk/Component.hpp
+    include/dusk/Actor.hpp
+    include/dusk/Scene.hpp
     include/dusk/Mesh.hpp
-    include/dusk/Model.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -120,15 +117,15 @@ SET(Dusk_INCLUDES
 )
 
 SET(Dusk_SOURCES
-    src/Debug.hpp
-    src/Benchmark.hpp
 
     src/Dusk.cpp
     src/Util.cpp
-    src/App.cpp
     src/UI.cpp
+    src/App.cpp
+    src/Component.cpp
+    src/Actor.cpp
+    src/Scene.cpp
     src/Mesh.cpp
-    src/Model.cpp
 
     # imgui
     src/imgui/imgui.cpp
@@ -148,6 +145,28 @@ ADD_LIBRARY(${Dusk_OUT}
     ${Dusk_SOURCES}
 )
 ADD_DEPENDENCIES(${Dusk_OUT} glm nlohmann_json)
+
+TARGET_LINK_LIBRARIES(
+    ${Dusk_OUT}
+    ${OPENGL_LIBRARIES}
+    ${GLEW_LIBRARIES}
+    ${SDL2_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${LUA_LIBRARIES}
+)
+
+INCLUDE_DIRECTORIES(
+    ${OPENGL_INCLUDE_DIR}
+    ${GLEW_INCLUDE_DIRS}
+    ${GLMM_INCLUDE_DIRS}
+    ${SDL2_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+    ${LUA_INCLUDE_DIRS}
+
+    # TODO: Move to depend/CMakeListst.txt
+    ${CMAKE_SOURCE_DIR}/depend/glm
+    ${CMAKE_SOURCE_DIR}/depend/json/src
+)
 
 SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
 

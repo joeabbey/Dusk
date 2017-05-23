@@ -5,10 +5,9 @@
 #include <dusk/Util.hpp>
 #include <dusk/UI.hpp>
 
-#include <cstdarg>
-#include <cassert>
-#include <cstdio>
-#include <cstring>
+#include <cstdarg> // for va_list
+#include <cassert> // for NDEBUG
+#include <cstdio> // for printf, vsnprintf
 
 namespace dusk {
 
@@ -74,22 +73,22 @@ namespace dusk {
     }
 
 #if defined(NDEBUG)
-#   define DebugInfo(M, ...)  do { } while(0)
-#   define DebugWarn(M, ...)  do { } while(0)
-#   define DebugError(M, ...) do { } while(0)
-#   define DebugPerf(M, ...)  do { } while(0)
+#   define DuskLogInfo(M, ...)  do { } while(0)
+#   define DuskLogWarn(M, ...)  do { } while(0)
+#   define DuskLogError(M, ...) do { } while(0)
+#   define DuskLogPerf(M, ...)  do { } while(0)
 #else
 
-#   define DebugInfo(M, ...) \
+#   define DuskLogInfo(M, ...) \
         do { dusk::Log(dusk::LogLevel::LOG_INFO, "[INFO](%s:%d) " M, GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
-#   define DebugWarn(M, ...) \
+#   define DuskLogWarn(M, ...) \
         do { dusk::Log(dusk::LogLevel::LOG_WARN, "[WARN](%s:%d) " M, GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
-#   define DebugError(M, ...) \
+#   define DuskLogError(M, ...) \
         do { dusk::Log(dusk::LogLevel::LOG_ERROR, "[ERROR](%s:%d) " M, GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
-#   define DebugPerf(M, ...) \
+#   define DuskLogPerf(M, ...) \
         do { dusk::Log(dusk::LogLevel::LOG_PERF, "[PERF](%s:%d) " M, GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
 #endif
