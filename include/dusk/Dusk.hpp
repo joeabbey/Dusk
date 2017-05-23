@@ -8,12 +8,16 @@
 #include <dusk/Timer.hpp>
 #include <dusk/UI.hpp>
 //#include <dusk/Shader.hpp>
+#include <dusk/Mesh.hpp>
+#include <dusk/Model.hpp>
 //#include <dusk/Sound.hpp>
 //#include <dusk/Actor.hpp>
 //#include <dusk/Scene.hpp>
 #include <dusk/App.hpp>
 
 namespace dusk {
+
+bool LoadModelFromFile(const std::string& filename, Model * outModel);
 
 } // namespace dusk
 

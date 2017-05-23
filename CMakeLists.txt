@@ -106,6 +106,8 @@ SET(Dusk_INCLUDES
     include/dusk/Timer.hpp
     include/dusk/UI.hpp
     include/dusk/App.hpp
+    include/dusk/Mesh.hpp
+    include/dusk/Model.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -125,6 +127,8 @@ SET(Dusk_SOURCES
     src/Util.cpp
     src/App.cpp
     src/UI.cpp
+    src/Mesh.cpp
+    src/Model.cpp
 
     # imgui
     src/imgui/imgui.cpp

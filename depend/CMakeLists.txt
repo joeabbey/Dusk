@@ -10,7 +10,7 @@ ADD_SUBDIRECTORY(json)
 SET(JSON_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/json/src")
 
 SET_TARGET_PROPERTIES(
-    glm nlohmann_json glm_dummy json_unit catch_main
+    glm_dummy json_unit catch_main
     PROPERTIES FOLDER "depend")
 
 SET_TARGET_PROPERTIES(

@@ -64,7 +64,7 @@ void UI::Render()
                 if (!filter.PassFilter(item.message.c_str()))
                     continue;
 
-                ImGui::TextColored(item.color, item.message.c_str());
+                ImGui::TextColored(item.color, "%s", item.message.c_str());
             }
             ImGui::SetScrollHere();
             ImGui::EndChild();

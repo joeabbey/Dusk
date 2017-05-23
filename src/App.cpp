@@ -10,9 +10,6 @@ App::App(int argc, char** argv)
     DuskBenchStart();
     DebugInfo("Starting Application");
 
-    DebugWarn("Test Warning");
-    DebugError("Test Error");
-
     if (0 > SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER))
     {
         DebugError("SDL_Init failed: %s", SDL_GetError());
