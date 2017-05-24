@@ -6,14 +6,18 @@
 
 namespace dusk {
 
+class Actor;
+
 class Component
 {
 public:
 
     DISALLOW_COPY_AND_ASSIGN(Component);
 
-    Component();
+    Component(Actor * parent);
     virtual ~Component();
+
+    Actor * GetActor() const { return _parent; };
 
     bool IsLoaded() const { return _loaded; }
 
@@ -26,6 +30,8 @@ public:
 protected:
 
     bool _loaded;
+
+    Actor * _parent;
 
 }; // class Component
 
@@ -41,7 +47,7 @@ class MeshComponent : public Component
 {
 public:
 
-    MeshComponent(const std::string& filename, Shader * shader);
+    MeshComponent(Actor * parent, const std::string& filename, Shader * shader);
     virtual ~MeshComponent();
 
     bool Load() override;
@@ -58,13 +64,18 @@ protected:
     Shader * _shader;
     std::string _filename;
 
+    glm::vec3   _position;
+    glm::vec3   _rotation;
+    glm::vec3   _scale;
+    glm::mat4   _transform;
+
 }; // class MeshComponent
 
 class ScriptComponent : public Component
 {
 public:
 
-    ScriptComponent(const std::string& filename);
+    ScriptComponent(Actor * parent, const std::string& filename);
     virtual ~ScriptComponent();
 
     bool Load() override;

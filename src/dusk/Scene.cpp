@@ -18,11 +18,25 @@ Scene::~Scene()
     {
         delete actor;
     }
+    for (Camera * camera : _cameras)
+    {
+        delete camera;
+    }
 }
 
 void Scene::AddActor(Actor * actor)
 {
     _actors.push_back(actor);
+}
+
+void Scene::AddCamera(Camera * camera)
+{
+    _cameras.push_back(camera);
+    
+    if (NULL == _camera)
+    {
+        _camera = camera;
+    }
 }
 
 bool Scene::Load()
@@ -55,7 +69,12 @@ void Scene::Free()
 void Scene::Update()
 {
     if (!_loaded) return;
-    
+
+    for (Camera * camera : _cameras)
+    {
+        camera->Update();
+    }
+
     for (Actor * actor : _actors)
     {
         actor->Update();

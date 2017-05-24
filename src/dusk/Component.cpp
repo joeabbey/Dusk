@@ -2,22 +2,29 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/App.hpp>
+#include <dusk/Actor.hpp>
 
 namespace dusk {
 
-Component::Component()
+Component::Component(Actor * parent)
     : _loaded(false)
-{ }
+    , _parent(parent)
+{
+}
 
 Component::~Component()
 {
 }
 
-MeshComponent::MeshComponent(const std::string& filename, Shader * shader)
-    : Component()
+MeshComponent::MeshComponent(Actor * parent, const std::string& filename, Shader * shader)
+    : Component(parent)
     , _shaderData()
     , _shader(shader)
     , _filename(filename)
+    , _position(0)
+    , _rotation(0)
+    , _scale(1)
+    , _transform(1)
 {
     _mesh = new Mesh(_filename);
 }
@@ -36,6 +43,7 @@ bool MeshComponent::Load()
     _shader->BindData("TransformData");
 
     _shader->Bind();
+    // TODO: Move out of MeshComponent
     glUniform1i(_shader->GetUniformLocation("ambient_map"), Material::TextureID::AMBIENT);
     glUniform1i(_shader->GetUniformLocation("diffuse_map"), Material::TextureID::DIFFUSE);
     glUniform1i(_shader->GetUniformLocation("specular_map"), Material::TextureID::SPECULAR);
@@ -62,13 +70,20 @@ void MeshComponent::Update()
 {
     if (!_loaded) return;
 
-    // TODO: Move out of MeshComponent
+    _transform = glm::mat4(1);
+    _transform = glm::translate(_transform, _position);
+    _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    _transform = glm::rotate(_transform, _rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    _transform = glm::scale(_transform, _scale);
 
+    _transform = _parent->GetTransform() * _transform;
 
-    // TODO: Move out of Update
-    _shaderData.model = glm::mat4(1);
-    _shaderData.view = glm::lookAt(glm::vec3(5), glm::vec3(0), glm::vec3(0, 1, 0));
-    _shaderData.proj = glm::perspective(45.0f, (float)App::Inst()->WindowWidth / (float)App::Inst()->WindowHeight, 0.1f, 100.0f);
+    Camera * camera = GetActor()->GetScene()->GetCamera();
+
+    _shaderData.model = _transform;
+    _shaderData.view = camera->GetView();
+    _shaderData.proj = camera->GetProjection();
     _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
 
     _shader->SetData("TransformData", &_shaderData, sizeof(_shaderData));
@@ -82,8 +97,8 @@ void MeshComponent::Render()
     _mesh->Render();
 }
 
-ScriptComponent::ScriptComponent(const std::string& filename)
-    : Component()
+ScriptComponent::ScriptComponent(Actor * parent, const std::string& filename)
+    : Component(parent)
     , _filename(filename)
 { }
 

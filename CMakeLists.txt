@@ -105,6 +105,7 @@ SET(Dusk_INCLUDES
     include/dusk/Component.hpp
     include/dusk/Actor.hpp
     include/dusk/Scene.hpp
+    include/dusk/Camera.hpp
     include/dusk/Mesh.hpp
     include/dusk/Material.hpp
     include/dusk/Texture.hpp
@@ -129,6 +130,7 @@ SET(Dusk_SOURCES
     src/dusk/Component.cpp
     src/dusk/Actor.cpp
     src/dusk/Scene.cpp
+    src/dusk/Camera.cpp
     src/dusk/Mesh.cpp
     src/dusk/Material.cpp
     src/dusk/Texture.cpp

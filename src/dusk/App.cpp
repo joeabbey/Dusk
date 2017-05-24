@@ -183,9 +183,22 @@ bool App::LoadConfig(const std::string& filename)
         Scene * dusk_scene = new Scene(scene["Name"].get<std::string>());
         _scenes.emplace(scene["Name"], dusk_scene);
 
+        for (auto& camera : scene["Cameras"])
+        {
+            Camera * dusk_camera = new Camera();
+            dusk_scene->AddCamera(dusk_camera);
+
+            dusk_camera->SetPosition({
+                camera["Position"][0], camera["Position"][1], camera["Position"][2]
+            });
+            dusk_camera->SetForward({
+                camera["Forward"][0], camera["Forward"][1], camera["Forward"][2]
+            });
+        }
+
         for (auto& actor : scene["Actors"])
         {
-            Actor * dusk_actor = new Actor(actor["Name"].get<std::string>());
+            Actor * dusk_actor = new Actor(dusk_scene, actor["Name"].get<std::string>());
             dusk_scene->AddActor(dusk_actor);
 
             dusk_actor->SetPosition({
@@ -200,11 +213,11 @@ bool App::LoadConfig(const std::string& filename)
                 if ("Mesh" == type)
                 {
                     const std::string& shader = comp["Shader"];
-                    dusk_comp = new MeshComponent(comp["File"].get<std::string>(), _shaders[shader]);
+                    dusk_comp = new MeshComponent(dusk_actor, comp["File"].get<std::string>(), _shaders[shader]);
                 }
                 else if ("Script" == type)
                 {
-                    dusk_comp = new ScriptComponent(comp["File"].get<std::string>());
+                    dusk_comp = new ScriptComponent(dusk_actor, comp["File"].get<std::string>());
                 }
 
                 if (nullptr != comp)
