@@ -11,7 +11,9 @@
 
 #include <glad/glad.h>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -22,5 +24,11 @@
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>
+
+#include <tinyobjloader/tiny_obj_loader.h>
+
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName&) = delete;   \
+    TypeName& operator=(const TypeName&) = delete
 
 #endif // DUSK_CONFIG_HPP

@@ -43,6 +43,8 @@ bool Actor::Load()
         }
     }
 
+    _loaded = true;
+
     DuskBenchEnd("Actor::Load()");
     return true;
 }
@@ -57,6 +59,8 @@ void Actor::Free()
 
 void Actor::Update()
 {
+    if (!_loaded) return;
+
     for (Component * comp : _components)
     {
         comp->Update();
@@ -65,6 +69,8 @@ void Actor::Update()
 
 void Actor::Render()
 {
+    if (!_loaded) return;
+    
     for (Component * comp : _components)
     {
         comp->Render();

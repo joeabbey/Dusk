@@ -12,9 +12,9 @@ class UI
 {
 public:
 
+    DISALLOW_COPY_AND_ASSIGN(UI);
+
     UI() = delete;
-    UI(const UI&) = delete;
-    UI& operator=(const UI&) = delete;
 
     static void Render();
 

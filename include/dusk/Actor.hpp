@@ -12,11 +12,10 @@ class Actor
 {
 public:
 
+    DISALLOW_COPY_AND_ASSIGN(Actor);
+
     Actor(const std::string& name);
     virtual ~Actor();
-
-    Actor(const Actor&) = delete;
-    Actor& operator=(const Actor&) = delete;
 
     bool IsLoaded() const { return _loaded; }
 

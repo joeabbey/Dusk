@@ -101,10 +101,13 @@ SET(Dusk_INCLUDES
     include/dusk/Timer.hpp
     include/dusk/UI.hpp
     include/dusk/App.hpp
+    include/dusk/Shader.hpp
     include/dusk/Component.hpp
     include/dusk/Actor.hpp
     include/dusk/Scene.hpp
     include/dusk/Mesh.hpp
+    include/dusk/Material.hpp
+    include/dusk/Texture.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -118,14 +121,17 @@ SET(Dusk_INCLUDES
 
 SET(Dusk_SOURCES
 
-    src/Dusk.cpp
-    src/Util.cpp
-    src/UI.cpp
-    src/App.cpp
-    src/Component.cpp
-    src/Actor.cpp
-    src/Scene.cpp
-    src/Mesh.cpp
+    src/dusk/Dusk.cpp
+    src/dusk/Util.cpp
+    src/dusk/UI.cpp
+    src/dusk/App.cpp
+    src/dusk/Shader.cpp
+    src/dusk/Component.cpp
+    src/dusk/Actor.cpp
+    src/dusk/Scene.cpp
+    src/dusk/Mesh.cpp
+    src/dusk/Material.cpp
+    src/dusk/Texture.cpp
 
     # imgui
     src/imgui/imgui.cpp

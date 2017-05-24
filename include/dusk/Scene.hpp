@@ -13,11 +13,10 @@ class Scene
 {
 public:
 
+    DISALLOW_COPY_AND_ASSIGN(Scene);
+
     Scene(const std::string& name);
     virtual ~Scene();
-
-    Scene(const Scene&) = delete;
-    Scene& operator=(const Scene&) = delete;
 
     bool IsLoaded() const { return _loaded; }
 

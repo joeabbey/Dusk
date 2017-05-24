@@ -36,7 +36,7 @@ std::string GetExtension(std::string path)
     size_t pivot = path.find_last_of('.');
     return (pivot == std::string::npos
         ? std::string()
-        : std::string(path.begin() + pivot, path.end()));
+        : std::string(path.begin() + pivot + 1, path.end()));
 }
 
 } // namespace dusk

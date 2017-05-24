@@ -38,6 +38,8 @@ bool Scene::Load()
         }
     }
 
+    _loaded = true;
+
     DuskBenchEnd("Scene::Load()");
     return true;
 }
@@ -52,6 +54,8 @@ void Scene::Free()
 
 void Scene::Update()
 {
+    if (!_loaded) return;
+    
     for (Actor * actor : _actors)
     {
         actor->Update();
@@ -60,6 +64,8 @@ void Scene::Update()
 
 void Scene::Render()
 {
+    if (!_loaded) return;
+
     for (Actor * actor : _actors)
     {
         actor->Render();

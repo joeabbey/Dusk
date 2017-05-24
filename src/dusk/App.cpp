@@ -20,9 +20,9 @@ App::~App()
 {
     DuskLogInfo("Stopping Application");
 
-    for (Scene * scene : _scenes)
+    for (auto& it : _scenes)
     {
-        delete scene;
+        delete it.second;
     }
     _scenes.clear();
 }
@@ -37,13 +37,27 @@ void App::CreateWindow()
         return;
     }
 
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
+
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
     _sdlWindow = SDL_CreateWindow(WindowTitle.c_str(),
                     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                     WindowWidth, WindowHeight, SDL_WINDOW_OPENGL);
 
+    int flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+#ifndef NDEBUG
+    flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
+#endif
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, flags);
 
     _sdlContext = SDL_GL_CreateContext(_sdlWindow);
 
@@ -52,15 +66,9 @@ void App::CreateWindow()
         return;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
-
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
@@ -89,6 +97,8 @@ void App::DestroyWindow()
     SDL_GL_DeleteContext(_sdlContext);
     _sdlContext = NULL;
 
+    IMG_Quit();
+
     SDL_Quit();
 }
 
@@ -112,13 +122,72 @@ bool App::LoadConfig(const std::string& filename)
     WindowHeight = data["Window"]["Height"];
     WindowTitle = data["Window"]["Title"];
 
+    if (_sdlWindow)
+    {
+        SDL_SetWindowSize(_sdlWindow, WindowWidth, WindowHeight);
+        SDL_SetWindowTitle(_sdlWindow, WindowTitle.c_str());
+    }
+
+    for (auto& shader : data["Shaders"])
+    {
+        std::vector<Shader::FileInfo> shaderFiles;
+
+        for (auto& shaderFile : shader["Files"])
+        {
+            GLenum shaderType = GL_INVALID_ENUM;
+
+            const std::string& type = shaderFile["Type"];
+            if ("Vertex" == type)
+            {
+                shaderType = GL_VERTEX_SHADER;
+            }
+            else if ("Fragment" == type)
+            {
+                shaderType = GL_FRAGMENT_SHADER;
+            }
+            else if ("Geometry" == type)
+            {
+                shaderType = GL_GEOMETRY_SHADER;
+            }
+            // Compute Shader, GL 4.3+
+            /*
+            else if ("Compute" == type)
+            {
+                shaderType = GL_COMPUTE_SHADER;
+            }
+            */
+            // Tessellation Shaders, GL 4.0+
+            /*
+            else if ("TessControl" == type)
+            {
+                shaderType = GL_TESS_CONTROL_SHADER;
+            }
+            else if ("TessEvaluation" == type)
+            {
+                shaderType = GL_TESS_EVALUATION_SHADER;
+            }
+            */
+
+            shaderFiles.push_back({
+                shaderType,
+                shaderFile["File"],
+            });
+        }
+
+        Shader * dusk_shader = new Shader(shader["Name"], shaderFiles);
+        _shaders.emplace(shader["Name"], dusk_shader);
+    }
+
     for (auto& scene : data["Scenes"])
     {
         Scene * dusk_scene = new Scene(scene["Name"].get<std::string>());
+        _scenes.emplace(scene["Name"], dusk_scene);
 
         for (auto& actor : scene["Actors"])
         {
             Actor * dusk_actor = new Actor(actor["Name"].get<std::string>());
+            dusk_scene->AddActor(dusk_actor);
+
             dusk_actor->SetPosition({
                 actor["Position"][0], actor["Position"][1], actor["Position"][2]
             });
@@ -130,7 +199,8 @@ bool App::LoadConfig(const std::string& filename)
                 const std::string& type = comp["Type"];
                 if ("Mesh" == type)
                 {
-                    dusk_comp = new MeshComponent(comp["File"].get<std::string>());
+                    const std::string& shader = comp["Shader"];
+                    dusk_comp = new MeshComponent(comp["File"].get<std::string>(), _shaders[shader]);
                 }
                 else if ("Script" == type)
                 {
@@ -142,15 +212,14 @@ bool App::LoadConfig(const std::string& filename)
                     dusk_actor->AddComponent(dusk_comp);
                 }
             }
-            dusk_scene->AddActor(dusk_actor);
         }
-        _scenes.push_back(dusk_scene);
     }
 
-    if (_sdlWindow)
+    const auto& startScene = _scenes.find(data["StartScene"]);
+    if (startScene != _scenes.end())
     {
-        SDL_SetWindowSize(_sdlWindow, WindowWidth, WindowHeight);
-        SDL_SetWindowTitle(_sdlWindow, WindowTitle.c_str());
+        _currentScene = startScene->second;
+        DuskLogInfo("Starting Scene %s", _currentScene->GetName().c_str());
     }
 
     file.close();
@@ -163,12 +232,13 @@ void App::Run()
 {
     CreateWindow();
 
-    if (!_scenes.empty())
+    // Load the shaders, now that we have a GL Context
+    for (const auto& it : _shaders)
     {
-        _currentScene = _scenes.front();
+        it.second->Load();
     }
 
-    if (NULL != _currentScene)
+    if (_currentScene)
     {
         _currentScene->Load();
     }
@@ -194,7 +264,7 @@ void App::Run()
             }
         }
 
-        if (NULL != _currentScene)
+        if (_currentScene)
         {
             _currentScene->Update();
         }
@@ -205,7 +275,7 @@ void App::Run()
 
         UI::Render();
 
-        if (NULL != _currentScene)
+        if (_currentScene)
         {
             _currentScene->Render();
         }
@@ -213,7 +283,7 @@ void App::Run()
         SDL_GL_SwapWindow(_sdlWindow);
     }
 
-    if (NULL != _currentScene)
+    if (_currentScene)
     {
         _currentScene->Free();
     }

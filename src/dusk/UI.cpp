@@ -21,7 +21,7 @@ void UI::Render()
     {
         static ImGuiTextFilter filter("-PERF");
 
-        ImGui::SetNextWindowSize(ImVec2(500, 300));
+        ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiSetCond_FirstUseEver);
         if (ImGui::Begin("Console", &UI::ConsoleShown))
         {
             filter.Draw("Filter", 180);

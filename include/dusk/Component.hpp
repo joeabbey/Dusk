@@ -10,8 +10,7 @@ class Component
 {
 public:
 
-    Component(const Component&) = delete;
-    Component& operator=(const Component&) = delete;
+    DISALLOW_COPY_AND_ASSIGN(Component);
 
     Component();
     virtual ~Component();
@@ -30,11 +29,19 @@ protected:
 
 }; // class Component
 
+struct TransformData
+{
+    alignas(64) glm::mat4 model = glm::mat4(1);
+    alignas(64) glm::mat4 view  = glm::mat4(1);
+    alignas(64) glm::mat4 proj  = glm::mat4(1);
+    alignas(64) glm::mat4 mvp   = glm::mat4(1);
+};
+
 class MeshComponent : public Component
 {
 public:
 
-    MeshComponent(const std::string& file);
+    MeshComponent(const std::string& filename, Shader * shader);
     virtual ~MeshComponent();
 
     bool Load() override;
@@ -45,8 +52,11 @@ public:
 
 protected:
 
+    TransformData _shaderData;
+
     Mesh * _mesh;
-    std::string _file;
+    Shader * _shader;
+    std::string _filename;
 
 }; // class MeshComponent
 
@@ -54,7 +64,7 @@ class ScriptComponent : public Component
 {
 public:
 
-    ScriptComponent(const std::string& file);
+    ScriptComponent(const std::string& filename);
     virtual ~ScriptComponent();
 
     bool Load() override;
@@ -65,7 +75,7 @@ public:
 
 protected:
 
-    std::string _file;
+    std::string _filename;
 
 }; // class ScriptComponent
 

@@ -2,37 +2,56 @@
 #define DUSK_MESH_HPP
 
 #include <dusk/Config.hpp>
-//#include <dusk/Material.hpp>
+#include <dusk/Shader.hpp>
+#include <dusk/Material.hpp>
 
 namespace dusk {
-
-struct Material { };
 
 class Mesh
 {
 public:
 
+    enum AttrID : GLuint
+    {
+        VERTS = 0,
+        NORMS = 1,
+        TXCDS = 2,
+    };
+
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
-    Mesh();
-    Mesh(const std::string& name);
+    Mesh(const std::string& filename);
     virtual ~Mesh();
 
-    std::string GetName() const { return _name; }
-
-    bool Load(const std::string file);
+    bool Load();
     void Free();
+
+    void Update();
+    void Render();
 
 private:
 
-    struct RenderGroup {
+    struct RenderGroup
+    {
         Material * material;
+
+        unsigned int vertCount;
+
+        GLenum drawMode;
         GLuint glVAO;
+        GLuint glVBOs[3];
     };
 
-    std::string _name;
+    bool LoadOBJ(const std::string filename);
+    //bool LoadDMF(const std::string filename);
 
+    static bool LoadVAO(RenderGroup * group,
+                          const std::vector<float>& verts,
+                          const std::vector<float>& norms,
+                          const std::vector<float>& txcds);
+
+    std::string _filename;
     std::vector<RenderGroup> _renderGroups;
 
 }; // class Mesh
