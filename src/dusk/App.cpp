@@ -286,12 +286,12 @@ void App::Run()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        UI::Render();
-
         if (_currentScene)
         {
             _currentScene->Render();
         }
+
+        UI::Render();
 
         SDL_GL_SwapWindow(_sdlWindow);
     }
