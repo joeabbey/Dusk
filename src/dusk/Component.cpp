@@ -27,10 +27,16 @@ MeshComponent::MeshComponent(Actor * parent, const std::string& filename, Shader
     , _transform(1)
 {
     _mesh = new Mesh(_filename);
+
+    GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
+    GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
 }
 
 MeshComponent::~MeshComponent()
 {
+    GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
+    GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
+
     if (IsLoaded())
     {
         Free();
@@ -66,7 +72,7 @@ void MeshComponent::Free()
     _loaded = false;
 }
 
-void MeshComponent::Update()
+void MeshComponent::Update(const Event& event)
 {
     if (!_loaded) return;
 
@@ -89,7 +95,7 @@ void MeshComponent::Update()
     _shader->SetData("TransformData", &_shaderData, sizeof(_shaderData));
 }
 
-void MeshComponent::Render()
+void MeshComponent::Render(const Event& event)
 {
     if (!_loaded) return;
 
@@ -145,16 +151,5 @@ void ScriptComponent::Free()
 {
 
 }
-
-void ScriptComponent::Update()
-{
-
-}
-
-void ScriptComponent::Render()
-{
-
-}
-
 
 } // namespace dusk

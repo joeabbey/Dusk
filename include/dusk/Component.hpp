@@ -3,6 +3,7 @@
 
 #include <dusk/Config.hpp>
 #include <dusk/Mesh.hpp>
+#include <dusk/Event.hpp>
 
 namespace dusk {
 
@@ -23,9 +24,6 @@ public:
 
     virtual bool Load() = 0;
     virtual void Free() = 0;
-
-    virtual void Update() = 0;
-    virtual void Render() = 0;
 
 protected:
 
@@ -53,8 +51,8 @@ public:
     bool Load() override;
     void Free() override;
 
-    void Update() override;
-    void Render() override;
+    void Update(const Event& event);
+    void Render(const Event& event);
 
 protected:
 
@@ -80,9 +78,6 @@ public:
 
     bool Load() override;
     void Free() override;
-
-    void Update() override;
-    void Render() override;
 
 protected:
 

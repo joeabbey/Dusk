@@ -2,6 +2,7 @@
 #define DUSK_SCENE_HPP
 
 #include <dusk/Config.hpp>
+#include <dusk/EventDispatcher.hpp>
 #include <dusk/Actor.hpp>
 #include <dusk/Camera.hpp>
 
@@ -10,9 +11,16 @@
 
 namespace dusk {
 
-class Scene
+class Scene : public IEventDispatcher
 {
 public:
+
+    enum class Events : EventID
+    {
+        _PREFIX = 100,
+        UPDATE,
+        RENDER,
+    };
 
     DISALLOW_COPY_AND_ASSIGN(Scene);
 

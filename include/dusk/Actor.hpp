@@ -2,6 +2,7 @@
 #define DUSK_ACTOR_HPP
 
 #include <dusk/Config.hpp>
+#include <dusk/EventDispatcher.hpp>
 #include <dusk/Component.hpp>
 //#include <dusk/MeshComponent.hpp>
 //#include <dusk/ScriptComponent.hpp>
@@ -10,9 +11,16 @@ namespace dusk {
 
 class Scene;
 
-class Actor
+class Actor : public IEventDispatcher
 {
 public:
+
+    enum class Events : EventID
+    {
+        _PREFIX = 200,
+        UPDATE,
+        RENDER,
+    };
 
     DISALLOW_COPY_AND_ASSIGN(Actor);
 
@@ -45,8 +53,8 @@ public:
     bool Load();
     void Free();
 
-    void Update();
-    void Render();
+    void Update(const Event& event);
+    void Render(const Event& event);
 
 private:
 
@@ -58,8 +66,6 @@ private:
     glm::vec3   _position;
     glm::vec3   _rotation;
     glm::vec3   _scale;
-
-    bool _transformInvalid = true;
     glm::mat4   _transform;
 
     std::vector<Component*> _components;

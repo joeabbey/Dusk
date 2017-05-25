@@ -1,6 +1,7 @@
 #include "dusk/Actor.hpp"
 
 #include <dusk/Benchmark.hpp>
+#include <dusk/Scene.hpp>
 
 namespace dusk {
 
@@ -13,11 +14,15 @@ Actor::Actor(Scene * parent, const std::string& name)
     , _scale(1)
     , _components()
 {
-
+    GetScene()->AddEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
+    GetScene()->AddEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
 }
 
 Actor::~Actor()
 {
+    GetScene()->RemoveEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
+    GetScene()->RemoveEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+
     for (Component * comp : _components)
     {
         delete comp;
@@ -83,24 +88,18 @@ void Actor::Free()
     }
 }
 
-void Actor::Update()
+void Actor::Update(const Event& event)
 {
     if (!_loaded) return;
 
-    for (Component * comp : _components)
-    {
-        comp->Update();
-    }
+    DispatchEvent(Event((EventID)Events::UPDATE));
 }
 
-void Actor::Render()
+void Actor::Render(const Event& event)
 {
     if (!_loaded) return;
 
-    for (Component * comp : _components)
-    {
-        comp->Render();
-    }
+    DispatchEvent(Event((EventID)Events::RENDER));
 }
 
 

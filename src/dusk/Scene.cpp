@@ -32,7 +32,7 @@ void Scene::AddActor(Actor * actor)
 void Scene::AddCamera(Camera * camera)
 {
     _cameras.push_back(camera);
-    
+
     if (NULL == _camera)
     {
         _camera = camera;
@@ -75,21 +75,14 @@ void Scene::Update()
         camera->Update();
     }
 
-    for (Actor * actor : _actors)
-    {
-        actor->Update();
-    }
+    DispatchEvent(Event((EventID)Events::UPDATE));
 }
 
 void Scene::Render()
 {
     if (!_loaded) return;
 
-    for (Actor * actor : _actors)
-    {
-        actor->Render();
-    }
+    DispatchEvent(Event((EventID)Events::RENDER));
 }
-
 
 } // namespace dusk
