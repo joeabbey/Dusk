@@ -14,6 +14,8 @@ public:
     Camera(float fov = 45.0f, glm::vec3 up = glm::vec3(0, 1, 0), glm::vec2 clip = glm::vec2(0.1f, 1000.0f));
     virtual ~Camera() = default;
 
+    void SetBaseTransform(const glm::mat4& baseTransform);
+
     glm::mat4 GetView();
     glm::mat4 GetProjection();
 
@@ -24,23 +26,25 @@ public:
     void SetAspect(float width, float height) { SetAspect(width / height); }
     float GetAspect() const { return _aspect; }
 
-    void SetClip(glm::vec2 clip);
+    void SetClip(const glm::vec2& clip);
     void SetClip(float znear, float zfar) { SetClip(glm::vec2(znear, zfar)); };
 
-    void SetPosition(glm::vec3 pos);
+    void SetPosition(const glm::vec3& pos);
     glm::vec3 GetPosition() const { return _position; }
 
-    void SetForward(glm::vec3 forward);
+    void SetForward(const glm::vec3& forward);
     glm::vec3 GetForward() const { return _forward; }
 
-    void SetUp(glm::vec3 up);
+    void SetUp(const glm::vec3& up);
     glm::vec3 GetUp() const { return _up; }
 
-    void AddVelocity(glm::vec3 vel);
+    void AddVelocity(const glm::vec3& vel);
 
     void Update();
 
 private:
+
+    glm::mat4 _baseTransform;
 
     bool _viewInvalid;
     bool _projectionInvalid;

@@ -1,11 +1,13 @@
 #include "dusk/Camera.hpp"
 
+#include <dusk/Log.hpp>
 #include <dusk/App.hpp>
 
 namespace dusk {
 
 Camera::Camera(float fov /*= 45.0f*/, glm::vec3 up /*= glm::vec3(0, 1, 0)*/, glm::vec2 clip /*= glm::vec2(0.1f, 1000.0f)*/)
-    : _viewInvalid(true)
+    : _baseTransform(1)
+    , _viewInvalid(true)
     , _projectionInvalid(true)
     , _view(1)
     , _projection(1)
@@ -22,11 +24,17 @@ Camera::Camera(float fov /*= 45.0f*/, glm::vec3 up /*= glm::vec3(0, 1, 0)*/, glm
     SetAspect(App::Inst()->WindowWidth, App::Inst()->WindowHeight);
 }
 
+void Camera::SetBaseTransform(const glm::mat4& baseTransform)
+{
+    _baseTransform = baseTransform;
+    _viewInvalid = true;
+}
+
 glm::mat4 Camera::GetView()
 {
     if (_viewInvalid)
     {
-        _view = glm::lookAt(_position, _position + _forward, _up);
+        _view = glm::lookAt(_position, _position + _forward, _up) * _baseTransform;
         _viewInvalid = false;
     }
     return _view;
@@ -54,31 +62,31 @@ void Camera::SetAspect(float aspect)
     _projectionInvalid = true;
 }
 
-void Camera::SetClip(glm::vec2 clip)
+void Camera::SetClip(const glm::vec2& clip)
 {
     _clip = clip;
     _projectionInvalid = true;
 }
 
-void Camera::SetPosition(glm::vec3 pos)
+void Camera::SetPosition(const glm::vec3& pos)
 {
     _position = pos;
     _projectionInvalid = true;
 }
 
-void Camera::SetForward(glm::vec3 forward)
+void Camera::SetForward(const glm::vec3& forward)
 {
     _forward = forward;
     _projectionInvalid = true;
 }
 
-void Camera::SetUp(glm::vec3 up)
+void Camera::SetUp(const glm::vec3& up)
 {
     _up = up;
     _projectionInvalid = true;
 }
 
-void Camera::AddVelocity(glm::vec3 vel)
+void Camera::AddVelocity(const glm::vec3& vel)
 {
     _velocity += vel;
 }

@@ -33,13 +33,15 @@ public:
 
     std::string GetName() const { return _name; }
 
-    void SetPosition(glm::vec3 pos);
+    void SetBaseTransform(const glm::mat4& baseTransform);
+
+    void SetPosition(const glm::vec3& pos);
     glm::vec3 GetPosition() const { return _position; }
 
-    void SetRotation(glm::vec3 rot);
+    void SetRotation(const glm::vec3& rot);
     glm::vec3 GetRotation() const { return _rotation; }
 
-    void SetScale(glm::vec3 scale);
+    void SetScale(const glm::vec3& scale);
     glm::vec3 GetScale() const { return _scale; }
 
     glm::mat4 GetTransform();
@@ -59,6 +61,8 @@ public:
 private:
 
     bool _loaded;
+
+    glm::mat4 _baseTransform;
 
     Scene * _parent;
 

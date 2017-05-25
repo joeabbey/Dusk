@@ -3,6 +3,7 @@
 
 #include <dusk/Config.hpp>
 #include <dusk/Mesh.hpp>
+#include <dusk/Camera.hpp>
 #include <dusk/Event.hpp>
 
 namespace dusk {
@@ -54,6 +55,8 @@ public:
     void Update(const Event& event);
     void Render(const Event& event);
 
+    inline Mesh * GetMesh() const { return _mesh; };
+
 protected:
 
     TransformData _shaderData;
@@ -68,6 +71,27 @@ protected:
     glm::mat4   _transform;
 
 }; // class MeshComponent
+
+class CameraComponent : public Component
+{
+public:
+
+    CameraComponent(Actor * parent, Camera * camera);
+    virtual ~CameraComponent();
+
+    bool Load() override;
+    void Free() override;
+
+    void Update(const Event& event);
+    void Render(const Event& event);
+
+    inline Camera * GetCamera() const { return _camera; };
+
+protected:
+
+    Camera * _camera;
+
+}; // class CameraComponent
 
 class ScriptComponent : public Component
 {

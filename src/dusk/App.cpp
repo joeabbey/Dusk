@@ -45,6 +45,9 @@ void App::CreateWindow()
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+
     _sdlWindow = SDL_CreateWindow(WindowTitle.c_str(),
                     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                     WindowWidth, WindowHeight, SDL_WINDOW_OPENGL);
@@ -66,9 +69,11 @@ void App::CreateWindow()
         return;
     }
 
+    int multisamples;
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &multisamples);
+    DuskLogInfo("Anti-Aliasing: %d", multisamples);
+
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
@@ -198,6 +203,7 @@ bool App::LoadConfig(const std::string& filename)
 
         for (auto& actor : scene["Actors"])
         {
+            DuskLogInfo("Read Actor %s", actor["Name"].get<std::string>().c_str());
             Actor * dusk_actor = new Actor(dusk_scene, actor["Name"].get<std::string>());
             dusk_scene->AddActor(dusk_actor);
 
@@ -218,6 +224,20 @@ bool App::LoadConfig(const std::string& filename)
                 else if ("Script" == type)
                 {
                     dusk_comp = new ScriptComponent(dusk_actor, comp["File"].get<std::string>());
+                }
+                else if ("Camera" == type)
+                {
+                    Camera * dusk_camera = new Camera();
+                    dusk_scene->SetCamera(dusk_camera);
+
+                    dusk_camera->SetPosition({
+                        comp["Position"][0], comp["Position"][1], comp["Position"][2]
+                    });
+                    dusk_camera->SetForward({
+                        comp["Forward"][0], comp["Forward"][1], comp["Forward"][2]
+                    });
+
+                    dusk_comp = new CameraComponent(dusk_actor, dusk_camera);
                 }
 
                 if (nullptr != comp)

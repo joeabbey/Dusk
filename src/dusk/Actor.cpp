@@ -29,24 +29,29 @@ Actor::~Actor()
     }
 }
 
-void Actor::SetPosition(glm::vec3 pos)
+void Actor::SetBaseTransform(const glm::mat4& baseTransform)
+{
+    _baseTransform = baseTransform;
+}
+
+void Actor::SetPosition(const glm::vec3& pos)
 {
     _position = pos;
 }
 
-void Actor::SetRotation(glm::vec3 rot)
+void Actor::SetRotation(const glm::vec3& rot)
 {
     _rotation = rot;
 }
 
-void Actor::SetScale(glm::vec3 scale)
+void Actor::SetScale(const glm::vec3& scale)
 {
     _scale = scale;
 }
 
 glm::mat4 Actor::GetTransform()
 {
-    _transform = glm::mat4(1);
+    _transform = _baseTransform;
     _transform = glm::scale(_transform, _scale);
     _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -92,12 +97,22 @@ void Actor::Update(const Event& event)
 {
     if (!_loaded) return;
 
+    // TODO: GROSS
+    if (GetName() == "player_actor")
+    {
+        glm::vec3 rot = GetRotation();
+        rot.y += 0.01f;
+        SetRotation(rot);
+    }
+
     DispatchEvent(Event((EventID)Events::UPDATE));
 }
 
 void Actor::Render(const Event& event)
 {
     if (!_loaded) return;
+
+    //DuskLogInfo("Rendering %s", GetName().c_str());
 
     DispatchEvent(Event((EventID)Events::RENDER));
 }

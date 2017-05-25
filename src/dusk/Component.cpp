@@ -84,6 +84,11 @@ void MeshComponent::Update(const Event& event)
     _transform = glm::scale(_transform, _scale);
 
     _transform = _parent->GetTransform() * _transform;
+}
+
+void MeshComponent::Render(const Event& event)
+{
+    if (!_loaded) return;
 
     Camera * camera = GetActor()->GetScene()->GetCamera();
 
@@ -93,14 +98,46 @@ void MeshComponent::Update(const Event& event)
     _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
 
     _shader->SetData("TransformData", &_shaderData, sizeof(_shaderData));
-}
-
-void MeshComponent::Render(const Event& event)
-{
-    if (!_loaded) return;
 
     _shader->Bind();
     _mesh->Render();
+}
+
+CameraComponent::CameraComponent(Actor * parent, Camera * camera)
+    : Component(parent)
+    , _camera(camera)
+{
+    GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &CameraComponent::Update);
+}
+
+CameraComponent::~CameraComponent()
+{
+    GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &CameraComponent::Update);
+
+    delete _camera;
+
+    if (IsLoaded())
+    {
+        Free();
+    }
+}
+
+bool CameraComponent::Load()
+{
+    _loaded = true;
+
+    return true;
+}
+
+void CameraComponent::Free()
+{
+}
+
+void CameraComponent::Update(const Event& event)
+{
+    if (!_loaded) return;
+
+    _camera->SetBaseTransform(glm::inverse(GetActor()->GetTransform()));
 }
 
 ScriptComponent::ScriptComponent(Actor * parent, const std::string& filename)
