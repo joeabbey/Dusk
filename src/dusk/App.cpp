@@ -45,8 +45,8 @@ void App::CreateWindow()
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+    //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
 
     _sdlWindow = SDL_CreateWindow(WindowTitle.c_str(),
                     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -322,6 +322,48 @@ void App::Run()
     }
 
     DestroyWindow();
+}
+
+void App::InitScripting()
+{
+    ScriptHost::AddFunction("dusk_App_GetInst", &App::Script_GetInst);
+    ScriptHost::AddFunction("dusk_App_LoadConfig", &App::Script_LoadConfig);
+    ScriptHost::AddFunction("dusk_App_GetScene", &App::Script_GetScene);
+
+    IEventDispatcher::InitScripting();
+
+    Scene::InitScripting();
+    Actor::InitScripting();
+    //Component::InitScripting();
+    //MeshComponent::InitScripting();
+    //CameraComponent::InitScripting();
+    //ScriptComponent::InitScripting();
+}
+
+int App::Script_GetInst(lua_State * L)
+{
+    lua_pushinteger(L, (ptrdiff_t)App::GetInst());
+
+    return 1;
+}
+
+int App::Script_LoadConfig(lua_State * L)
+{
+    App * app = (App *)lua_tointeger(L, 1);
+
+    bool result = app->LoadConfig(std::string(lua_tostring(L, 2)));
+    lua_pushboolean(L, result);
+
+    return 1;
+}
+
+int App::Script_GetScene(lua_State * L)
+{
+    App * app = (App *)lua_tointeger(L, 1);
+
+    lua_pushinteger(L, (ptrdiff_t)app->GetScene());
+
+    return 1;
 }
 
 } // namespace dusk

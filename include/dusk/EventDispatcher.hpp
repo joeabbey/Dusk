@@ -52,6 +52,10 @@ public:
     void RemoveAllEventListeners();
     void RemoveAllEventListeners(const EventID& eventId);
 
+    static void InitScripting();
+    static int Script_AddEventListener(lua_State * L);
+    static int Script_RemoveEventListener(lua_State * L);
+
 private:
 
     std::unordered_map<EventID, std::vector<IEventCallback *>> _eventListeners;

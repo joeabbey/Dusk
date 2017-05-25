@@ -97,6 +97,7 @@ SET(Dusk_INCLUDES
     include/dusk/Platform.hpp
     include/dusk/Benchmark.hpp
     include/dusk/Util.hpp
+    include/dusk/ScriptHost.hpp
     include/dusk/Timer.hpp
     include/dusk/Event.hpp
     include/dusk/EventCallbacks.hpp
@@ -126,6 +127,7 @@ SET(Dusk_SOURCES
 
     src/dusk/Dusk.cpp
     src/dusk/Util.cpp
+    src/dusk/ScriptHost.cpp
     src/dusk/Event.cpp
     src/dusk/EventCallbacks.cpp
     src/dusk/EventDispatcher.cpp

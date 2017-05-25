@@ -1,5 +1,7 @@
 #include "dusk/ScriptHost.hpp"
 
+#include <dusk/Log.hpp>
+
 namespace dusk {
 
 std::vector<ScriptHost *> ScriptHost::_ScriptHosts;
@@ -22,6 +24,9 @@ ScriptHost::ScriptHost()
     {
         lua_register(_luaState, it.first.c_str(), it.second);
     }
+
+    // Load Dusk-Lua library
+    RunFile("assets/scripts/dusk/Dusk.lua");
 }
 
 ScriptHost::~ScriptHost()
@@ -77,14 +82,14 @@ bool ScriptHost::RunString(const std::string& code)
 error:
 
     // get error message from stack
-    DuskLogError("Failed to run script '%s', %s", filename.c_str(), lua_tostring(_luaState, -1));
+    DuskLogError("Failed to run script %s", lua_tostring(_luaState, -1));
     // remove error message
     lua_pop(_luaState, 1);
 
     return false;
 }
 
-bool ScriptHost::AddFunction(const std::string& funName, lua_CFunction function)
+bool ScriptHost::AddFunction(const std::string& funcName, lua_CFunction function)
 {
     if (funcName.empty())
     {
@@ -92,7 +97,7 @@ bool ScriptHost::AddFunction(const std::string& funName, lua_CFunction function)
         return false;
     }
 
-    if (!callback)
+    if (!function)
     {
         DuskLogError("Cannot register a null function");
         return false;
@@ -106,10 +111,12 @@ bool ScriptHost::AddFunction(const std::string& funName, lua_CFunction function)
     }
 
     _Functions.emplace(funcName, function);
-    for (const auto& it : _Functions)
+    for (const auto& it : _ScriptHosts)
     {
-        lua_register(_luaState, funcName.c_str(), function);
+        lua_register(it->GetLuaState(), funcName.c_str(), function);
     }
+
+    return true;
 }
 
 } // namespace dusk

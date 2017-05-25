@@ -93,8 +93,8 @@ class LuaEventCallback : public IEventCallback
 {
 public:
 
-    LuaEventCallback(ScriptHost * scriptHost, const std::string& funcName)
-        : _scriptHost(scriptHost)
+    LuaEventCallback(lua_State * luaState, const std::string& funcName)
+        : _luaState(luaState)
         , _funcName(funcName)
     { }
 
@@ -104,14 +104,14 @@ public:
     {
         if (const LuaEventCallback * convert = dynamic_cast<const LuaEventCallback *>(&rhs))
         {
-            return _scriptHost == convert->_scriptHost && _funcName == convert->_funcName;
+            return _luaState == convert->_luaState && _funcName == convert->_funcName;
         }
         return false;
     }
 
 private:
 
-    ScriptHost * _scriptHost;
+    lua_State * _luaState;
     std::string _funcName;
 
 }; // class MethodEventCallback

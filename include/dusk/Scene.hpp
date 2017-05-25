@@ -33,6 +33,7 @@ public:
 
     void AddActor(Actor * actor);
     const std::vector<Actor *>& GetActors() const { return _actors; };
+    Actor * GetActorByName(const std::string& name);
 
     void AddCamera(Camera * camera);
     const std::vector<Camera *>& GetCameras() const { return _cameras; };
@@ -45,6 +46,9 @@ public:
 
     void Update();
     void Render();
+
+    static void InitScripting();
+    static int Script_GetActorByName(lua_State * L);
 
 private:
 

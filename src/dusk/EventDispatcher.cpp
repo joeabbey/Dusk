@@ -67,5 +67,33 @@ void IEventDispatcher::RemoveAllEventListeners(const EventID& eventId)
     listIt->second.clear();
 }
 
+void IEventDispatcher::InitScripting()
+{
+    ScriptHost::AddFunction("dusk_IEventDispatcher_AddEventListener",
+                            &IEventDispatcher::Script_AddEventListener);
+    ScriptHost::AddFunction("dusk_IEventDispatcher_RemoveEventListener",
+                            &IEventDispatcher::Script_RemoveEventListener);
+}
+
+int IEventDispatcher::Script_AddEventListener(lua_State * L)
+{
+    IEventDispatcher * disp = (IEventDispatcher *)lua_tointeger(L, 1);
+
+    disp->AddEventListener((EventID)lua_tointeger(L, 2),
+                           new LuaEventCallback(L, std::string(lua_tostring(L, 3))));
+
+    return 0;
+}
+
+int IEventDispatcher::Script_RemoveEventListener(lua_State * L)
+{
+    IEventDispatcher * disp = (IEventDispatcher *)lua_tointeger(L, 1);
+
+    LuaEventCallback tmp(L, std::string(lua_tostring(L, 3)));
+    disp->AddEventListener((EventID)lua_tointeger(L, 2), &tmp);
+
+    return 0;
+}
+
 
 } // namespace dusk

@@ -15,12 +15,14 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(App);
 
-    static App * Inst() { return _Inst; }
+    static App * GetInst() { return _Inst; }
 
     explicit App(int argc, char** argv);
     virtual ~App();
 
     bool LoadConfig(const std::string& filename);
+
+    Scene * GetScene() const { return _currentScene; };
 
     void Run();
 
@@ -28,6 +30,11 @@ public:
     unsigned int WindowWidth  = 1024;
     unsigned int WindowHeight = 768;
     std::string WindowTitle   = "Dusk";
+
+    static void InitScripting();
+    static int Script_GetInst(lua_State * L);
+    static int Script_LoadConfig(lua_State * L);
+    static int Script_GetScene(lua_State * L);
 
 private:
 

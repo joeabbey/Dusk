@@ -21,7 +21,7 @@ public:
 
     lua_State * GetLuaState() const { return _luaState; }
 
-    static bool AddFunction(const std::string& funName, lua_CFunction function);
+    static bool AddFunction(const std::string& funcName, lua_CFunction function);
 
 private:
 

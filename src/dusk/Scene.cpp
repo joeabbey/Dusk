@@ -29,6 +29,18 @@ void Scene::AddActor(Actor * actor)
     _actors.push_back(actor);
 }
 
+Actor * Scene::GetActorByName(const std::string& name)
+{
+    for (const auto& actor : _actors)
+    {
+        if (actor->GetName() == name)
+        {
+            return actor;
+        }
+    }
+    return nullptr;
+}
+
 void Scene::AddCamera(Camera * camera)
 {
     _cameras.push_back(camera);
@@ -83,6 +95,27 @@ void Scene::Render()
     if (!_loaded) return;
 
     DispatchEvent(Event((EventID)Events::RENDER));
+}
+
+void Scene::InitScripting()
+{
+    ScriptHost::AddFunction("dusk_Scene_GetActorByName", &Scene::Script_GetActorByName);
+}
+
+int Scene::Script_GetActorByName(lua_State * L)
+{
+    Scene * scene = (Scene *)lua_tointeger(L, 1);
+
+    Actor * actor = scene->GetActorByName(std::string(lua_tostring(L, 2)));
+    if (!actor)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_pushinteger(L, (ptrdiff_t)actor);
+
+    return 1;
 }
 
 } // namespace dusk
