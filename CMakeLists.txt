@@ -183,6 +183,15 @@ INCLUDE_DIRECTORIES(
 
 SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
 
+# Copy assets to build directory
+ADD_CUSTOM_TARGET(copy-assets)
+ADD_DEPENDENCIES(${Dusk_OUT} copy-assets)
+ADD_CUSTOM_COMMAND(
+    TARGET copy-assets PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E
+        copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+)
+
 # Copy includes to build directory
 ADD_CUSTOM_TARGET(copy-includes)
 ADD_DEPENDENCIES(${Dusk_OUT} copy-includes)
