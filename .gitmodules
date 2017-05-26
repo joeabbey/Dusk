@@ -6,14 +6,27 @@
 	path = depend/glm
 	url = https://github.com/g-truc/glm.git
 	branch = 0.9.8
-	shallow = true
 [submodule "depend/json"]
 	path = depend/json
 	url = https://github.com/nlohmann/json.git
 	branch = master
-	shallow = true
 [submodule "depend/lua"]
 	path = depend/lua
 	url = https://github.com/LuaDist/lua
 	branch = lua-5.3
-	shallow = true
+[submodule "depend/SDL_ttf"]
+	path = depend/SDL_ttf
+	url = https://github.com/SDL-mirror/SDL_ttf
+	branch = tags/release-2.0.14
+[submodule "depend/SDL"]
+	path = depend/SDL
+	url = https://github.com/SDL-mirror/SDL
+	branch = tags/release-2.0.5
+[submodule "depend/SDL_image"]
+	path = depend/SDL_image
+	url = https://github.com/SDL-mirror/SDL_image
+	branch = tags/release-2.0.1
+[submodule "depend/zlib"]
+	path = depend/zlib
+	url = https://github.com/madler/zlib
+	branch = tags/v1.2.11
