@@ -142,6 +142,7 @@ void CameraComponent::Update(const Event& event)
 
 ScriptComponent::ScriptComponent(Actor * parent, const std::string& filename)
     : Component(parent)
+    , _scriptHost()
     , _filename(filename)
 { }
 
@@ -155,29 +156,7 @@ ScriptComponent::~ScriptComponent()
 
 bool ScriptComponent::Load()
 {
-    return true;
-
-    // TODO: Move
-    lua_State * _luaState = NULL;
-
-    int status = luaL_loadfile(_luaState, _filename.c_str());
-
-    if (status)
-    {
-        DuskLogError("Failed to load script '%s'", _filename.c_str());
-        return false;
-    }
-
-    DuskLogInfo("Executing script '%s'", _filename.c_str());
-
-    // Set the error callback to 0, this means errors will be pushed onto the stack
-    status = lua_pcall(_luaState, 0, LUA_MULTRET, 0);
-
-    if (status)
-    {
-        DuskLogError("Failed to execute script '%s'", _filename.c_str());
-        return false;
-    }
+    _scriptHost.RunFile(_filename);
 
     _loaded = true;
 

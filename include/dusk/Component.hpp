@@ -4,6 +4,7 @@
 #include <dusk/Config.hpp>
 #include <dusk/Mesh.hpp>
 #include <dusk/Camera.hpp>
+#include <dusk/ScriptHost.hpp>
 #include <dusk/Event.hpp>
 
 namespace dusk {
@@ -104,6 +105,8 @@ public:
     void Free() override;
 
 protected:
+
+    ScriptHost _scriptHost;
 
     std::string _filename;
 

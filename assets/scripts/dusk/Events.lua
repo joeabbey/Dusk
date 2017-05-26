@@ -1,4 +1,3 @@
-if not Dusk then Dusk = { } end
 
 local IEventDispatcher = Class(Dusk.Object, function(self, ptr)
     DuskObject.init(self, ptr)

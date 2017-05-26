@@ -1,4 +1,3 @@
-if not Dusk then Dusk = { } end
 
 local Scene = Dusk.Class(Dusk.IEventDispatcher, function(self, ptr)
     Dusk.IEventDispatcher.init(self, ptr)
