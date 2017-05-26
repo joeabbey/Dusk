@@ -14,19 +14,15 @@
 	path = depend/lua
 	url = https://github.com/LuaDist/lua
 	branch = lua-5.3
-[submodule "depend/SDL_ttf"]
-	path = depend/SDL_ttf
-	url = https://github.com/SDL-mirror/SDL_ttf
-	branch = tags/release-2.0.14
-[submodule "depend/SDL"]
-	path = depend/SDL
-	url = https://github.com/SDL-mirror/SDL
-	branch = tags/release-2.0.5
-[submodule "depend/SDL_image"]
-	path = depend/SDL_image
-	url = https://github.com/SDL-mirror/SDL_image
-	branch = tags/release-2.0.1
 [submodule "depend/zlib"]
 	path = depend/zlib
 	url = https://github.com/madler/zlib
 	branch = tags/v1.2.11
+[submodule "depend/flatbuffers"]
+	path = depend/flatbuffers
+	url = https://github.com/google/flatbuffers
+	branch = tags/v1.6.0
+[submodule "depend/glfw"]
+	path = depend/glfw
+	url = https://github.com/glfw/glfw
+	branch = tags/3.2.1

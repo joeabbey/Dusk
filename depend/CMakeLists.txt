@@ -11,14 +11,31 @@ SET(JSON_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/json/src" PARENT_SCOPE)
 
 ADD_SUBDIRECTORY(lua)
 SET(LUA_LIBRARIES liblua PARENT_SCOPE)
-SET(LUA_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/src" "${CMAKE_BINARY_DIR}/depend/lua" PARENT_SCOPE)
+SET(LUA_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/lua/src" "${CMAKE_BINARY_DIR}/depend/lua" PARENT_SCOPE)
+
+ADD_SUBDIRECTORY(zlib)
+SET(ZLIB_LIBRARIES zlib PARENT_SCOPE)
+SET(ZLIB_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/zlib" "${CMAKE_BINARY_DIR}/depend/zlib" PARENT_SCOPE)
+
+ADD_SUBDIRECTORY(glfw)
+SET(GLFW_LIBRARIES glfw PARENT_SCOPE)
+SET(GLFW_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/glfw/include")
+
+SET(DEPEND_IGNORE
+    glm_dummy
+    json_unit catch_main
+    lua luac
+    zlibstatic example example64 minigzip minigzip64
+    glfwinfo heightmap gears boing offscreen particles wave simple splitview reopen monitors iconify gamma
+    icon tearing empty events msaa cursor threads clipboard title joysticks sharing windows timeout
+)
 
 SET_TARGET_PROPERTIES(
-    glm_dummy json_unit catch_main lua luac
+    ${DEPEND_IGNORE}
     PROPERTIES FOLDER "depend")
 
 SET_TARGET_PROPERTIES(
-    glm_dummy json_unit catch_main lua luac
+    ${DEPEND_IGNORE}
     PROPERTIES
     EXCLUDE_FROM_ALL 1
     EXCLUDE_FROM_DEFAULT_BUILD 1)
