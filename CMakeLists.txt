@@ -1,6 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2 FATAL_ERROR)
 CMAKE_POLICY(SET CMP0048 NEW)
 
+# Add dependencies to be built with the project
+ADD_SUBDIRECTORY(depend)
+
 PROJECT(Dusk VERSION 0.0.1)
 
 ### Global configuration
@@ -10,30 +13,6 @@ SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Allow for custom FindXXX.cmake files
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-### MSVC fixes
-
-IF(MSVC)
-
-    # Path to the VC directory
-    SET(VC_ROOT $ENV{VS140COMNTOOLS}../../VC)
-    STRING(REPLACE "\\" "/" VC_ROOT ${VC_ROOT})
-
-    # Library and include search prefix for VisualStudio
-    SET(VC_CMAKE_PREFIX ${VC_ROOT})
-
-    # Force searching for 64-bit libraries first, if building 64-bit
-    IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        SET(VC_CMAKE_PREFIX ${VC_ROOT}/lib/amd64 ${VC_ROOT}/bin/amd64 ${VC_ROOT})
-    ENDIF()
-
-    # Prepend the cmake search prefix with our VisualStudio search path
-    SET(CMAKE_PREFIX_PATH ${VC_CMAKE_PREFIX} ${CMAKE_PREFIX_PATH})
-
-    # Prevent 'lib' from being prepended to libraries
-    SET(CMAKE_SHARED_LIBRARY_PREFIX "")
-
-ENDIF()
 
 ### Compiler-specific flags
 
@@ -73,8 +52,30 @@ ENDIF()
 FIND_PACKAGE(OpenGL      REQUIRED)
 FIND_PACKAGE(ZLIB        REQUIRED)
 FIND_PACKAGE(FlatBuffers REQUIRED)
-FIND_PACKAGE(Lua         REQUIRED)
 FIND_PACKAGE(SDL2        REQUIRED COMPONENTS image ttf)
+
+INCLUDE_DIRECTORIES(
+    ${OPENGL_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+    ${FLATBUFFERS_INCLUDE_DIRS}
+    ${SDL2_INCLUDE_DIRS}
+    ${GLM_INCLUDE_DIRS}
+    ${JSON_INCLUDE_DIRS}
+    ${LUA_INCLUDE_DIRS}
+)
+
+MESSAGE(STATUS "${OPENGL_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${FLATBUFFERS_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${JSON_INCLUDE_DIRS} ${LUA_INCLUDE_DIRS}")
+
+SET(Dusk_LINK_LIBRARIES
+    ${OPENGL_LIBRARIES}
+    ${SDL2_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${LUA_LIBRARIES}
+)
+
+SET(Dusk_DEPEND
+    glm nlohmann_json liblua
+)
 
 ### Dusk library
 
@@ -159,28 +160,11 @@ ADD_LIBRARY(${Dusk_OUT}
     ${Dusk_INCLUDES}
     ${Dusk_SOURCES}
 )
-ADD_DEPENDENCIES(${Dusk_OUT} glm nlohmann_json)
+ADD_DEPENDENCIES(${Dusk_OUT} ${Dusk_DEPEND})
 
 TARGET_LINK_LIBRARIES(
     ${Dusk_OUT}
-    ${OPENGL_LIBRARIES}
-    ${GLEW_LIBRARIES}
-    ${SDL2_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${LUA_LIBRARIES}
-)
-
-INCLUDE_DIRECTORIES(
-    ${OPENGL_INCLUDE_DIR}
-    ${GLEW_INCLUDE_DIRS}
-    ${GLMM_INCLUDE_DIRS}
-    ${SDL2_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
-    ${LUA_INCLUDE_DIRS}
-
-    # TODO: Move to depend/CMakeListst.txt
-    ${CMAKE_SOURCE_DIR}/depend/glm
-    ${CMAKE_SOURCE_DIR}/depend/json/src
+    ${Dusk_LINK_LIBRARIES}
 )
 
 SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
@@ -204,10 +188,6 @@ FOREACH(inc ${Dusk_INCLUDES})
             copy ${CMAKE_SOURCE_DIR}/${inc} ${CMAKE_BINARY_DIR}/${inc}
     )
 ENDFOREACH()
-
-### Dependencies
-
-ADD_SUBDIRECTORY(depend)
 
 ### Example projects
 

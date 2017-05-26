@@ -79,8 +79,9 @@ int IEventDispatcher::Script_AddEventListener(lua_State * L)
 {
     IEventDispatcher * disp = (IEventDispatcher *)lua_tointeger(L, 1);
 
+    std::string funcName = lua_tostring(L, 3);
     disp->AddEventListener((EventID)lua_tointeger(L, 2),
-                           new LuaEventCallback(L, std::string(lua_tostring(L, 3))));
+                           new LuaEventCallback(L, funcName));
 
     return 0;
 }
@@ -89,7 +90,8 @@ int IEventDispatcher::Script_RemoveEventListener(lua_State * L)
 {
     IEventDispatcher * disp = (IEventDispatcher *)lua_tointeger(L, 1);
 
-    LuaEventCallback tmp(L, std::string(lua_tostring(L, 3)));
+    std::string funcName = lua_tostring(L, 3);
+    LuaEventCallback tmp(L, funcName);
     disp->AddEventListener((EventID)lua_tointeger(L, 2), &tmp);
 
     return 0;

@@ -1,6 +1,6 @@
 
-local IEventDispatcher = Class(Dusk.Object, function(self, ptr)
-    DuskObject.init(self, ptr)
+local IEventDispatcher = Dusk.Class(Dusk.Object, function(self, ptr)
+    Dusk.Object.init(self, ptr)
 end)
 
 function IEventDispatcher:AddEventListener(eventId, callback)

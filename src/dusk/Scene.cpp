@@ -106,7 +106,8 @@ int Scene::Script_GetActorByName(lua_State * L)
 {
     Scene * scene = (Scene *)lua_tointeger(L, 1);
 
-    Actor * actor = scene->GetActorByName(std::string(lua_tostring(L, 2)));
+    std::string actorName = lua_tostring(L, 2);
+    Actor * actor = scene->GetActorByName(actorName);
     if (!actor)
     {
         lua_pushnil(L);

@@ -117,5 +117,93 @@ void Actor::Render(const Event& event)
     DispatchEvent(Event((EventID)Events::RENDER));
 }
 
+void Actor::InitScripting()
+{
+    ScriptHost::AddFunction("dusk_Actor_GetPosition", &Actor::Script_GetPosition);
+    ScriptHost::AddFunction("dusk_Actor_SetPosition", &Actor::Script_SetPosition);
+    ScriptHost::AddFunction("dusk_Actor_GetRotation", &Actor::Script_GetRotation);
+    ScriptHost::AddFunction("dusk_Actor_SetRotation", &Actor::Script_SetRotation);
+    ScriptHost::AddFunction("dusk_Actor_GetScale", &Actor::Script_GetScale);
+    ScriptHost::AddFunction("dusk_Actor_SetScale", &Actor::Script_SetScale);
+}
+
+int Actor::Script_GetPosition(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 pos = actor->GetPosition();
+
+    lua_pushnumber(L, pos.x);
+    lua_pushnumber(L, pos.y);
+    lua_pushnumber(L, pos.z);
+
+    return 3;
+}
+
+int Actor::Script_SetPosition(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 pos;
+
+    pos.x = lua_tonumber(L, 2);
+    pos.y = lua_tonumber(L, 3);
+    pos.z = lua_tonumber(L, 4);
+
+    actor->SetPosition(pos);
+
+    return 0;
+}
+
+int Actor::Script_GetRotation(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 rot = actor->GetRotation();
+
+    lua_pushnumber(L, rot.x);
+    lua_pushnumber(L, rot.y);
+    lua_pushnumber(L, rot.z);
+
+    return 3;
+}
+
+int Actor::Script_SetRotation(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 rot;
+
+    rot.x = lua_tonumber(L, 2);
+    rot.y = lua_tonumber(L, 3);
+    rot.z = lua_tonumber(L, 4);
+
+    actor->SetRotation(rot);
+
+    return 0;
+}
+
+int Actor::Script_GetScale(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 scale = actor->GetScale();
+
+    lua_pushnumber(L, scale.x);
+    lua_pushnumber(L, scale.y);
+    lua_pushnumber(L, scale.z);
+
+    return 3;
+}
+
+int Actor::Script_SetScale(lua_State * L)
+{
+    Actor * actor = (Actor *)lua_tointeger(L, 1);
+    glm::vec3 scale;
+
+    scale.x = lua_tonumber(L, 2);
+    scale.y = lua_tonumber(L, 3);
+    scale.z = lua_tonumber(L, 4);
+
+    actor->SetScale(scale);
+
+    return 0;
+}
+
 
 } // namespace dusk

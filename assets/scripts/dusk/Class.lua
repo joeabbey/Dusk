@@ -1,4 +1,4 @@
-function Class(base, init)
+local Class = function(base, init)
 	local c = { }
 	if not init and type(base) == 'function' then
 		init = base
@@ -41,3 +41,5 @@ function Class(base, init)
 	setmetatable(c, mt)
 	return c
 end
+
+Dusk.Class = Class

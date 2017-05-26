@@ -11,6 +11,8 @@ App * App::_Inst = nullptr;
 
 App::App(int argc, char** argv)
 {
+    App::InitScripting();
+
     DuskLogInfo("Starting Application");
 
     _Inst = this;

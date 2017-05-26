@@ -4,6 +4,11 @@ local Actor = Dusk.Class(Dusk.IEventDispatcher, function(self, ptr)
     Dusk.IEventDispatcher.init(self, ptr)
 end)
 
+Actor.Events = {
+    UPDATE = 201,
+    RENDER = 202
+}
+
 function Actor:GetPosition()
     return dusk_Actor_GetPosition(self.dusk_ptr)
 end

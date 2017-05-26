@@ -58,6 +58,15 @@ public:
     void Update(const Event& event);
     void Render(const Event& event);
 
+    static void InitScripting();
+
+    static int Script_GetPosition(lua_State * L);
+    static int Script_SetPosition(lua_State * L);
+    static int Script_GetRotation(lua_State * L);
+    static int Script_SetRotation(lua_State * L);
+    static int Script_GetScale(lua_State * L);
+    static int Script_SetScale(lua_State * L);
+
 private:
 
     bool _loaded;

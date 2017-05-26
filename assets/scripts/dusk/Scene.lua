@@ -4,7 +4,7 @@ local Scene = Dusk.Class(Dusk.IEventDispatcher, function(self, ptr)
 end)
 
 function Scene:GetActorByName(name)
-    return Dusk.Actor( dusk_Scene_GetActorByName(name))
+    return Dusk.Actor(dusk_Scene_GetActorByName(self.dusk_ptr, name))
 end
 
 Dusk.Scene = Scene

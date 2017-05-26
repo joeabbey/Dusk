@@ -106,7 +106,7 @@ bool ScriptHost::AddFunction(const std::string& funcName, lua_CFunction function
     auto it = _Functions.find(funcName);
     if (it != _Functions.end())
     {
-        DuskLogWarn("Cannot register a function twice");
+        DuskLogWarn("Cannot register a function twice, %s", funcName.c_str());
         return false;
     }
 

@@ -6,7 +6,14 @@
 	path = depend/glm
 	url = https://github.com/g-truc/glm.git
 	branch = 0.9.8
+	shallow = true
 [submodule "depend/json"]
 	path = depend/json
 	url = https://github.com/nlohmann/json.git
 	branch = master
+	shallow = true
+[submodule "depend/lua"]
+	path = depend/lua
+	url = https://github.com/LuaDist/lua
+	branch = lua-5.3
+	shallow = true
