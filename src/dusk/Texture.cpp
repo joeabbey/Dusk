@@ -19,20 +19,16 @@ bool Texture::Load()
 {
     DuskBenchStart();
 
-    int mode;
-    SDL_Surface * surf = NULL;
-
     DuskLogInfo("Loading image '%s'", _filename.c_str());
 
-    surf = IMG_Load(_filename.c_str());
-    if (NULL == surf)
+    int width, height, comp;
+    unsigned char * image = stbi_load(_filename.c_str(), &width, &height, &comp, STBI_rgb_alpha);
+
+    if (NULL == image)
     {
-        DuskLogError("Loading image failed '%s', %s", _filename.c_str(), IMG_GetError());
-        SDL_FreeSurface(surf);
+        DuskLogError("Loading image failed '%s'", _filename.c_str());
         return false;
     }
-
-    mode = (4 == surf->format->BytesPerPixel ? GL_RGBA : GL_RGB);
 
     glGenTextures(1, &_glID);
     glBindTexture(GL_TEXTURE_2D, _glID);
@@ -43,9 +39,9 @@ bool Texture::Load()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, mode, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
-    SDL_FreeSurface(surf);
+    stbi_image_free(image);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     DuskBenchEnd("Texture::Load()");

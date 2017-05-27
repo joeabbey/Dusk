@@ -1,4 +1,4 @@
-// ImGui SDL2 binding with OpenGL3
+// ImGui GLFW binding with OpenGL3 + shaders
 // In this binding, ImTextureID is used to store an OpenGL 'GLuint' texture identifier. Read the FAQ about ImTextureID in imgui.cpp.
 
 // You can copy and use unmodified imgui_impl_* files in your project. See main.cpp for an example of using this.
@@ -6,15 +6,21 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include "imgui.h"
-#include "imgui_impl_sdl_gl3.h"
+#include <imgui/imgui.h>
+#include "imgui/imgui_impl_glfw_gl3.h"
 
-// SDL,GL3W
-#include <glad/glad.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
+// GL3W/GLFW
+#include <glad/glad.h>    // This example is using gl3w to access OpenGL functions (because it is small). You may use glew/glad/glLoadGen/etc. whatever already works for you.
+#include <GLFW/glfw3.h>
+#ifdef _WIN32
+#undef APIENTRY
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
+#include <GLFW/glfw3native.h>
+#endif
 
 // Data
+static GLFWwindow*  g_Window = NULL;
 static double       g_Time = 0.0f;
 static bool         g_MousePressed[3] = { false, false, false };
 static float        g_MouseWheel = 0.0f;
@@ -27,7 +33,7 @@ static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
 // - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
-void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
+void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     ImGuiIO& io = ImGui::GetIO();
@@ -125,63 +131,56 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
 }
 
-static const char* ImGui_ImplSdlGL3_GetClipboardText(void*)
+static const char* ImGui_ImplGlfwGL3_GetClipboardText(void* user_data)
 {
-    return SDL_GetClipboardText();
+    return glfwGetClipboardString((GLFWwindow*)user_data);
 }
 
-static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
+static void ImGui_ImplGlfwGL3_SetClipboardText(void* user_data, const char* text)
 {
-    SDL_SetClipboardText(text);
+    glfwSetClipboardString((GLFWwindow*)user_data, text);
 }
 
-bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
+void ImGui_ImplGlfwGL3_MouseButtonCallback(GLFWwindow*, int button, int action, int /*mods*/)
+{
+    if (action == GLFW_PRESS && button >= 0 && button < 3)
+        g_MousePressed[button] = true;
+}
+
+void ImGui_ImplGlfwGL3_ScrollCallback(GLFWwindow*, double /*xoffset*/, double yoffset)
+{
+    g_MouseWheel += (float)yoffset; // Use fractional mouse wheel, 1.0 unit 5 lines.
+}
+
+void ImGui_ImplGlfwGL3_KeyCallback(GLFWwindow*, int key, int, int action, int mods)
 {
     ImGuiIO& io = ImGui::GetIO();
-    switch (event->type)
-    {
-    case SDL_MOUSEWHEEL:
-        {
-            if (event->wheel.y > 0)
-                g_MouseWheel = 1;
-            if (event->wheel.y < 0)
-                g_MouseWheel = -1;
-            return true;
-        }
-    case SDL_MOUSEBUTTONDOWN:
-        {
-            if (event->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
-            if (event->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
-            if (event->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
-            return true;
-        }
-    case SDL_TEXTINPUT:
-        {
-            io.AddInputCharactersUTF8(event->text.text);
-            return true;
-        }
-    case SDL_KEYDOWN:
-    case SDL_KEYUP:
-        {
-            int key = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-            io.KeysDown[key] = (event->type == SDL_KEYDOWN);
-            io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
-            io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
-            io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
-            io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
-            return true;
-        }
-    }
-    return false;
+    if (action == GLFW_PRESS)
+        io.KeysDown[key] = true;
+    if (action == GLFW_RELEASE)
+        io.KeysDown[key] = false;
+
+    (void)mods; // Modifiers are not reliable across systems
+    io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+    io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+    io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+    io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
 }
 
-void ImGui_ImplSdlGL3_CreateFontsTexture()
+void ImGui_ImplGlfwGL3_CharCallback(GLFWwindow*, unsigned int c)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    if (c > 0 && c < 0x10000)
+        io.AddInputCharacter((unsigned short)c);
+}
+
+bool ImGui_ImplGlfwGL3_CreateFontsTexture()
 {
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
     unsigned char* pixels;
     int width, height;
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   // Load as RGBA 32-bits for OpenGL3 demo because it is more likely to be compatible with user's existing shader.
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   // Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
 
     // Upload texture to graphics system
     GLint last_texture;
@@ -190,7 +189,6 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
     glBindTexture(GL_TEXTURE_2D, g_FontTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Store our identifier
@@ -198,9 +196,11 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
 
     // Restore state
     glBindTexture(GL_TEXTURE_2D, last_texture);
+
+    return true;
 }
 
-bool ImGui_ImplSdlGL3_CreateDeviceObjects()
+bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 {
     // Backup GL state
     GLint last_texture, last_array_buffer, last_vertex_array;
@@ -267,7 +267,7 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
 #undef OFFSETOF
 
-    ImGui_ImplSdlGL3_CreateFontsTexture();
+    ImGui_ImplGlfwGL3_CreateFontsTexture();
 
     // Restore modified GL state
     glBindTexture(GL_TEXTURE_2D, last_texture);
@@ -277,7 +277,7 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     return true;
 }
 
-void    ImGui_ImplSdlGL3_InvalidateDeviceObjects()
+void    ImGui_ImplGlfwGL3_InvalidateDeviceObjects()
 {
     if (g_VaoHandle) glDeleteVertexArrays(1, &g_VaoHandle);
     if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
@@ -303,92 +303,100 @@ void    ImGui_ImplSdlGL3_InvalidateDeviceObjects()
     }
 }
 
-bool    ImGui_ImplSdlGL3_Init(SDL_Window* window)
+bool    ImGui_ImplGlfwGL3_Init(GLFWwindow* window, bool install_callbacks)
 {
+    g_Window = window;
+
     ImGuiIO& io = ImGui::GetIO();
-    io.KeyMap[ImGuiKey_Tab] = SDLK_TAB;                     // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-    io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = SDL_SCANCODE_DOWN;
-    io.KeyMap[ImGuiKey_PageUp] = SDL_SCANCODE_PAGEUP;
-    io.KeyMap[ImGuiKey_PageDown] = SDL_SCANCODE_PAGEDOWN;
-    io.KeyMap[ImGuiKey_Home] = SDL_SCANCODE_HOME;
-    io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
-    io.KeyMap[ImGuiKey_Delete] = SDLK_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = SDLK_BACKSPACE;
-    io.KeyMap[ImGuiKey_Enter] = SDLK_RETURN;
-    io.KeyMap[ImGuiKey_Escape] = SDLK_ESCAPE;
-    io.KeyMap[ImGuiKey_A] = SDLK_a;
-    io.KeyMap[ImGuiKey_C] = SDLK_c;
-    io.KeyMap[ImGuiKey_V] = SDLK_v;
-    io.KeyMap[ImGuiKey_X] = SDLK_x;
-    io.KeyMap[ImGuiKey_Y] = SDLK_y;
-    io.KeyMap[ImGuiKey_Z] = SDLK_z;
+    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;                         // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
+    io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
+    io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
+    io.KeyMap[ImGuiKey_UpArrow] = GLFW_KEY_UP;
+    io.KeyMap[ImGuiKey_DownArrow] = GLFW_KEY_DOWN;
+    io.KeyMap[ImGuiKey_PageUp] = GLFW_KEY_PAGE_UP;
+    io.KeyMap[ImGuiKey_PageDown] = GLFW_KEY_PAGE_DOWN;
+    io.KeyMap[ImGuiKey_Home] = GLFW_KEY_HOME;
+    io.KeyMap[ImGuiKey_End] = GLFW_KEY_END;
+    io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
+    io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
+    io.KeyMap[ImGuiKey_Enter] = GLFW_KEY_ENTER;
+    io.KeyMap[ImGuiKey_Escape] = GLFW_KEY_ESCAPE;
+    io.KeyMap[ImGuiKey_A] = GLFW_KEY_A;
+    io.KeyMap[ImGuiKey_C] = GLFW_KEY_C;
+    io.KeyMap[ImGuiKey_V] = GLFW_KEY_V;
+    io.KeyMap[ImGuiKey_X] = GLFW_KEY_X;
+    io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
+    io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
 
-    io.RenderDrawListsFn = ImGui_ImplSdlGL3_RenderDrawLists;   // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
-    io.SetClipboardTextFn = ImGui_ImplSdlGL3_SetClipboardText;
-    io.GetClipboardTextFn = ImGui_ImplSdlGL3_GetClipboardText;
-    io.ClipboardUserData = NULL;
-
+    io.RenderDrawListsFn = ImGui_ImplGlfwGL3_RenderDrawLists;       // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
+    io.SetClipboardTextFn = ImGui_ImplGlfwGL3_SetClipboardText;
+    io.GetClipboardTextFn = ImGui_ImplGlfwGL3_GetClipboardText;
+    io.ClipboardUserData = g_Window;
 #ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
-    io.ImeWindowHandle = wmInfo.info.win.window;
-#else
-    (void)window;
+    io.ImeWindowHandle = glfwGetWin32Window(g_Window);
 #endif
+
+    if (install_callbacks)
+    {
+        glfwSetMouseButtonCallback(window, ImGui_ImplGlfwGL3_MouseButtonCallback);
+        glfwSetScrollCallback(window, ImGui_ImplGlfwGL3_ScrollCallback);
+        glfwSetKeyCallback(window, ImGui_ImplGlfwGL3_KeyCallback);
+        glfwSetCharCallback(window, ImGui_ImplGlfwGL3_CharCallback);
+    }
 
     return true;
 }
 
-void ImGui_ImplSdlGL3_Shutdown()
+void ImGui_ImplGlfwGL3_Shutdown()
 {
-    ImGui_ImplSdlGL3_InvalidateDeviceObjects();
+    ImGui_ImplGlfwGL3_InvalidateDeviceObjects();
     ImGui::Shutdown();
 }
 
-void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
+void ImGui_ImplGlfwGL3_NewFrame()
 {
     if (!g_FontTexture)
-        ImGui_ImplSdlGL3_CreateDeviceObjects();
+        ImGui_ImplGlfwGL3_CreateDeviceObjects();
 
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
     int display_w, display_h;
-    SDL_GetWindowSize(window, &w, &h);
-    SDL_GL_GetDrawableSize(window, &display_w, &display_h);
+    glfwGetWindowSize(g_Window, &w, &h);
+    glfwGetFramebufferSize(g_Window, &display_w, &display_h);
     io.DisplaySize = ImVec2((float)w, (float)h);
     io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
 
     // Setup time step
-    Uint32	time = SDL_GetTicks();
-    double current_time = time / 1000.0;
-    io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
+    double current_time =  glfwGetTime();
+    io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f/60.0f);
     g_Time = current_time;
 
     // Setup inputs
-    // (we already got mouse wheel, keyboard keys & characters from SDL_PollEvent())
-    int mx, my;
-    Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
-        io.MousePos = ImVec2((float)mx, (float)my);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
+    // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
+    if (glfwGetWindowAttrib(g_Window, GLFW_FOCUSED))
+    {
+        double mouse_x, mouse_y;
+        glfwGetCursorPos(g_Window, &mouse_x, &mouse_y);
+        io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);   // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
+    }
     else
-        io.MousePos = ImVec2(-1, -1);
+    {
+        io.MousePos = ImVec2(-1,-1);
+    }
 
-    io.MouseDown[0] = g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;		// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-    io.MouseDown[1] = g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
-    io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
-    g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
+    for (int i = 0; i < 3; i++)
+    {
+        io.MouseDown[i] = g_MousePressed[i] || glfwGetMouseButton(g_Window, i) != 0;    // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+        g_MousePressed[i] = false;
+    }
 
     io.MouseWheel = g_MouseWheel;
     g_MouseWheel = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
-    SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
+    glfwSetInputMode(g_Window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 
     // Start the frame
     ImGui::NewFrame();

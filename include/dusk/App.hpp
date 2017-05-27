@@ -36,6 +36,12 @@ public:
     static int Script_LoadConfig(lua_State * L);
     static int Script_GetScene(lua_State * L);
 
+    static void GLFW_ErrorCallback(int code, const char * message);
+    static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void GLFW_ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+    static void GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void GLFW_CharCallback(GLFWwindow* window, unsigned int c);
+
 private:
 
     static App * _Inst;
@@ -49,8 +55,7 @@ private:
     std::unordered_map<std::string, Scene *> _scenes;
     Scene * _currentScene = nullptr;
 
-    SDL_Window *  _sdlWindow  = nullptr;
-    SDL_GLContext _sdlContext = nullptr;
+    GLFWwindow * _glfwWindow;
 
 }; // class App
 

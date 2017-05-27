@@ -33,53 +33,49 @@ void App::CreateWindow()
 {
     DuskBenchStart();
 
-    if (0 > SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER))
+    if (!glfwInit())
     {
-        DuskLogError("SDL_Init failed: %s", SDL_GetError());
+        DuskLogError("Failed to initialize GLFW");
         return;
     }
 
-    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
+    glfwSetErrorCallback(&App::GLFW_ErrorCallback);
 
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    _glfwWindow = glfwCreateWindow(WindowWidth, WindowHeight, WindowTitle.c_str(), NULL, NULL);
+    if (!_glfwWindow)
+    {
+        DuskLogError("Failed to create GLFW window");
+        return;
+    }
 
-    //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+    //int vidcount;
+    //const GLFWvidmode * modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &vidcount);
 
-    _sdlWindow = SDL_CreateWindow(WindowTitle.c_str(),
-                    SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                    WindowWidth, WindowHeight, SDL_WINDOW_OPENGL);
+    //for (int i = 0; i < vidcount; ++i)
+    //{
+    //    const GLFWvidmode& mode = modes[i];
+    //    DuskLogInfo("Video Mode: %dx%d R:%d G:%d B:%d %dhz",
+    //        mode.width, mode.height,
+    //        mode.redBits, mode.greenBits, mode.blueBits,
+    //        mode.refreshRate);
+    //}
 
-    int flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-#ifndef NDEBUG
-    flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
-#endif
+    glfwMakeContextCurrent(_glfwWindow);
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, flags);
-
-    _sdlContext = SDL_GL_CreateContext(_sdlWindow);
-
-    if (!gladLoadGLLoader((GLADloadproc) SDL_GL_GetProcAddress)) {
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
+    {
         DuskLogError("Failed to initialize OpenGL context");
         return;
     }
 
-    int multisamples;
-    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &multisamples);
-    DuskLogInfo("Anti-Aliasing: %d", multisamples);
+    ImGui_ImplGlfwGL3_Init(_glfwWindow, false);
 
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-    ImGui_ImplSdlGL3_Init(_sdlWindow);
+    glfwSetMouseButtonCallback(_glfwWindow, &App::GLFW_MouseButtonCallback);
+    glfwSetScrollCallback(_glfwWindow, &App::GLFW_ScrollCallback);
+    glfwSetKeyCallback(_glfwWindow, &App::GLFW_KeyCallback);
+    glfwSetCharCallback(_glfwWindow, &App::GLFW_CharCallback);
 
     glEnable(GL_MULTISAMPLE);
 
@@ -96,17 +92,12 @@ void App::CreateWindow()
 
 void App::DestroyWindow()
 {
-    ImGui_ImplSdlGL3_Shutdown();
+    ImGui_ImplGlfwGL3_Shutdown();
 
-    SDL_DestroyWindow(_sdlWindow);
-    _sdlWindow = NULL;
+    glfwDestroyWindow(_glfwWindow);
+    _glfwWindow = nullptr;
 
-    SDL_GL_DeleteContext(_sdlContext);
-    _sdlContext = NULL;
-
-    IMG_Quit();
-
-    SDL_Quit();
+    glfwTerminate();
 }
 
 bool App::LoadConfig(const std::string& filename)
@@ -129,10 +120,10 @@ bool App::LoadConfig(const std::string& filename)
     WindowHeight = data["Window"]["Height"];
     WindowTitle = data["Window"]["Title"];
 
-    if (_sdlWindow)
+    if (_glfwWindow)
     {
-        SDL_SetWindowSize(_sdlWindow, WindowWidth, WindowHeight);
-        SDL_SetWindowTitle(_sdlWindow, WindowTitle.c_str());
+        glfwSetWindowSize(_glfwWindow, WindowWidth, WindowHeight);
+        glfwSetWindowTitle(_glfwWindow, WindowTitle.c_str());
     }
 
     for (auto& shader : data["Shaders"])
@@ -278,33 +269,16 @@ void App::Run()
         _currentScene->Load();
     }
 
-    bool running = true;
-    while(running)
+    while (!glfwWindowShouldClose(_glfwWindow))
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSdlGL3_ProcessEvent(&event);
-            if (SDL_QUIT == event.type)
-            {
-                running = false;
-                break;
-            }
-            if (SDL_KEYDOWN == event.type)
-            {
-                if (SDLK_F2 == event.key.keysym.sym)
-                {
-                    UI::ConsoleShown ^= 1;
-                }
-            }
-        }
+        glfwPollEvents();
 
         if (_currentScene)
         {
             _currentScene->Update();
         }
 
-        ImGui_ImplSdlGL3_NewFrame(_sdlWindow);
+        ImGui_ImplGlfwGL3_NewFrame();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -315,7 +289,7 @@ void App::Run()
 
         UI::Render();
 
-        SDL_GL_SwapWindow(_sdlWindow);
+        glfwSwapBuffers(_glfwWindow);
     }
 
     if (_currentScene)
@@ -367,5 +341,37 @@ int App::Script_GetScene(lua_State * L)
 
     return 1;
 }
+
+void App::GLFW_ErrorCallback(int code, const char * message)
+{
+    DuskLogError("GLFW: %d, %s", code, message);
+}
+
+void App::GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
+}
+
+void App::GLFW_ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    ImGui_ImplGlfwGL3_ScrollCallback(window, xoffset, yoffset);
+}
+
+void App::GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
+        UI::ConsoleShown ^= 1;
+
+    ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
+}
+
+void App::GLFW_CharCallback(GLFWwindow* window, unsigned int c)
+{
+    ImGui_ImplGlfwGL3_CharCallback(window, c);
+}
+
 
 } // namespace dusk

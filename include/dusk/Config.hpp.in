@@ -11,9 +11,7 @@
 
 #include <glad/glad.h>
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,9 +21,11 @@
 #include <json.hpp>
 
 #include <imgui/imgui.h>
-#include <imgui/imgui_impl_sdl_gl3.h>
+#include <imgui/imgui_impl_glfw_gl3.h>
 
 #include <tinyobjloader/tiny_obj_loader.h>
+
+#include <stb/stb_image.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName&) = delete;   \

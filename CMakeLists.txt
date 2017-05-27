@@ -57,7 +57,7 @@ INCLUDE_DIRECTORIES(BEFORE SYSTEM
     ${OPENGL_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${FLATBUFFERS_INCLUDE_DIRS}
-    ${SDL2_INCLUDE_DIRS}
+    ${GLFW_INCLUDE_DIRS}
     ${GLM_INCLUDE_DIRS}
     ${JSON_INCLUDE_DIRS}
     ${LUA_INCLUDE_DIRS}
@@ -65,7 +65,7 @@ INCLUDE_DIRECTORIES(BEFORE SYSTEM
 
 SET(Dusk_LINK_LIBRARIES
     ${OPENGL_LIBRARIES}
-    ${SDL2_LIBRARIES}
+    ${GLFW_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${LUA_LIBRARIES}
 )
@@ -114,11 +114,14 @@ SET(Dusk_INCLUDES
     # imgui
     include/imgui/imgui.h
     include/imgui/imgui_internal.h
-    include/imgui/imgui_impl_sdl_gl3.h
+    include/imgui/imgui_impl_glfw_gl3.h
 
     # glad
     include/glad/glad.h
     include/KHR/khrplatform.h
+
+    # stb
+    include/stb/stb_image.h
 )
 
 SET(Dusk_SOURCES
@@ -144,7 +147,7 @@ SET(Dusk_SOURCES
     src/imgui/imgui.cpp
     src/imgui/imgui_draw.cpp
     src/imgui/imgui_demo.cpp
-    src/imgui/imgui_impl_sdl_gl3.cpp
+    src/imgui/imgui_impl_glfw_gl3.cpp
 
     # glad
     src/glad/glad.c
