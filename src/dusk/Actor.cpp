@@ -105,7 +105,7 @@ void Actor::Update(const Event& event)
         SetRotation(rot);
     }
 
-    DispatchEvent(Event((EventID)Events::UPDATE));
+    DispatchEvent(Event((EventID)Events::UPDATE, event.GetData()));
 }
 
 void Actor::Render(const Event& event)

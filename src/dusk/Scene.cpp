@@ -1,5 +1,6 @@
 #include "dusk/Scene.hpp"
 
+#include <dusk/App.hpp>
 #include <dusk/Benchmark.hpp>
 
 namespace dusk {
@@ -55,6 +56,10 @@ bool Scene::Load()
 {
     DuskBenchStart();
 
+    App * app = App::GetInst();
+    app->AddEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
+    app->AddEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+
     for (Actor * actor : _actors)
     {
         if (!actor->Load())
@@ -72,13 +77,17 @@ bool Scene::Load()
 
 void Scene::Free()
 {
+    App * app = App::GetInst();
+    app->RemoveEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
+    app->RemoveEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+
     for (Actor * actor : _actors)
     {
         actor->Free();
     }
 }
 
-void Scene::Update()
+void Scene::Update(const Event& event)
 {
     if (!_loaded) return;
 
@@ -87,10 +96,10 @@ void Scene::Update()
         camera->Update();
     }
 
-    DispatchEvent(Event((EventID)Events::UPDATE));
+    DispatchEvent(Event((EventID)Events::UPDATE, event.GetData()));
 }
 
-void Scene::Render()
+void Scene::Render(const Event& event)
 {
     if (!_loaded) return;
 

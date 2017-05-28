@@ -43,7 +43,7 @@ public:
     inline void SetTarget(IEventDispatcher * target) { _target = target; }
     inline IEventDispatcher * GetTarget() const { return _target; }
 
-    inline const EventData * GetData() const { return &_data; }
+    inline const EventData& GetData() const { return _data; }
 
     template <typename T>
     inline const T * GetDataAs() const { return dynamic_cast<const T *>(&_data); }

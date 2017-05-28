@@ -5,7 +5,7 @@ Dusk.GetApp = function()
 end
 
 local App = Dusk.Class(Dusk.Object, function(self, ptr)
-    Dusk.Object.init(self, ptr)
+    Dusk.IEventDispatcher.init(self, ptr)
 end)
 
 function App:GetScene()

@@ -44,8 +44,8 @@ public:
     bool Load();
     void Free();
 
-    void Update();
-    void Render();
+    void Update(const Event& event);
+    void Render(const Event& event);
 
     static void InitScripting();
     static int Script_GetActorByName(lua_State * L);

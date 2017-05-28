@@ -244,14 +244,39 @@ bool App::LoadConfig(const std::string& filename)
     const auto& startScene = _scenes.find(data["StartScene"]);
     if (startScene != _scenes.end())
     {
-        _currentScene = startScene->second;
-        DuskLogInfo("Starting Scene %s", _currentScene->GetName().c_str());
+        _startScene = startScene->second;
     }
 
     file.close();
 
     DuskBenchEnd("App::LoadConfig()");
     return true;
+}
+
+void App::PushScene(Scene * scene)
+{
+    if (!scene) return;
+
+    if (!_sceneStack.empty())
+    {
+        _sceneStack.top()->Free();
+    }
+
+    _sceneStack.push(scene);
+
+    DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
+    _sceneStack.top()->Load();
+}
+
+void App::PopScene()
+{
+    if (_sceneStack.empty()) return;
+
+    _sceneStack.top()->Free();
+    _sceneStack.pop();
+
+    DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
+    _sceneStack.top()->Load();
 }
 
 void App::Run()
@@ -264,38 +289,63 @@ void App::Run()
         it.second->Load();
     }
 
-    if (_currentScene)
-    {
-        _currentScene->Load();
-    }
+    // Load the starting scene
+    PushScene(_startScene);
 
+    double frame_delay = 1.0;   // MS until next frame
+    double frame_elap  = 0.0;   // MS since last frame
+    double fps_delay   = 250.0; // MS until next FPS update
+    double fps_elap    = 0.0;   // MS since last FPS update
+    double elapsed;
+
+    unsigned long frames = 0;
+
+    UpdateEventData updateEventData;
+
+    updateEventData.SetTargetFPS(TARGET_FPS);
+    frame_delay = (1000.0 / TARGET_FPS) / 1000.0;
+
+    double timeOffset = glfwGetTime();
     while (!glfwWindowShouldClose(_glfwWindow))
     {
+        // TODO: Cleanup
+        elapsed = glfwGetTime() - timeOffset;
+        timeOffset = glfwGetTime();
+
         glfwPollEvents();
 
-        if (_currentScene)
+        updateEventData.Update(elapsed);
+        DispatchEvent(Event((EventID)Events::UPDATE, updateEventData));
+
+        frame_elap += elapsed;
+        if (frame_delay <= frame_elap)
         {
-            _currentScene->Update();
+            frame_elap = 0.0;
+            ++frames;
+
+            ImGui_ImplGlfwGL3_NewFrame();
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            DispatchEvent(Event((EventID)Events::RENDER));
+
+            UI::Render();
+
+            glfwSwapBuffers(_glfwWindow);
         }
 
-        ImGui_ImplGlfwGL3_NewFrame();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        if (_currentScene)
+        fps_elap += elapsed;
+        if (fps_delay <= fps_elap)
         {
-            _currentScene->Render();
+            float fps = (float)((frames / fps_elap) * 1000.0f);
+            updateEventData.SetCurrentFPS(fps);
+
+            frames = 0;
+            fps_elap = 0.0;
         }
-
-        UI::Render();
-
-        glfwSwapBuffers(_glfwWindow);
     }
 
-    if (_currentScene)
-    {
-        _currentScene->Free();
-    }
+    PopScene();
 
     DestroyWindow();
 }
@@ -373,5 +423,34 @@ void App::GLFW_CharCallback(GLFWwindow* window, unsigned int c)
     ImGui_ImplGlfwGL3_CharCallback(window, c);
 }
 
+int UpdateEventData::PushToLua(lua_State * L) const
+{
+    lua_newtable(L);
+
+    lua_pushstring(L, "Delta");
+    lua_pushnumber(L, _delta);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "ElapsedTime");
+    lua_pushnumber(L, _elapsed_time);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "TotalTime");
+    lua_pushnumber(L, _total_time);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "CurrentFPS");
+    lua_pushnumber(L, _current_fps);
+    lua_settable(L, -3);
+
+    return 1;
+}
+
+void UpdateEventData::Update(float elapsed)
+{
+    _elapsed_time = elapsed;
+    _total_time += elapsed;
+    _delta = (float)(elapsed / (1000.0f / _target_fps));
+}
 
 } // namespace dusk

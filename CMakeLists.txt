@@ -50,8 +50,6 @@ ENDIF()
 ### Required packages
 
 FIND_PACKAGE(OpenGL      REQUIRED)
-FIND_PACKAGE(FlatBuffers REQUIRED)
-FIND_PACKAGE(SDL2        REQUIRED COMPONENTS image ttf)
 
 INCLUDE_DIRECTORIES(BEFORE SYSTEM
     ${OPENGL_INCLUDE_DIRS}
@@ -71,7 +69,7 @@ SET(Dusk_LINK_LIBRARIES
 )
 
 SET(Dusk_DEPEND
-    glm nlohmann_json liblua
+    glm nlohmann_json liblua glfw
 )
 
 ### Dusk library
