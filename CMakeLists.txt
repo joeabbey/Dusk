@@ -69,7 +69,7 @@ SET(Dusk_LINK_LIBRARIES
 )
 
 SET(Dusk_DEPEND
-    glm nlohmann_json liblua glfw
+    glm nlohmann_json liblua glfw flatbuffers
 )
 
 ### Dusk library

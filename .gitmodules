@@ -21,7 +21,8 @@
 [submodule "depend/flatbuffers"]
 	path = depend/flatbuffers
 	url = https://github.com/google/flatbuffers
-	branch = tags/v1.6.0
+    #branch = tags/v1.6.0
+    branch = master # the latest release has an issue building with clang
 [submodule "depend/glfw"]
 	path = depend/glfw
 	url = https://github.com/glfw/glfw

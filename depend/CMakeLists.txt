@@ -26,13 +26,19 @@ ADD_SUBDIRECTORY(glfw)
 SET(GLFW_LIBRARIES glfw PARENT_SCOPE)
 SET(GLFW_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/glfw/include")
 
+MESSAGE("Adding dependency: flatbuffers")
+ADD_SUBDIRECTORY(flatbuffers)
+SET(FLATBUFFERS_LIBRARIES flatbuffers PARENT_SCOPE)
+SET(FLATBUFFERS_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/flatbuffers/include")
+
 SET(DEPEND_IGNORE
     glm_dummy
     json_unit catch_main
     lua luac
     zlibstatic example example64 minigzip minigzip64
-    glfwinfo heightmap gears boing offscreen particles wave simple splitview reopen monitors iconify gamma
+    glfwinfo heightmap gears boing particles wave simple splitview reopen monitors iconify gamma
     icon tearing empty events msaa cursor threads clipboard title joysticks sharing windows timeout
+    flattests flatsamplebinary flathash flatsampletext
 )
 
 SET_TARGET_PROPERTIES(
