@@ -20,7 +20,7 @@ public:
         std::string filename;
     };
 
-    Shader(const std::string& name, const std::vector<FileInfo>& files);
+    Shader(const std::string& name, const std::vector<std::string>& data, const std::vector<FileInfo>& files);
     virtual ~Shader();
 
     bool IsLoaded() const { return _loaded; }
@@ -32,10 +32,18 @@ public:
 
     void Bind();
 
+    GLuint GetGLProgram() const { return _glProgram; }
+
     GLint GetUniformLocation(const std::string& name);
 
     void BindData(const std::string& name);
-    static void SetData(const std::string& name, void * data, size_t size);
+
+    static void DefineData(const std::string& name, size_t size);
+
+    static void AddData(const std::string& name, void * data, size_t size)
+        { UpdateData(name, data, size); }
+
+    static void UpdateData(const std::string& name, void * data, size_t size);
 
 private:
 
@@ -44,6 +52,7 @@ private:
         GLuint glUBO;
         size_t size;
         int index;
+        bool loaded;
     };
 
     static std::unordered_map<std::string, ShaderData> _DataRecords;

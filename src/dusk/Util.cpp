@@ -18,8 +18,8 @@ std::string GetDirname(std::string path)
     CleanSlashes(path);
     size_t pivot = path.find_last_of('/');
     return (pivot == std::string::npos
-        ? "."
-        : std::string(path.begin(), path.end() - pivot - 1));
+        ? "./"
+        : path.substr(0, pivot));
 }
 
 std::string GetBasename(std::string path)
@@ -27,8 +27,8 @@ std::string GetBasename(std::string path)
     CleanSlashes(path);
     size_t pivot = path.find_last_of('/');
     return (pivot == std::string::npos
-        ? "."
-        : std::string(path.begin() + pivot + 1, path.end()));
+        ? std::string()
+        : path.substr(pivot + 1));
 }
 
 std::string GetExtension(std::string path)
@@ -36,7 +36,7 @@ std::string GetExtension(std::string path)
     size_t pivot = path.find_last_of('.');
     return (pivot == std::string::npos
         ? std::string()
-        : std::string(path.begin() + pivot + 1, path.end()));
+        : path.substr(pivot + 1));
 }
 
 } // namespace dusk

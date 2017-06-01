@@ -34,19 +34,32 @@ SET(FLATBUFFERS_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/flatbuffers/include")
 SET(DEPEND_IGNORE
     glm_dummy
     json_unit catch_main
-    lua luac
+    lua wlua luac
     zlibstatic example example64 minigzip minigzip64
-    glfwinfo heightmap gears boing particles wave simple splitview reopen monitors iconify gamma
+    glfwinfo docs uninstall heightmap gears boing particles wave simple splitview reopen monitors iconify gamma
     icon tearing empty events msaa cursor threads clipboard title joysticks sharing windows timeout
     flattests flatsamplebinary flathash flatsampletext
 )
 
-SET_TARGET_PROPERTIES(
+SET(DEPEND
+    json liblua zlib glfw flatbuffers
     ${DEPEND_IGNORE}
-    PROPERTIES FOLDER "depend")
+)
 
-SET_TARGET_PROPERTIES(
-    ${DEPEND_IGNORE}
-    PROPERTIES
-    EXCLUDE_FROM_ALL 1
-    EXCLUDE_FROM_DEFAULT_BUILD 1)
+FOREACH(depend ITEMS ${DEPEND})
+    IF(TARGET ${depend})
+        SET_TARGET_PROPERTIES(
+            ${depend}
+            PROPERTIES FOLDER "depend")
+    ENDIF()
+ENDFOREACH()
+
+FOREACH(depend ITEMS ${DEPEND})
+    IF(TARGET ${depend})
+        SET_TARGET_PROPERTIES(
+            ${depend}
+            PROPERTIES
+            EXCLUDE_FROM_ALL 1
+            EXCLUDE_FROM_DEFAULT_BUILD 1)
+    ENDIF()
+ENDFOREACH()

@@ -7,12 +7,13 @@
 #include <dusk/Util.hpp>
 #include <dusk/Timer.hpp>
 #include <dusk/UI.hpp>
-//#include <dusk/Shader.hpp>
+#include <dusk/Shader.hpp>
 #include <dusk/Mesh.hpp>
 //#include <dusk/Sound.hpp>
-//#include <dusk/Actor.hpp>
-//#include <dusk/Scene.hpp>
+#include <dusk/Actor.hpp>
+#include <dusk/Scene.hpp>
 #include <dusk/App.hpp>
+#include <dusk/Log.hpp>
 
 namespace dusk {
 

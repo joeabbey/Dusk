@@ -41,26 +41,18 @@ void App::CreateWindow()
 
     glfwSetErrorCallback(&App::GLFW_ErrorCallback);
 
+#ifndef NDEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+#endif
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_SAMPLES, INT_MAX); // As many samples as we can get
     _glfwWindow = glfwCreateWindow(WindowWidth, WindowHeight, WindowTitle.c_str(), NULL, NULL);
     if (!_glfwWindow)
     {
         DuskLogError("Failed to create GLFW window");
         return;
     }
-
-    //int vidcount;
-    //const GLFWvidmode * modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &vidcount);
-
-    //for (int i = 0; i < vidcount; ++i)
-    //{
-    //    const GLFWvidmode& mode = modes[i];
-    //    DuskLogInfo("Video Mode: %dx%d R:%d G:%d B:%d %dhz",
-    //        mode.width, mode.height,
-    //        mode.redBits, mode.greenBits, mode.blueBits,
-    //        mode.refreshRate);
-    //}
 
     glfwMakeContextCurrent(_glfwWindow);
 
@@ -69,6 +61,10 @@ void App::CreateWindow()
         DuskLogError("Failed to initialize OpenGL context");
         return;
     }
+
+    int samples;
+    glGetIntegerv(GL_SAMPLES, &samples);
+    DuskLogInfo("Running %dx AA", samples);
 
     ImGui_ImplGlfwGL3_Init(_glfwWindow, false);
 
@@ -172,7 +168,7 @@ bool App::LoadConfig(const std::string& filename)
             });
         }
 
-        Shader * dusk_shader = new Shader(shader["Name"], shaderFiles);
+        Shader * dusk_shader = new Shader(shader["Name"], shader["BindData"], shaderFiles);
         _shaders.emplace(shader["Name"], dusk_shader);
     }
 
@@ -274,6 +270,8 @@ void App::PopScene()
 
     _sceneStack.top()->Free();
     _sceneStack.pop();
+    
+    if (_sceneStack.empty()) return;
 
     DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
     _sceneStack.top()->Load();

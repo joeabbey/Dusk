@@ -55,6 +55,8 @@ public:
 
 private:
 
+    bool _loaded;
+
     glm::vec4 _ambient;
     glm::vec4 _diffuse;
     glm::vec4 _specular;

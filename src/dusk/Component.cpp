@@ -45,15 +45,10 @@ MeshComponent::~MeshComponent()
 
 bool MeshComponent::Load()
 {
-    Shader::SetData("TransformData", &_shaderData, sizeof(_shaderData));
-    _shader->BindData("TransformData");
-
     _shader->Bind();
-    // TODO: Move out of MeshComponent
-    glUniform1i(_shader->GetUniformLocation("ambient_map"), Material::TextureID::AMBIENT);
-    glUniform1i(_shader->GetUniformLocation("diffuse_map"), Material::TextureID::DIFFUSE);
-    glUniform1i(_shader->GetUniformLocation("specular_map"), Material::TextureID::SPECULAR);
-    glUniform1i(_shader->GetUniformLocation("bump_map"), Material::TextureID::BUMP);
+
+    Shader::AddData("TransformData", &_shaderData, sizeof(_shaderData));
+    _shader->BindData("TransformData");
 
     if (!_mesh->Load())
     {
@@ -90,6 +85,8 @@ void MeshComponent::Render(const Event& event)
 {
     if (!_loaded) return;
 
+    _shader->Bind();
+
     Camera * camera = GetActor()->GetScene()->GetCamera();
 
     _shaderData.model = _transform;
@@ -97,10 +94,18 @@ void MeshComponent::Render(const Event& event)
     _shaderData.proj = camera->GetProjection();
     _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
 
-    _shader->SetData("TransformData", &_shaderData, sizeof(_shaderData));
+    Shader::UpdateData("TransformData", &_shaderData, sizeof(_shaderData));
 
-    _shader->Bind();
+    // TODO: Move out of MeshComponent
+    glUniform1i(_shader->GetUniformLocation("ambient_map"), Material::TextureID::AMBIENT);
+    glUniform1i(_shader->GetUniformLocation("diffuse_map"), Material::TextureID::DIFFUSE);
+    glUniform1i(_shader->GetUniformLocation("specular_map"), Material::TextureID::SPECULAR);
+    glUniform1i(_shader->GetUniformLocation("bump_map"), Material::TextureID::BUMP);
+
     _mesh->Render();
+
+    // TODO: Move
+    _shader->BindData("MaterialData");
 }
 
 CameraComponent::CameraComponent(Actor * parent, Camera * camera)

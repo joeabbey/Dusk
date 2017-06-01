@@ -32,6 +32,14 @@ bool Mesh::Load()
         //ret = LoadDMF(_filename);
     }
 
+    for (RenderGroup& group : _renderGroups)
+    {
+        if (group.material)
+        {
+            group.material->Load();
+        }
+    }
+
     DuskBenchEnd("Mesh::Load()");
     return ret;
 }
@@ -40,6 +48,10 @@ void Mesh::Free()
 {
     for (RenderGroup& group : _renderGroups)
     {
+        if (group.material)
+        {
+            group.material->Free();
+        }
         delete group.material;
         glDeleteVertexArrays(1, &group.glVAO);
         glDeleteBuffers(3, group.glVBOs);
@@ -56,8 +68,10 @@ void Mesh::Render()
 {
     for (RenderGroup& group : _renderGroups)
     {
-        if (NULL != group.material)
+        if (group.material)
+        {
             group.material->Bind();
+        }
 
         glBindVertexArray(group.glVAO);
         glDrawArrays(group.drawMode, 0, group.vertCount);
@@ -92,7 +106,7 @@ bool Mesh::LoadOBJ(const std::string filename)
         RenderGroup & group = _renderGroups.back();
 
         tinyobj::mesh_t &     mesh = shape.mesh;
-        tinyobj::material_t * mat  = NULL;
+        tinyobj::material_t * mat  = nullptr;
 
         if (!mesh.material_ids.empty() && mesh.material_ids[0] >= 0)
         {
@@ -145,6 +159,32 @@ bool Mesh::LoadOBJ(const std::string filename)
         }
 
         group.material = nullptr;
+        if (mat)
+        {
+            std::string ambient_texname = (mat->ambient_texname.empty()
+                ? std::string()
+                : dirname + mat->ambient_texname);
+            std::string diffuse_texname = (mat->diffuse_texname.empty()
+                ? std::string()
+                : dirname + mat->diffuse_texname);
+            std::string specular_texname = (mat->specular_texname.empty()
+                ? std::string()
+                : dirname + mat->specular_texname);
+            std::string bump_texname = (mat->bump_texname.empty()
+                ? std::string()
+                : dirname + mat->bump_texname);
+
+            group.material = new Material(
+                glm::vec4(mat->ambient[0], mat->ambient[1], mat->ambient[2], 1.0f),
+                glm::vec4(mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.0f),
+                glm::vec4(mat->specular[0], mat->specular[1], mat->specular[2], 1.0f),
+                mat->shininess, mat->dissolve,
+                ambient_texname,
+                diffuse_texname,
+                specular_texname,
+                bump_texname
+            );
+        }
         group.vertCount = verts.size();
         group.drawMode = GL_TRIANGLES;
         LoadVAO(&group, verts, norms, txcds);

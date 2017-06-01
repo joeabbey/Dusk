@@ -10,12 +10,15 @@ namespace dusk {
 std::unordered_map<std::string, Shader::ShaderData> Shader::_DataRecords;
 int Shader::_MaxDataIndex = 0;
 
-Shader::Shader(const std::string& name, const std::vector<FileInfo>& files)
+Shader::Shader(const std::string& name, const std::vector<std::string>& data, const std::vector<FileInfo>& files)
     : _name(name)
-    , _files()
+    , _files(files)
     , _glProgram(0)
 {
-    _files = files;
+    for (const auto& dataName : data)
+    {
+        _boundData.emplace(dataName, false);
+    }
 }
 
 Shader::~Shader()
@@ -74,6 +77,15 @@ bool Shader::Load()
     }
 
     _loaded = true;
+
+    for (const auto& it : _boundData)
+    {
+        auto tmp = _DataRecords.find(it.first);
+        if (tmp == _DataRecords.end()) continue;
+
+        UpdateData(it.first, nullptr, tmp->second.size);
+        BindData(it.first);
+    }
 
     DuskBenchEnd("Shader::Load()");
     return true;
@@ -251,33 +263,40 @@ void Shader::PrintShaderProgramLog(GLuint program)
 
 void Shader::BindData(const std::string& name)
 {
-    if (_boundData.find(name) != _boundData.end())
-    {
-        return;
-    }
-
     const auto& it = _DataRecords.find(name);
 
-    glUseProgram(_glProgram);
+    if (_boundData[name]) return;
 
     if (it != _DataRecords.end())
     {
-        ShaderData& record = it->second;
-        GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
-        glUniformBlockBinding(_glProgram, dataIndex, record.index);
-        glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
+        if (_boundData.find(name) == _boundData.end())
+        {
+            _boundData.emplace(name, false);
+        }
 
-        _boundData.emplace(name, true);
+        if (_loaded)
+        {
+            glUseProgram(_glProgram);
+
+            ShaderData& record = it->second;
+            GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
+            glUniformBlockBinding(_glProgram, dataIndex, record.index);
+            glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
+
+            glUseProgram(0);
+
+            _boundData[name] = true;
+
+            DuskLogInfo("Binding shader %u to data %s", _glProgram, name.c_str());
+        }
     }
     else
     {
         DuskLogError("Failed to bind shader to data %s, does not exist", name.c_str());
     }
-
-    glUseProgram(0);
 }
 
-void Shader::SetData(const std::string& name, void * data, size_t size)
+void Shader::DefineData(const std::string& name, size_t size)
 {
     const auto& it = _DataRecords.find(name);
 
@@ -287,6 +306,23 @@ void Shader::SetData(const std::string& name, void * data, size_t size)
         ShaderData& record = _DataRecords[name];
         record.size = size;
         record.index = _MaxDataIndex;
+        record.loaded = false;
+
+        ++_MaxDataIndex;
+    }
+}
+
+void Shader::UpdateData(const std::string& name, void * data, size_t size)
+{
+    const auto& it = _DataRecords.find(name);
+
+    if (it == _DataRecords.end())
+    {
+        _DataRecords.emplace(name, ShaderData());
+        ShaderData& record = _DataRecords[name];
+        record.size = size;
+        record.index = _MaxDataIndex;
+        record.loaded = true;
 
         ++_MaxDataIndex;
 
@@ -301,10 +337,24 @@ void Shader::SetData(const std::string& name, void * data, size_t size)
     {
         ShaderData& record = it->second;
 
-        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-        GLvoid * dataPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-        memcpy(dataPtr, data, record.size);
-        glUnmapBuffer(GL_UNIFORM_BUFFER);
+        if (record.loaded)
+        {
+            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
+            GLvoid * dataPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+            memcpy(dataPtr, data, record.size);
+            glUnmapBuffer(GL_UNIFORM_BUFFER);
+        }
+        else
+        {
+            record.loaded = true;
+
+            glGenBuffers(1, &record.glUBO);
+            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
+            glBufferData(GL_UNIFORM_BUFFER, record.size, data, GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+            DuskLogInfo("Added Shader Data %s at index %d", name.c_str(), record.index);
+        }
     }
 }
 

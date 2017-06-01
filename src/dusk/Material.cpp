@@ -1,5 +1,6 @@
 #include "dusk/Material.hpp"
 
+#include <dusk/Log.hpp>
 #include <dusk/Shader.hpp>
 
 namespace dusk {
@@ -13,7 +14,8 @@ Material::Material(glm::vec4 ambient,
                    const std::string& diffuseMap,
                    const std::string& specularMap,
                    const std::string& bumpMap)
-    : _ambient(ambient)
+    : _loaded(false)
+    , _ambient(ambient)
     , _diffuse(diffuse)
     , _specular(specular)
     , _shininess(shininess)
@@ -52,6 +54,8 @@ Material::Material(glm::vec4 ambient,
     _shaderData.hasDiffuseMap  = !diffuseMap.empty();
     _shaderData.hasSpecularMap = !specularMap.empty();
     _shaderData.hasBumpMap     = !bumpMap.empty();
+
+    Shader::DefineData("MaterialData", sizeof(MaterialData));
 }
 
 Material::~Material()
@@ -75,20 +79,26 @@ bool Material::Load()
 
     if (_ambientMap)
     {
+        DuskLogInfo("Loading ambient map");
         retval &= _ambientMap->Load();
     }
     if (_diffuseMap)
     {
+        DuskLogInfo("Loading diffuse map");
         retval &= _diffuseMap->Load();
     }
     if (_specularMap)
     {
+        DuskLogInfo("Loading specular map");
         retval &= _specularMap->Load();
     }
     if (_bumpMap)
     {
+        DuskLogInfo("Loading bump map");
         retval &= _bumpMap->Load();
     }
+
+    _loaded = true;
 
     return retval;
 }
@@ -111,11 +121,13 @@ void Material::Free()
     {
         _bumpMap->Free();
     }
+
+    _loaded = false;
 }
 
 void Material::Bind()
 {
-    Shader::SetData("MaterialData", &_shaderData, sizeof(_shaderData));
+    Shader::UpdateData("MaterialData", &_shaderData, sizeof(_shaderData));
 
     if (_ambientMap)
     {
