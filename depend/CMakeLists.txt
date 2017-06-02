@@ -1,65 +1,188 @@
 
-IF(NOT DEFINED CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
-    SET(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
-ENDIF()
+ADD_CUSTOM_TARGET(depend)
 
+### glm
 MESSAGE("Adding dependency: glm")
-ADD_SUBDIRECTORY(glm)
+
 SET(GLM_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/glm" PARENT_SCOPE)
 
+ADD_CUSTOM_TARGET(glm)
+ADD_DEPENDENCIES(depend glm)
+
+### nlohmann_json
 MESSAGE("Adding dependency: json")
-ADD_SUBDIRECTORY(json)
+
 SET(JSON_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/json/src" PARENT_SCOPE)
 
+ADD_CUSTOM_TARGET(json)
+ADD_DEPENDENCIES(depend json)
+
+### lua
 MESSAGE("Adding dependency: lua")
-ADD_SUBDIRECTORY(lua)
-SET(LUA_LIBRARIES liblua PARENT_SCOPE)
-SET(LUA_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/lua/src" "${CMAKE_BINARY_DIR}/depend/lua" PARENT_SCOPE)
 
+SET(LUA_OPTIONS
+)
+
+SET(LUA_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/lua/src"
+    "${CMAKE_BINARY_DIR}/depend/lua"
+    PARENT_SCOPE
+)
+
+IF(MSVC)
+    SET(LUA_LIBRARIES_DEBUG
+        "${CMAKE_BINARY_DIR}/depend/lua/Debug/lua.lib"
+        PARENT_SCOPE
+    )
+    SET(LUA_LIBRARIES_RELEASE
+        "${CMAKE_BINARY_DIR}/depend/lua/Release/lua.lib"
+        PARENT_SCOPE
+    )
+ELSE()
+    SET(LUA_LIBRARIES "${CMAKE_BINARY_DIR}/depend/lua/liblua.a" PARENT_SCOPE)
+ENDIF()
+
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua)
+EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CMAKE_CURRENT_SOURCE_DIR}/lua ${LUA_OPTIONS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
+)
+
+ADD_CUSTOM_TARGET(lua)
+ADD_CUSTOM_COMMAND(
+    TARGET lua PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} --build . --target liblua
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
+)
+ADD_DEPENDENCIES(depend lua)
+
+### zlib
 MESSAGE("Adding dependency: zlib")
-ADD_SUBDIRECTORY(zlib)
-SET(ZLIB_LIBRARIES zlib PARENT_SCOPE)
-SET(ZLIB_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/zlib" "${CMAKE_BINARY_DIR}/depend/zlib" PARENT_SCOPE)
 
+SET(ZLIB_OPTIONS
+)
+
+SET(ZLIB_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/zlib"
+    "${CMAKE_BINARY_DIR}/depend/zlib"
+    PARENT_SCOPE
+)
+
+IF(MSVC)
+    SET(ZLIB_LIBRARIES_DEBUG
+        "${CMAKE_BINARY_DIR}/depend/zlib/Debug/zlibd.lib"
+        PARENT_SCOPE
+    )
+    SET(ZLIB_LIBRARIES_RELEASE
+        "${CMAKE_BINARY_DIR}/depend/zlib/Release/zlibd.lib"
+        PARENT_SCOPE
+    )
+ELSE()
+    SET(ZLIB_LIBRARIES "${CMAKE_BINARY_DIR}/depend/zlib/zlib.a" PARENT_SCOPE)
+ENDIF()
+
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib)
+EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CMAKE_CURRENT_SOURCE_DIR}/zlib ${ZLIB_OPTIONS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
+)
+
+ADD_CUSTOM_TARGET(zlib)
+ADD_CUSTOM_COMMAND(
+    TARGET zlib PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} --build . --target zlib
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
+)
+ADD_DEPENDENCIES(depend zlib)
+
+### GLFW
 MESSAGE("Adding dependency: glfw")
-ADD_SUBDIRECTORY(glfw)
-SET(GLFW_LIBRARIES glfw PARENT_SCOPE)
-SET(GLFW_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/glfw/include")
 
+SET(GLFW_OPTIONS
+    -DGLFW_BUILD_EXAMPLES=OFF
+    -DGLFW_BUILD_TESTS=OFF
+    -DGLFW_BUILD_DOCS=OFF
+    -DGLFW_INSTALL=OFF
+)
+
+SET(GLFW_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/glfw/include"
+    PARENT_SCOPE
+)
+
+IF(MSVC)
+    SET(GLFW_LIBRARIES_DEBUG
+        "${CMAKE_BINARY_DIR}/depend/glfw/src/Debug/glfw3.lib"
+        PARENT_SCOPE
+    )
+    SET(GLFW_LIBRARIES_RELEASE
+        "${CMAKE_BINARY_DIR}/depend/glfw/src/Release/glfw3.lib"
+        PARENT_SCOPE
+    )
+ELSE()
+    SET(GLFW_LIBRARIES "${CMAKE_BINARY_DIR}/depend/glfw/src/glfw3.a" PARENT_SCOPE)
+ENDIF()
+
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw)
+EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CMAKE_CURRENT_SOURCE_DIR}/glfw ${ZLIB_OPTIONS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
+)
+
+ADD_CUSTOM_TARGET(glfw)
+ADD_CUSTOM_COMMAND(
+    TARGET glfw PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} --build . --target glfw
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
+)
+ADD_DEPENDENCIES(depend glfw)
+
+### FlatBuffers
 MESSAGE("Adding dependency: flatbuffers")
-ADD_SUBDIRECTORY(flatbuffers)
-SET(FLATBUFFERS_LIBRARIES flatbuffers PARENT_SCOPE)
-SET(FLATBUFFERS_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/flatbuffers/include")
 
-SET(DEPEND_IGNORE
-    glm_dummy
-    json_unit catch_main
-    lua wlua luac
-    zlibstatic example example64 minigzip minigzip64
-    glfwinfo docs uninstall heightmap gears boing particles wave simple splitview reopen monitors iconify gamma
-    icon tearing empty events msaa cursor threads clipboard title joysticks sharing windows timeout
-    flattests flatsamplebinary flathash flatsampletext
+SET(FLATBUFFERS_OPTIONS
+    -DFLATBUFFERS_BUILD_TESTS=OFF
+    -DFLATBUFFERS_BUILD_FLATHASH=OFF
+    -DFLATBUFFERS_INSTALL=OFF
 )
 
-SET(DEPEND
-    json liblua zlib glfw flatbuffers
-    ${DEPEND_IGNORE}
+SET(FLATBUFFERS_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/flatbuffers/include"
+    PARENT_SCOPE
 )
 
-FOREACH(depend ITEMS ${DEPEND})
-    IF(TARGET ${depend})
-        SET_TARGET_PROPERTIES(
-            ${depend}
-            PROPERTIES FOLDER "depend")
-    ENDIF()
-ENDFOREACH()
+IF(MSVC)
+    SET(FLATBUFFERS_LIBRARIES_DEBUG
+        "${CMAKE_BINARY_DIR}/depend/flatbuffers/Debug/flatbuffers.lib"
+        PARENT_SCOPE
+    )
+    SET(FLATBUFFERS_LIBRARIES_RELEASE
+        "${CMAKE_BINARY_DIR}/depend/flatbuffers/Release/flatbuffers.lib"
+        PARENT_SCOPE
+    )
+ELSE()
+    SET(FLATBUFFERS_LIBRARIES "${CMAKE_BINARY_DIR}/depend/flatbuffers/flatbuffers.a" PARENT_SCOPE)
+ENDIF()
 
-FOREACH(depend ITEMS ${DEPEND})
-    IF(TARGET ${depend})
-        SET_TARGET_PROPERTIES(
-            ${depend}
-            PROPERTIES
-            EXCLUDE_FROM_ALL 1
-            EXCLUDE_FROM_DEFAULT_BUILD 1)
-    ENDIF()
-ENDFOREACH()
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers)
+EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CMAKE_CURRENT_SOURCE_DIR}/flatbuffers ${ZLIB_OPTIONS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
+)
+
+ADD_CUSTOM_TARGET(flatbuffers)
+ADD_CUSTOM_COMMAND(
+    TARGET flatbuffers PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} --build . --target flatbuffers
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
+)
+ADD_DEPENDENCIES(depend flatbuffers)
+
+SET_TARGET_PROPERTIES(
+    depend glm json lua zlib glfw
+    PROPERTIES FOLDER "depend"
+)

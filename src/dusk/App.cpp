@@ -46,7 +46,7 @@ void App::CreateWindow()
 #endif
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_SAMPLES, INT_MAX); // As many samples as we can get
+    glfwWindowHint(GLFW_SAMPLES, 16);
     _glfwWindow = glfwCreateWindow(WindowWidth, WindowHeight, WindowTitle.c_str(), NULL, NULL);
     if (!_glfwWindow)
     {

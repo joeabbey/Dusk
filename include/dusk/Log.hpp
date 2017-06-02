@@ -2,6 +2,7 @@
 #define DUSK_DEBUG_HPP
 
 #include <dusk/Config.hpp>
+#include <dusk/Platform.hpp>
 #include <dusk/Util.hpp>
 #include <dusk/UI.hpp>
 

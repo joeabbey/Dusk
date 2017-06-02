@@ -1,10 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2 FATAL_ERROR)
 CMAKE_POLICY(SET CMP0048 NEW)
 
+PROJECT(Dusk VERSION 0.0.2)
+
 # Add dependencies to be built with the project
 ADD_SUBDIRECTORY(depend)
-
-PROJECT(Dusk VERSION 0.0.1)
 
 ### Global configuration
 
@@ -13,6 +13,11 @@ SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Allow for custom FindXXX.cmake files
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Get Git revision
+INCLUDE(GetGitRevisionDescription)
+GET_GIT_HEAD_REVISION(GIT_REFSPEC DUSK_REVISION)
+STRING(SUBSTRING "${DUSK_REVISION}" 0 12 DUSK_REVISION)
 
 ### Compiler-specific flags
 
@@ -41,6 +46,7 @@ IF(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 ELSEIF(MSVC)
 
     ADD_DEFINITIONS(/D_CRT_SECURE_NO_WARNINGS)
+    SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "/EHsc")
     LIST(APPEND CMAKE_EXE_LINKER_FLAGS
         "/NODEFAULTLIB:MSVCRT"
         "/NODEFAULTLIB:LIBCMT")
@@ -63,13 +69,22 @@ INCLUDE_DIRECTORIES(BEFORE SYSTEM
 
 SET(Dusk_LINK_LIBRARIES
     ${OPENGL_LIBRARIES}
-    ${GLFW_LIBRARIES}
-    ${ZLIB_LIBRARIES}
     ${LUA_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${GLFW_LIBRARIES}
+    ${FLATBUFFERS_LIBRARIES}
 )
-
-SET(Dusk_DEPEND
-    glm nlohmann_json liblua glfw flatbuffers
+SET(Dusk_LINK_LIBRARIES_DEBUG
+    ${LUA_LIBRARIES_DEBUG}
+    ${ZLIB_LIBRARIES_DEBUG}
+    ${GLFW_LIBRARIES_DEBUG}
+    ${FLATBUFFERS_LIBRARIES_DEBUG}
+)
+SET(Dusk_LINK_LIBRARIES_RELEASE
+    ${LUA_LIBRARIES_RELEASE}
+    ${ZLIB_LIBRARIES_RELEASE}
+    ${GLFW_LIBRARIES_RELEASE}
+    ${FLATBUFFERS_LIBRARIES_RELEASE}
 )
 
 ### Dusk library
@@ -85,7 +100,7 @@ ADD_DEFINITIONS(-DIMGUI_DISABLE_INCLUDE_IMCONFIG_H)
 SET(Dusk_OUT Dusk)
 
 SET(Dusk_CONFIG_IN include/dusk/Config.hpp.in)
-SET(Dusk_CONFIG    include/dusk/Config.hpp)
+SET(Dusk_CONFIG    ${CMAKE_BINARY_DIR}/include/dusk/Config.hpp)
 
 SET(Dusk_INCLUDES
     include/dusk/Dusk.hpp
@@ -158,13 +173,31 @@ ADD_LIBRARY(${Dusk_OUT}
     ${Dusk_INCLUDES}
     ${Dusk_SOURCES}
 )
-ADD_DEPENDENCIES(${Dusk_OUT} ${Dusk_DEPEND})
+ADD_DEPENDENCIES(${Dusk_OUT} depend)
 
+# Configuration-independant libraries
 TARGET_LINK_LIBRARIES(
     ${Dusk_OUT}
     ${Dusk_LINK_LIBRARIES}
 )
 
+# Debug-only libraries
+FOREACH(debug_lib IN ITEMS ${Dusk_LINK_LIBRARIES_DEBUG})
+    TARGET_LINK_LIBRARIES(
+        ${Dusk_OUT}
+        debug ${debug_lib}
+    )
+ENDFOREACH()
+
+# Release-only libraries
+FOREACH(release_lib IN ITEMS ${Dusk_LINK_LIBRARIES_RELEASE})
+    TARGET_LINK_LIBRARIES(
+        ${Dusk_OUT}
+        optimized ${release_lib}
+    )
+ENDFOREACH()
+
+SOURCE_GROUP("include" FILES ${Dusk_INCLUDES} ${Dusk_CONFIG})
 SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
 
 # Copy assets to build directory
@@ -174,6 +207,11 @@ ADD_CUSTOM_COMMAND(
     TARGET copy-assets PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E
         copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+)
+
+SET_TARGET_PROPERTIES(
+    copy-assets
+    PROPERTIES FOLDER "automation"
 )
 
 # Copy includes to build directory
@@ -186,6 +224,11 @@ FOREACH(inc ${Dusk_INCLUDES})
             copy ${CMAKE_SOURCE_DIR}/${inc} ${CMAKE_BINARY_DIR}/${inc}
     )
 ENDFOREACH()
+
+SET_TARGET_PROPERTIES(
+    copy-includes
+    PROPERTIES FOLDER "automation"
+)
 
 ### Example projects
 
