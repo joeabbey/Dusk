@@ -276,13 +276,22 @@ void Shader::BindData(const std::string& name)
 
         if (_loaded)
         {
-            glUseProgram(_glProgram);
-
             ShaderData& record = it->second;
+
+            glUseProgram(_glProgram);
+            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
+
             GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
+            if (GL_INVALID_INDEX == dataIndex)
+            {
+                DuskLogWarn("Could not bind Shader Data %s, does not exist in shader", name.c_str());
+                glUseProgram(0);
+                return;
+            }
             glUniformBlockBinding(_glProgram, dataIndex, record.index);
             glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
 
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
             glUseProgram(0);
 
             _boundData[name] = true;

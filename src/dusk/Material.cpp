@@ -24,7 +24,6 @@ Material::Material(glm::vec4 ambient,
     , _diffuseMap(nullptr)
     , _specularMap(nullptr)
     , _bumpMap(nullptr)
-    , _shaderData()
 {
     if (!ambientMap.empty())
     {
@@ -54,8 +53,6 @@ Material::Material(glm::vec4 ambient,
     _shaderData.hasDiffuseMap  = !diffuseMap.empty();
     _shaderData.hasSpecularMap = !specularMap.empty();
     _shaderData.hasBumpMap     = !bumpMap.empty();
-
-    Shader::DefineData("MaterialData", sizeof(MaterialData));
 }
 
 Material::~Material()
@@ -73,9 +70,11 @@ Material::~Material()
     _bumpMap = nullptr;
 }
 
-bool Material::Load()
+bool Material::Load(Shader * shader)
 {
     bool retval = true;
+
+    shader->Bind();
 
     if (_ambientMap)
     {
@@ -97,6 +96,9 @@ bool Material::Load()
         DuskLogInfo("Loading bump map");
         retval &= _bumpMap->Load();
     }
+
+    Shader::AddData("DuskMaterialData", &_shaderData, sizeof(MaterialData));
+    shader->BindData("DuskMaterialData");
 
     _loaded = true;
 
@@ -125,9 +127,14 @@ void Material::Free()
     _loaded = false;
 }
 
-void Material::Bind()
+void Material::Bind(Shader * shader)
 {
-    Shader::UpdateData("MaterialData", &_shaderData, sizeof(_shaderData));
+    Shader::UpdateData("DuskMaterialData", &_shaderData, sizeof(_shaderData));
+
+    glUniform1i(shader->GetUniformLocation("_AmbientMap"), Material::TextureID::AMBIENT);
+    glUniform1i(shader->GetUniformLocation("_DiffuseMap"), Material::TextureID::DIFFUSE);
+    glUniform1i(shader->GetUniformLocation("_SpecularMap"), Material::TextureID::SPECULAR);
+    glUniform1i(shader->GetUniformLocation("_BumpMap"), Material::TextureID::BUMP);
 
     if (_ambientMap)
     {

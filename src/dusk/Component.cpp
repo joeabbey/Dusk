@@ -66,14 +66,7 @@ void MeshComponent::Render(const Event& event)
 {
     if (!_loaded) return;
 
-    _shader->Bind();
-
-    Shader::UpdateData("TransformData", &_shaderData, sizeof(_shaderData));
-
     _mesh->Render();
-
-    // TODO: Move
-    _shader->BindData("MaterialData");
 }
 
 CameraComponent::CameraComponent(Actor * parent, Camera * camera)

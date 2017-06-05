@@ -71,15 +71,15 @@ private:
 
     bool _loaded;
 
-    glm::mat4 _baseTransform;
-
     Scene * _parent;
 
     std::string _name;
-    glm::vec3   _position;
-    glm::vec3   _rotation;
-    glm::vec3   _scale;
-    glm::mat4   _transform;
+
+    glm::mat4 _baseTransform;
+    glm::mat4 _transform;
+    glm::vec3 _position;
+    glm::vec3 _rotation;
+    glm::vec3 _scale;
 
     std::vector<Component*> _components;
 

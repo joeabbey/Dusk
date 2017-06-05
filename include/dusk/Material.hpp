@@ -4,6 +4,7 @@
 #include <dusk/Config.hpp>
 
 #include <dusk/Texture.hpp>
+#include <dusk/Shader.hpp>
 
 namespace dusk {
 
@@ -48,14 +49,16 @@ public:
 
     ~Material();
 
-    bool Load();
+    bool Load(Shader * shader);
     void Free();
 
-    void Bind();
+    void Bind(Shader * shader);
 
 private:
 
     bool _loaded;
+
+    MaterialData _shaderData;
 
     glm::vec4 _ambient;
     glm::vec4 _diffuse;
@@ -68,8 +71,6 @@ private:
     Texture * _diffuseMap;
     Texture * _specularMap;
     Texture * _bumpMap;
-
-    MaterialData _shaderData;
 
 };
 

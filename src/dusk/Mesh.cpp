@@ -2,11 +2,18 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
+#include <dusk/App.hpp>
+#include <dusk/Camera.hpp>
 
 namespace dusk {
 
-Mesh::Mesh(const std::string& filename)
-    : _filename(filename)
+Mesh::Mesh(Shader * shader)
+    : _shader(shader)
+    , _baseTransform(1)
+    , _transform(1)
+    , _position(0)
+    , _rotation(0)
+    , _scale(1)
     , _renderGroups()
 { }
 
@@ -15,30 +22,54 @@ Mesh::~Mesh()
     Free();
 }
 
+void Mesh::SetBaseTransform(const glm::mat4& baseTransform)
+{
+    _baseTransform = baseTransform;
+}
+
+void Mesh::SetPosition(const glm::vec3& pos)
+{
+    _position = pos;
+}
+
+void Mesh::SetRotation(const glm::vec3& rot)
+{
+    _rotation = rot;
+}
+
+void Mesh::SetScale(const glm::vec3& scale)
+{
+    _scale = scale;
+}
+
+glm::mat4 Mesh::GetTransform()
+{
+    _transform = _baseTransform;
+    _transform = glm::scale(_transform, _scale);
+    _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    _transform = glm::rotate(_transform, _rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    _transform = glm::translate(_transform, _position);
+
+    return _transform;
+}
+
 bool Mesh::Load()
 {
     DuskBenchStart();
-    DuskLogInfo("Loading mesh '%s'", _filename.c_str());
 
-    bool ret = false;
-
-    std::string ext = GetExtension(_filename);
-    if (ext == "obj")
-    {
-        ret = LoadOBJ(_filename);
-    }
-    else if (ext == "dmf" || ext == "dmfz")
-    {
-        //ret = LoadDMF(_filename);
-    }
+    bool ret = true;
 
     for (RenderGroup& group : _renderGroups)
     {
         if (group.material)
         {
-            group.material->Load();
+            ret &= group.material->Load(_shader);
         }
     }
+
+    Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
+    _shader->BindData("DuskTransformData");
 
     DuskBenchEnd("Mesh::Load()");
     return ret;
@@ -61,16 +92,27 @@ void Mesh::Free()
 
 void Mesh::Update()
 {
-
 }
 
 void Mesh::Render()
 {
+    _shader->Bind();
+
+    // TODO: Move camera somewhere else
+    Camera * camera = App::GetInst()->GetScene()->GetCamera();
+
+    _shaderData.model = GetTransform();
+    _shaderData.view = camera->GetView();
+    _shaderData.proj = camera->GetProjection();
+    _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
+
+    Shader::UpdateData("DuskTransformData", &_shaderData, sizeof(_shaderData));
+
     for (RenderGroup& group : _renderGroups)
     {
         if (group.material)
         {
-            group.material->Bind();
+            group.material->Bind(_shader);
         }
 
         glBindVertexArray(group.glVAO);
@@ -79,7 +121,80 @@ void Mesh::Render()
     glBindVertexArray(0);
 }
 
-bool Mesh::LoadOBJ(const std::string filename)
+bool Mesh::AddRenderGroup(Material * material,
+                          GLenum drawMode,
+                          const std::vector<float>& verts,
+                          const std::vector<float>& norms,
+                          const std::vector<float>& txcds)
+{
+    RenderGroup group;
+    group.vertCount = verts.size();
+    group.material = material;
+    group.drawMode = drawMode;
+
+    glGenVertexArrays(1, &group.glVAO);
+    glBindVertexArray(group.glVAO);
+
+    glGenBuffers(3, group.glVBOs);
+
+    glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verts.size(), verts.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(Mesh::AttrID::VERTS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(Mesh::AttrID::VERTS);
+
+    if (!norms.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * norms.size(), norms.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(Mesh::AttrID::NORMS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray(Mesh::AttrID::NORMS);
+    }
+
+    if (!txcds.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * txcds.size(), txcds.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(Mesh::AttrID::TXCDS, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray(Mesh::AttrID::TXCDS);
+    }
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    _renderGroups.push_back(group);
+    return true;
+}
+
+bool FileMesh::Load()
+{
+    DuskBenchStart();
+    DuskLogInfo("Loading model from '%s'", _filename.c_str());
+
+    bool ret = true;
+
+    std::string ext = GetExtension(_filename);
+    if (ext == "obj")
+    {
+        ret &= LoadOBJ(_filename);
+    }
+    else if (ext == "dmf" || ext == "dmfz")
+    {
+        //ret = LoadDMF(_filename);
+    }
+
+    ret &= Mesh::Load();
+
+    DuskBenchEnd("FileMesh::Load()");
+    return ret;
+}
+
+FileMesh::FileMesh(Shader * shader, const std::string& filename)
+    : Mesh(shader)
+    , _filename(filename)
+{
+}
+
+bool FileMesh::LoadOBJ(const std::string& filename)
 {
     bool                        ret;
     std::string                 err;
@@ -102,9 +217,6 @@ bool Mesh::LoadOBJ(const std::string filename)
 
     for (tinyobj::shape_t & shape : shapes)
     {
-        _renderGroups.push_back(RenderGroup());
-        RenderGroup & group = _renderGroups.back();
-
         tinyobj::mesh_t &     mesh = shape.mesh;
         tinyobj::material_t * mat  = nullptr;
 
@@ -158,7 +270,7 @@ bool Mesh::LoadOBJ(const std::string filename)
             index += fv;
         }
 
-        group.material = nullptr;
+        Material * material = nullptr;
         if (mat)
         {
             std::string ambient_texname = (mat->ambient_texname.empty()
@@ -174,7 +286,7 @@ bool Mesh::LoadOBJ(const std::string filename)
                 ? std::string()
                 : dirname + mat->bump_texname);
 
-            group.material = new Material(
+            material = new Material(
                 glm::vec4(mat->ambient[0], mat->ambient[1], mat->ambient[2], 1.0f),
                 glm::vec4(mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.0f),
                 glm::vec4(mat->specular[0], mat->specular[1], mat->specular[2], 1.0f),
@@ -185,48 +297,8 @@ bool Mesh::LoadOBJ(const std::string filename)
                 bump_texname
             );
         }
-        group.vertCount = verts.size();
-        group.drawMode = GL_TRIANGLES;
-        LoadVAO(&group, verts, norms, txcds);
+        AddRenderGroup(material, GL_TRIANGLES, verts, norms, txcds);
     }
-
-    return true;
-}
-
-bool Mesh::LoadVAO(RenderGroup * group,
-               const std::vector<float>& verts,
-               const std::vector<float>& norms,
-               const std::vector<float>& txcds)
-{
-
-    glGenVertexArrays(1, &group->glVAO);
-    glBindVertexArray(group->glVAO);
-
-    glGenBuffers(3, group->glVBOs);
-
-    glBindBuffer(GL_ARRAY_BUFFER, group->glVBOs[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verts.size(), verts.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(Mesh::AttrID::VERTS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    glEnableVertexAttribArray(Mesh::AttrID::VERTS);
-
-    if (!norms.empty())
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, group->glVBOs[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * norms.size(), norms.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(Mesh::AttrID::NORMS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glEnableVertexAttribArray(Mesh::AttrID::NORMS);
-    }
-
-    if (!txcds.empty())
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, group->glVBOs[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * txcds.size(), txcds.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(Mesh::AttrID::TXCDS, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-        glEnableVertexAttribArray(Mesh::AttrID::TXCDS);
-    }
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     return true;
 }

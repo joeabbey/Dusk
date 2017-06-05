@@ -9,6 +9,8 @@ Actor::Actor(Scene * parent, const std::string& name)
     : _loaded(false)
     , _parent(parent)
     , _name(name)
+    , _baseTransform(1)
+    , _transform(1)
     , _position(0)
     , _rotation(0)
     , _scale(1)
@@ -96,14 +98,6 @@ void Actor::Free()
 void Actor::Update(const Event& event)
 {
     if (!_loaded) return;
-
-    // TODO: GROSS
-    if (GetName() == "player_actor")
-    {
-        glm::vec3 rot = GetRotation();
-        rot.y += 0.01f;
-        SetRotation(rot);
-    }
 
     DispatchEvent(Event((EventID)Events::UPDATE, event.GetData()));
 }

@@ -208,7 +208,7 @@ bool App::LoadConfig(const std::string& filename)
                 if ("Mesh" == type)
                 {
                     const std::string& shader = comp["Shader"];
-                    dusk_comp = new MeshComponent(dusk_actor, comp["File"].get<std::string>(), _shaders[shader]);
+                    dusk_comp = new MeshComponent(dusk_actor, new FileMesh(_shaders[shader], comp["File"].get<std::string>()));
                 }
                 else if ("Script" == type)
                 {
@@ -270,7 +270,7 @@ void App::PopScene()
 
     _sceneStack.top()->Free();
     _sceneStack.pop();
-    
+
     if (_sceneStack.empty()) return;
 
     DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
