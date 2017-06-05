@@ -35,19 +35,11 @@ protected:
 
 }; // class Component
 
-struct TransformData
-{
-    alignas(64) glm::mat4 model = glm::mat4(1);
-    alignas(64) glm::mat4 view  = glm::mat4(1);
-    alignas(64) glm::mat4 proj  = glm::mat4(1);
-    alignas(64) glm::mat4 mvp   = glm::mat4(1);
-};
-
 class MeshComponent : public Component
 {
 public:
 
-    MeshComponent(Actor * parent, const std::string& filename, Shader * shader);
+    MeshComponent(Actor * parent, Mesh * mesh);
     virtual ~MeshComponent();
 
     bool Load() override;
@@ -60,16 +52,7 @@ public:
 
 protected:
 
-    TransformData _shaderData;
-
     Mesh * _mesh;
-    Shader * _shader;
-    std::string _filename;
-
-    glm::vec3   _position;
-    glm::vec3   _rotation;
-    glm::vec3   _scale;
-    glm::mat4   _transform;
 
 }; // class MeshComponent
 

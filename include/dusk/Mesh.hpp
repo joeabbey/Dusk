@@ -21,7 +21,7 @@ public:
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
-    Mesh(const std::string& filename);
+    Mesh();
     virtual ~Mesh();
 
     bool Load();
@@ -29,6 +29,14 @@ public:
 
     void Update();
     void Render();
+
+protected:
+
+    bool AddRenderGroup(Material * material,
+                        GLenum drawMode,
+                        const std::vector<float>& verts,
+                        const std::vector<float>& norms,
+                        const std::vector<float>& txcds);
 
 private:
 
@@ -43,18 +51,24 @@ private:
         GLuint glVBOs[3];
     };
 
-    bool LoadOBJ(const std::string filename);
-    //bool LoadDMF(const std::string filename);
-
-    static bool LoadVAO(RenderGroup * group,
-                          const std::vector<float>& verts,
-                          const std::vector<float>& norms,
-                          const std::vector<float>& txcds);
-
-    std::string _filename;
     std::vector<RenderGroup> _renderGroups;
 
 }; // class Mesh
+
+class FileMesh : public Mesh
+{
+public:
+
+    Mesh(const std::string& filename);
+
+private:
+
+    std::string _filename;
+
+    bool LoadOBJ(const std::string filename);
+    //bool LoadDMF(const std::string filename);
+
+}
 
 } // namespace dusk
 

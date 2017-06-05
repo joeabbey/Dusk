@@ -16,18 +16,10 @@ Component::~Component()
 {
 }
 
-MeshComponent::MeshComponent(Actor * parent, const std::string& filename, Shader * shader)
+MeshComponent::MeshComponent(Actor * parent, Mesh * mesh)
     : Component(parent)
-    , _shaderData()
-    , _shader(shader)
-    , _filename(filename)
-    , _position(0)
-    , _rotation(0)
-    , _scale(1)
-    , _transform(1)
+    , _mesh(mesh)
 {
-    _mesh = new Mesh(_filename);
-
     GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
     GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
 }
@@ -45,14 +37,9 @@ MeshComponent::~MeshComponent()
 
 bool MeshComponent::Load()
 {
-    _shader->Bind();
-
-    Shader::AddData("TransformData", &_shaderData, sizeof(_shaderData));
-    _shader->BindData("TransformData");
-
     if (!_mesh->Load())
     {
-        DuskLogError("Failed to load mesh component");
+        DuskLogError("Failed to load mesh");
         return false;
     }
 
@@ -71,14 +58,8 @@ void MeshComponent::Update(const Event& event)
 {
     if (!_loaded) return;
 
-    _transform = glm::mat4(1);
-    _transform = glm::translate(_transform, _position);
-    _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    _transform = glm::rotate(_transform, _rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    _transform = glm::scale(_transform, _scale);
-
-    _transform = _parent->GetTransform() * _transform;
+    _mesh->SetBaseTransform(GetActor()->GetTransform());
+    _mesh->Update();
 }
 
 void MeshComponent::Render(const Event& event)
@@ -87,20 +68,7 @@ void MeshComponent::Render(const Event& event)
 
     _shader->Bind();
 
-    Camera * camera = GetActor()->GetScene()->GetCamera();
-
-    _shaderData.model = _transform;
-    _shaderData.view = camera->GetView();
-    _shaderData.proj = camera->GetProjection();
-    _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
-
     Shader::UpdateData("TransformData", &_shaderData, sizeof(_shaderData));
-
-    // TODO: Move out of MeshComponent
-    glUniform1i(_shader->GetUniformLocation("ambient_map"), Material::TextureID::AMBIENT);
-    glUniform1i(_shader->GetUniformLocation("diffuse_map"), Material::TextureID::DIFFUSE);
-    glUniform1i(_shader->GetUniformLocation("specular_map"), Material::TextureID::SPECULAR);
-    glUniform1i(_shader->GetUniformLocation("bump_map"), Material::TextureID::BUMP);
 
     _mesh->Render();
 

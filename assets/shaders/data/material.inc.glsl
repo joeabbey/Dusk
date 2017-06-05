@@ -1,20 +1,20 @@
-layout(std140) uniform MaterialData
+layout(std140) uniform DuskMaterialData
 {
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+    vec4 Ambient;
+    vec4 Diffuse;
+    vec4 Specular;
 
-    float shininess;
-    float dissolve;
+    float Shininess;
+    float Dissolve;
 
-    bool has_ambient_map;
-    bool has_diffuse_map;
-    bool has_specular_map;
-    bool has_bump_map;
-}
-material_data;
+    bool HasAmbientMap;
+    bool HasDiffuseMap;
+    bool HasSpecularMap;
+    bool HasBumpMap;
 
-uniform sampler2D ambient_map;
-uniform sampler2D diffuse_map;
-uniform sampler2D specular_map;
-uniform sampler2D bump_map;
+} _MaterialData;
+
+uniform sampler2D _AmbientMap;
+uniform sampler2D _DiffuseMap;
+uniform sampler2D _SpecularMap;
+uniform sampler2D _BumpMap;
