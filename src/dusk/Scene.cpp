@@ -9,6 +9,7 @@ Scene::Scene(const std::string& name)
     : _loaded(false)
     , _name(name)
     , _actors()
+	, _camera(nullptr)
 {
 
 }
@@ -46,7 +47,7 @@ void Scene::AddCamera(Camera * camera)
 {
     _cameras.push_back(camera);
 
-    if (NULL == _camera)
+    if (!_camera)
     {
         _camera = camera;
     }
