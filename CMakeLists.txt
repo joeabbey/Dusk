@@ -213,6 +213,7 @@ SOURCE_GROUP(${config_path} FILES ${Dusk_CONFIG})
 ADD_CUSTOM_TARGET(copy-assets)
 ADD_DEPENDENCIES(${Dusk_OUT} copy-assets)
 ADD_CUSTOM_COMMAND(
+    OUTPUT 
     TARGET copy-assets PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E
         copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets

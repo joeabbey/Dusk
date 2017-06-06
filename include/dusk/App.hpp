@@ -59,6 +59,14 @@ private:
 
     static App * _Inst;
 
+	bool ParseWindow(nlohmann::json& data);
+	bool ParseShader(nlohmann::json& data);
+	bool ParseScene(nlohmann::json & data);
+	Camera * ParseCamera(nlohmann::json& data);
+	Mesh * ParseMesh(nlohmann::json& data);
+	Actor * ParseActor(nlohmann::json& data, Scene * scene);
+	Component * ParseComponent(nlohmann::json& data, Actor * actor);
+
     void CreateWindow();
     void DestroyWindow();
 

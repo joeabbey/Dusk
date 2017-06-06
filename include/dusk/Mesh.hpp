@@ -75,7 +75,7 @@ private:
     {
         Material * material;
 
-        unsigned int vertCount;
+		GLsizei vertCount;
 
         GLenum drawMode;
         GLuint glVAO;

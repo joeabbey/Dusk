@@ -96,13 +96,253 @@ void App::DestroyWindow()
     glfwTerminate();
 }
 
+bool App::ParseWindow(nlohmann::json& data)
+{
+	if (data.find("Width") != data.end())
+	{
+		WindowWidth = data["Width"];
+	}
+
+	if (data.find("Height") != data.end())
+	{
+		WindowHeight = data["Height"];
+	}
+
+	if (data.find("Title") != data.end())
+	{
+		WindowTitle = data["Title"].get<std::string>();
+	}
+
+	if (_glfwWindow)
+	{
+		glfwSetWindowSize(_glfwWindow, WindowWidth, WindowHeight);
+		glfwSetWindowTitle(_glfwWindow, WindowTitle.c_str());
+	}
+
+	return true;
+}
+
+bool App::ParseShader(nlohmann::json& data)
+{
+	std::vector<Shader::FileInfo> files;
+
+	for (auto& file : data["Files"])
+	{
+		GLenum shaderType = GL_INVALID_ENUM;
+
+		const std::string& type = file["Type"];
+		if ("Vertex" == type)
+		{
+			shaderType = GL_VERTEX_SHADER;
+		}
+		else if ("Fragment" == type)
+		{
+			shaderType = GL_FRAGMENT_SHADER;
+		}
+		else if ("Geometry" == type)
+		{
+			shaderType = GL_GEOMETRY_SHADER;
+		}
+		// Compute Shader, GL 4.3+
+		/*
+		else if ("Compute" == type)
+		{
+		shaderType = GL_COMPUTE_SHADER;
+		}
+		*/
+		// Tessellation Shaders, GL 4.0+
+		/*
+		else if ("TessControl" == type)
+		{
+		shaderType = GL_TESS_CONTROL_SHADER;
+		}
+		else if ("TessEvaluation" == type)
+		{
+		shaderType = GL_TESS_EVALUATION_SHADER;
+		}
+		*/
+
+		files.push_back({
+			shaderType,
+			file["File"],
+		});
+	}
+
+	Shader * shader = new Shader(data["Name"], data["BindData"], files);
+	_shaders.emplace(data["Name"], shader);
+	return true;
+}
+
+bool App::ParseScene(nlohmann::json& data)
+{
+	Scene * scene = new Scene(data["Name"].get<std::string>());
+
+	for (auto& camera : data["Cameras"])
+	{
+		Camera * tmp = ParseCamera(camera);
+		if (!tmp)
+		{
+			DuskLogError("Failed to parse camera");
+			delete scene;
+			return nullptr;
+		}
+		scene->AddCamera(tmp);
+	}
+
+	for (auto& actor : data["Actors"])
+	{
+		Actor * tmp = ParseActor(actor, scene);
+		if (!tmp)
+		{
+			DuskLogError("Failed to parse actor");
+			delete scene;
+			return nullptr;
+		}
+		scene->AddActor(tmp);
+	}
+
+	_scenes.emplace(data["Name"], scene);
+	return true;
+}
+
+Camera * App::ParseCamera(nlohmann::json& data)
+{
+	Camera * camera = new Camera();
+
+	if (data.find("Position") != data.end())
+	{
+		camera->SetPosition({
+			data["Position"][0], data["Position"][1], data["Position"][2]
+		});
+	}
+
+	if (data.find("Forward") != data.end())
+	{
+		camera->SetForward({
+			data["Forward"][0], data["Forward"][1], data["Forward"][2]
+		});
+	}
+
+	if (data.find("Up") != data.end())
+	{
+		camera->SetUp({
+			data["Up"][0], data["Up"][1], data["Up"][2]
+		});
+	}
+
+	if (data.find("FOV") != data.end())
+	{
+		camera->SetFOV(data["FOV"]);
+	}
+
+	if (data.find("Aspect") != data.end())
+	{
+		camera->SetAspect(data["Aspect"]);
+	}
+
+	if (data.find("Clip") != data.end())
+	{
+		camera->SetClip(data["Clip"][0], data["Clip"][1]);
+	}
+
+	return camera;
+}
+
+Mesh * App::ParseMesh(nlohmann::json& data)
+{
+	Mesh * mesh = nullptr;
+
+	Shader * shader = _shaders[data["Shader"]];
+
+	if (data.find("File") != data.end())
+	{
+		mesh = new FileMesh(shader, data["File"].get<std::string>());
+	}
+	else if (data.find("Shape") != data.end())
+	{
+		// TODO
+	}
+
+	return mesh;
+}
+
+Actor * App::ParseActor(nlohmann::json& data, Scene * scene)
+{
+	Actor * actor = new Actor(scene, data["Name"].get<std::string>());
+
+	DuskLogInfo("Read Actor %s", data["Name"].get<std::string>().c_str());
+
+	if (data.find("Position") != data.end())
+	{
+		actor->SetPosition({
+			data["Position"][0], data["Position"][1], data["Position"][2]
+		});
+	}
+
+	if (data.find("Rotation") != data.end())
+	{
+		actor->SetRotation({
+			data["Rotation"][0], data["Rotation"][1], data["Rotation"][2]
+		});
+	}
+
+	if (data.find("Scale") != data.end())
+	{
+		actor->SetScale({
+			data["Scale"][0], data["Scale"][1], data["Scale"][2]
+		});
+	}
+
+	for (auto& component : data["Components"])
+	{
+		Component * tmp = ParseComponent(component, actor);
+		if (!tmp)
+		{
+			DuskLogError("Failed to parse componenet");
+			delete actor;
+			return nullptr;
+		}
+		actor->AddComponent(tmp);
+	}
+
+	return actor;
+}
+
+Component * App::ParseComponent(nlohmann::json& data, Actor * actor)
+{
+	Component * component = nullptr;
+
+	const std::string& type = data["Type"];
+	if ("Mesh" == type)
+	{
+		Mesh * mesh = ParseMesh(data);
+		if (!mesh)
+		{
+			DuskLogError("Failed to parse mesh");
+			delete mesh;
+			return nullptr;
+		}
+		component = new MeshComponent(actor, mesh);
+	}
+	else if ("Script" == type)
+	{
+		component = new ScriptComponent(actor, data["File"].get<std::string>());
+	}
+	else if ("Camera" == type)
+	{
+		Camera * camera = ParseCamera(data);
+		component = new CameraComponent(actor, camera);
+	}
+
+	return component;
+}
+
 bool App::LoadConfig(const std::string& filename)
 {
     DuskBenchStart();
 
     std::ifstream file(filename);
     nlohmann::json data;
-    data << file;
 
     DuskLogInfo("Loading config file '%s'", filename.c_str());
 
@@ -112,129 +352,23 @@ bool App::LoadConfig(const std::string& filename)
         return false;
     }
 
-    WindowWidth = data["Window"]["Width"];
-    WindowHeight = data["Window"]["Height"];
-    WindowTitle = data["Window"]["Title"];
+	data << file;
 
-    if (_glfwWindow)
-    {
-        glfwSetWindowSize(_glfwWindow, WindowWidth, WindowHeight);
-        glfwSetWindowTitle(_glfwWindow, WindowTitle.c_str());
-    }
+	bool retval = true;
+
+	if (data.find("Window") != data.end())
+	{
+		retval &= ParseWindow(data["Window"]);
+	}
 
     for (auto& shader : data["Shaders"])
     {
-        std::vector<Shader::FileInfo> shaderFiles;
-
-        for (auto& shaderFile : shader["Files"])
-        {
-            GLenum shaderType = GL_INVALID_ENUM;
-
-            const std::string& type = shaderFile["Type"];
-            if ("Vertex" == type)
-            {
-                shaderType = GL_VERTEX_SHADER;
-            }
-            else if ("Fragment" == type)
-            {
-                shaderType = GL_FRAGMENT_SHADER;
-            }
-            else if ("Geometry" == type)
-            {
-                shaderType = GL_GEOMETRY_SHADER;
-            }
-            // Compute Shader, GL 4.3+
-            /*
-            else if ("Compute" == type)
-            {
-                shaderType = GL_COMPUTE_SHADER;
-            }
-            */
-            // Tessellation Shaders, GL 4.0+
-            /*
-            else if ("TessControl" == type)
-            {
-                shaderType = GL_TESS_CONTROL_SHADER;
-            }
-            else if ("TessEvaluation" == type)
-            {
-                shaderType = GL_TESS_EVALUATION_SHADER;
-            }
-            */
-
-            shaderFiles.push_back({
-                shaderType,
-                shaderFile["File"],
-            });
-        }
-
-        Shader * dusk_shader = new Shader(shader["Name"], shader["BindData"], shaderFiles);
-        _shaders.emplace(shader["Name"], dusk_shader);
+		retval &= ParseShader(shader);
     }
 
     for (auto& scene : data["Scenes"])
     {
-        Scene * dusk_scene = new Scene(scene["Name"].get<std::string>());
-        _scenes.emplace(scene["Name"], dusk_scene);
-
-        for (auto& camera : scene["Cameras"])
-        {
-            Camera * dusk_camera = new Camera();
-            dusk_scene->AddCamera(dusk_camera);
-
-            dusk_camera->SetPosition({
-                camera["Position"][0], camera["Position"][1], camera["Position"][2]
-            });
-            dusk_camera->SetForward({
-                camera["Forward"][0], camera["Forward"][1], camera["Forward"][2]
-            });
-        }
-
-        for (auto& actor : scene["Actors"])
-        {
-            DuskLogInfo("Read Actor %s", actor["Name"].get<std::string>().c_str());
-            Actor * dusk_actor = new Actor(dusk_scene, actor["Name"].get<std::string>());
-            dusk_scene->AddActor(dusk_actor);
-
-            dusk_actor->SetPosition({
-                actor["Position"][0], actor["Position"][1], actor["Position"][2]
-            });
-
-            for (auto& comp : actor["Components"])
-            {
-                Component * dusk_comp = nullptr;
-
-                const std::string& type = comp["Type"];
-                if ("Mesh" == type)
-                {
-                    const std::string& shader = comp["Shader"];
-                    dusk_comp = new MeshComponent(dusk_actor, new FileMesh(_shaders[shader], comp["File"].get<std::string>()));
-                }
-                else if ("Script" == type)
-                {
-                    dusk_comp = new ScriptComponent(dusk_actor, comp["File"].get<std::string>());
-                }
-                else if ("Camera" == type)
-                {
-                    Camera * dusk_camera = new Camera();
-                    dusk_scene->SetCamera(dusk_camera);
-
-                    dusk_camera->SetPosition({
-                        comp["Position"][0], comp["Position"][1], comp["Position"][2]
-                    });
-                    dusk_camera->SetForward({
-                        comp["Forward"][0], comp["Forward"][1], comp["Forward"][2]
-                    });
-
-                    dusk_comp = new CameraComponent(dusk_actor, dusk_camera);
-                }
-
-                if (nullptr != comp)
-                {
-                    dusk_actor->AddComponent(dusk_comp);
-                }
-            }
-        }
+		retval &= ParseScene(scene);
     }
 
     const auto& startScene = _scenes.find(data["StartScene"]);
@@ -246,7 +380,7 @@ bool App::LoadConfig(const std::string& filename)
     file.close();
 
     DuskBenchEnd("App::LoadConfig()");
-    return true;
+    return retval;
 }
 
 void App::PushScene(Scene * scene)
