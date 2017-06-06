@@ -444,7 +444,7 @@ int UpdateEventData::PushToLua(lua_State * L) const
     return 1;
 }
 
-void UpdateEventData::Update(float elapsed)
+void UpdateEventData::Update(double elapsed)
 {
     _elapsed_time = elapsed;
     _total_time += elapsed;

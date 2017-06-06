@@ -85,8 +85,8 @@ public:
     UpdateEventData& operator=(const UpdateEventData&) = default;
 
     float GetDelta() const { return _delta; }
-    float GetElapsedTime() const { return _elapsed_time; }
-    float GetTotalTime() const { return _total_time; }
+    double GetElapsedTime() const { return _elapsed_time; }
+    double GetTotalTime() const { return _total_time; }
     float GetCurrentFPS() const { return _current_fps; }
 
     virtual int PushToLua(lua_State * L) const override;
@@ -94,7 +94,7 @@ public:
     void SetTargetFPS(float fps) { _target_fps = fps; }
     void SetCurrentFPS(float fps) { _current_fps = fps; }
 
-    void Update(float elapsed);
+    void Update(double elapsed);
 
 private:
 

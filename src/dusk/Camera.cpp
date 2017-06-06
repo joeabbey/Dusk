@@ -21,7 +21,7 @@ Camera::Camera(float fov /*= 45.0f*/, glm::vec3 up /*= glm::vec3(0, 1, 0)*/, glm
     , _velocity(0)
 {
     // TODO: Something?
-    SetAspect(App::GetInst()->WindowWidth, App::GetInst()->WindowHeight);
+    SetAspect((float)App::GetInst()->WindowWidth, (float)App::GetInst()->WindowHeight);
 }
 
 void Camera::SetBaseTransform(const glm::mat4& baseTransform)

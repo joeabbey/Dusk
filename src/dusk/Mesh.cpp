@@ -128,7 +128,7 @@ bool Mesh::AddRenderGroup(Material * material,
                           const std::vector<float>& txcds)
 {
     RenderGroup group;
-    group.vertCount = verts.size();
+    group.vertCount = (unsigned int)verts.size();
     group.material = material;
     group.drawMode = drawMode;
 

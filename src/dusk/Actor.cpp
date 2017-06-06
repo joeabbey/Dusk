@@ -138,9 +138,9 @@ int Actor::Script_SetPosition(lua_State * L)
     Actor * actor = (Actor *)lua_tointeger(L, 1);
     glm::vec3 pos;
 
-    pos.x = lua_tonumber(L, 2);
-    pos.y = lua_tonumber(L, 3);
-    pos.z = lua_tonumber(L, 4);
+    pos.x = (float)lua_tonumber(L, 2);
+    pos.y = (float)lua_tonumber(L, 3);
+    pos.z = (float)lua_tonumber(L, 4);
 
     actor->SetPosition(pos);
 
@@ -164,9 +164,9 @@ int Actor::Script_SetRotation(lua_State * L)
     Actor * actor = (Actor *)lua_tointeger(L, 1);
     glm::vec3 rot;
 
-    rot.x = lua_tonumber(L, 2);
-    rot.y = lua_tonumber(L, 3);
-    rot.z = lua_tonumber(L, 4);
+    rot.x = (float)lua_tonumber(L, 2);
+	rot.y = (float)lua_tonumber(L, 3);
+	rot.z = (float)lua_tonumber(L, 4);
 
     actor->SetRotation(rot);
 
@@ -190,9 +190,9 @@ int Actor::Script_SetScale(lua_State * L)
     Actor * actor = (Actor *)lua_tointeger(L, 1);
     glm::vec3 scale;
 
-    scale.x = lua_tonumber(L, 2);
-    scale.y = lua_tonumber(L, 3);
-    scale.z = lua_tonumber(L, 4);
+    scale.x = (float)lua_tonumber(L, 2);
+	scale.y = (float)lua_tonumber(L, 3);
+	scale.z = (float)lua_tonumber(L, 4);
 
     actor->SetScale(scale);
 

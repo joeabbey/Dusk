@@ -12,7 +12,7 @@ void UI::Render()
     if (ImGui::BeginMainMenuBar())
     {
         // TODO: Decouple from App
-        ImGui::SameLine(App::GetInst()->WindowWidth - 150, 0.0f);
+        ImGui::SameLine((float)App::GetInst()->WindowWidth - 150, 0.0f);
         ImGui::Text("%.2f FPS (%.2f ms)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
         ImGui::EndMainMenuBar();
     }

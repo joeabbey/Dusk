@@ -183,6 +183,6 @@ ADD_CUSTOM_COMMAND(
 ADD_DEPENDENCIES(depend flatbuffers)
 
 SET_TARGET_PROPERTIES(
-    depend glm json lua zlib glfw
+    depend glm json lua zlib glfw flatbuffers
     PROPERTIES FOLDER "depend"
 )
