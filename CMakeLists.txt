@@ -102,6 +102,8 @@ SET(Dusk_OUT Dusk)
 SET(Dusk_CONFIG_IN include/dusk/Config.hpp.in)
 SET(Dusk_CONFIG    ${CMAKE_BINARY_DIR}/include/dusk/Config.hpp)
 
+FILE(GLOB_RECURSE Dusk_ASSETS RELATIVE ${CMAKE_SOURCE_DIR} "assets/*")
+
 SET(Dusk_INCLUDES
     include/dusk/Dusk.hpp
     include/dusk/Log.hpp
@@ -197,8 +199,15 @@ FOREACH(release_lib IN ITEMS ${Dusk_LINK_LIBRARIES_RELEASE})
     )
 ENDFOREACH()
 
-SOURCE_GROUP("include" FILES ${Dusk_INCLUDES} ${Dusk_CONFIG})
-SOURCE_GROUP("src" FILES ${Dusk_SOURCES})
+# Set IDE folders
+FOREACH(file IN ITEMS ${Dusk_ASSETS} ${Dusk_INCLUDES} ${Dusk_SOURCES})
+    GET_FILENAME_COMPONENT(file_path ${file} DIRECTORY)
+    FILE(TO_NATIVE_PATH ${file_path} file_path)
+    SOURCE_GROUP(${file_path} FILES ${file})
+ENDFOREACH()
+
+FILE(TO_NATIVE_PATH "include/dusk" config_path)
+SOURCE_GROUP(${config_path} FILES ${Dusk_CONFIG})
 
 # Copy assets to build directory
 ADD_CUSTOM_TARGET(copy-assets)
