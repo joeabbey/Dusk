@@ -18,6 +18,8 @@ public:
     enum class Events : EventID
     {
         _PREFIX = 100,
+        LOAD,
+        FREE,
         UPDATE,
         RENDER,
     };
@@ -30,6 +32,8 @@ public:
     bool IsLoaded() const { return _loaded; }
 
     std::string GetName() const { return _name; }
+
+    void AddScript(const std::string& filename) { _scripts.push_back(filename); }
 
     void AddActor(Actor * actor);
     const std::vector<Actor *>& GetActors() const { return _actors; };
@@ -58,6 +62,9 @@ private:
 
     Camera * _camera;
 
+    ScriptHost _scriptHost;
+
+    std::vector<std::string> _scripts;
     std::vector<Camera *> _cameras;
     std::vector<Actor *> _actors;
 

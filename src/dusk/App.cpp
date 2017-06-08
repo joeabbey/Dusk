@@ -177,6 +177,11 @@ bool App::ParseScene(nlohmann::json& data)
 {
 	Scene * scene = new Scene(data["Name"].get<std::string>());
 
+	for (auto& script : data["Scripts"])
+	{
+        scene->AddScript(script.get<std::string>());
+	}
+
 	for (auto& camera : data["Cameras"])
 	{
 		Camera * tmp = ParseCamera(camera);
@@ -184,7 +189,7 @@ bool App::ParseScene(nlohmann::json& data)
 		{
 			DuskLogError("Failed to parse camera");
 			delete scene;
-			return nullptr;
+			return false;
 		}
 		scene->AddCamera(tmp);
 	}
@@ -196,7 +201,7 @@ bool App::ParseScene(nlohmann::json& data)
 		{
 			DuskLogError("Failed to parse actor");
 			delete scene;
-			return nullptr;
+			return false;
 		}
 		scene->AddActor(tmp);
 	}
@@ -383,6 +388,15 @@ bool App::LoadConfig(const std::string& filename)
     return retval;
 }
 
+Scene * App::GetSceneByName(const std::string& name) const
+{
+    if (_scenes.find(name) != _scenes.end())
+    {
+        return _scenes.at(name);
+    }
+    return nullptr;
+}
+
 void App::PushScene(Scene * scene)
 {
     if (!scene) return;
@@ -445,7 +459,7 @@ void App::Run()
         timeOffset = glfwGetTime();
 
         glfwPollEvents();
-
+        
         updateEventData.Update(elapsed);
         DispatchEvent(Event((EventID)Events::UPDATE, updateEventData));
 
@@ -477,7 +491,10 @@ void App::Run()
         }
     }
 
-    PopScene();
+    if (!_sceneStack.empty())
+    {
+        _sceneStack.top()->Free();
+    }
 
     DestroyWindow();
 }
@@ -487,15 +504,15 @@ void App::InitScripting()
     ScriptHost::AddFunction("dusk_App_GetInst", &App::Script_GetInst);
     ScriptHost::AddFunction("dusk_App_LoadConfig", &App::Script_LoadConfig);
     ScriptHost::AddFunction("dusk_App_GetScene", &App::Script_GetScene);
+    ScriptHost::AddFunction("dusk_App_GetSceneByName", &App::Script_GetSceneByName);
+    ScriptHost::AddFunction("dusk_App_PushScene", &App::Script_PushScene);
+    ScriptHost::AddFunction("dusk_App_PopScene", &App::Script_PopScene);
 
     IEventDispatcher::InitScripting();
 
     Scene::InitScripting();
     Actor::InitScripting();
-    //Component::InitScripting();
-    //MeshComponent::InitScripting();
-    //CameraComponent::InitScripting();
-    //ScriptComponent::InitScripting();
+    Component::InitScripting();
 }
 
 int App::Script_GetInst(lua_State * L)
@@ -522,6 +539,35 @@ int App::Script_GetScene(lua_State * L)
     lua_pushinteger(L, (ptrdiff_t)app->GetScene());
 
     return 1;
+}
+
+int App::Script_GetSceneByName(lua_State * L)
+{
+    App * app = (App *)lua_tointeger(L, 1);
+    std::string name = lua_tostring(L, 2);
+
+    lua_pushinteger(L, (ptrdiff_t)app->GetSceneByName(name));
+
+    return 1;
+}
+
+int App::Script_PushScene(lua_State * L)
+{
+    App * app = (App *)lua_tointeger(L, 1);
+    Scene * scene = (Scene *)lua_tointeger(L, 2);
+
+    app->PushScene(scene);
+
+    return 0;
+}
+
+int App::Script_PopScene(lua_State * L)
+{
+    App * app = (App *)lua_tointeger(L, 1);
+
+    app->PopScene();
+
+    return 0;
 }
 
 void App::GLFW_ErrorCallback(int code, const char * message)

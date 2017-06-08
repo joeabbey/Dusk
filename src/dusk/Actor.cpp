@@ -81,6 +81,8 @@ bool Actor::Load()
         }
     }
 
+    DispatchEvent(Event((EventID)Events::LOAD));
+
     _loaded = true;
 
     DuskBenchEnd("Actor::Load()");
@@ -89,6 +91,8 @@ bool Actor::Load()
 
 void Actor::Free()
 {
+    DispatchEvent(Event((EventID)Events::FREE));
+
     for (Component * comp : _components)
     {
         comp->Free();

@@ -27,6 +27,9 @@ public:
     virtual bool Load() = 0;
     virtual void Free() = 0;
 
+    static void InitScripting();
+    static int Script_GetActor(lua_State * L);
+
 protected:
 
     bool _loaded;

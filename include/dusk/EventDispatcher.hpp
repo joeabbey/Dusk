@@ -21,7 +21,7 @@ public:
 
     void AddEventListener(const EventID& eventId, IEventCallback * callback);
 
-    void RemoveEventListener(const EventID& eventId, IEventCallback * callback);
+    void RemoveEventListener(const EventID& eventId, const IEventCallback * callback);
 
     void AddEventListener(const EventID& eventId, void (*function)(const Event&))
     {
@@ -59,6 +59,7 @@ public:
 private:
 
     std::unordered_map<EventID, std::vector<IEventCallback *>> _eventListeners;
+    std::unordered_map<EventID, std::vector<IEventCallback *>> _deadEventListeners;
 
 }; // class IEventDispatcher
 

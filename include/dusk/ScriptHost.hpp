@@ -16,6 +16,9 @@ public:
     ScriptHost();
     virtual ~ScriptHost();
 
+    bool Load();
+    void Free();
+
     bool RunFile(const std::string& filename);
     bool RunString(const std::string& code);
 
@@ -27,6 +30,8 @@ private:
 
     static std::vector<ScriptHost *> _ScriptHosts;
     static std::unordered_map<std::string, lua_CFunction> _Functions;
+
+    bool _loaded = false;
 
     lua_State * _luaState;
 

@@ -34,6 +34,7 @@ public:
     bool LoadConfig(const std::string& filename);
 
     Scene * GetScene() const { return (_sceneStack.empty() ? nullptr : _sceneStack.top()); };
+    Scene * GetSceneByName(const std::string& name) const;
     void PushScene(Scene * scene);
     void PopScene();
 
@@ -48,6 +49,9 @@ public:
     static int Script_GetInst(lua_State * L);
     static int Script_LoadConfig(lua_State * L);
     static int Script_GetScene(lua_State * L);
+    static int Script_GetSceneByName(lua_State * L);
+    static int Script_PushScene(lua_State * L);
+    static int Script_PopScene(lua_State * L);
 
     static void GLFW_ErrorCallback(int code, const char * message);
     static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -70,7 +74,7 @@ private:
     void CreateWindow();
     void DestroyWindow();
 
-    const float TARGET_FPS = 60.0f; 
+    const float TARGET_FPS = 60.0f;
 
     // TODO: Move
     std::unordered_map<std::string, Shader *> _shaders;

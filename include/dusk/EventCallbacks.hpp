@@ -31,6 +31,7 @@ public:
 
     inline virtual bool IsEqualTo(const IEventCallback& rhs) const { return false; }
 
+
 }; // class IEventCallback
 
 class FunctionEventCallback : public IEventCallback

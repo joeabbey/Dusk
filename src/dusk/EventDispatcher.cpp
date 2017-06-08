@@ -1,11 +1,14 @@
 #include "dusk/EventDispatcher.hpp"
 
+#include <dusk/Log.hpp>
+
+unsigned int balance = 0;
+
 namespace dusk {
 
 void IEventDispatcher::AddEventListener(const EventID& eventId, IEventCallback * callback)
 {
-    const auto& it = _eventListeners.find(eventId);
-    if (it == _eventListeners.end())
+    if (_eventListeners.find(eventId) == _eventListeners.end())
     {
         _eventListeners.emplace(eventId, std::vector<IEventCallback *>());
     }
@@ -13,19 +16,19 @@ void IEventDispatcher::AddEventListener(const EventID& eventId, IEventCallback *
     _eventListeners[eventId].push_back(callback);
 }
 
-void IEventDispatcher::RemoveEventListener(const EventID& eventId, IEventCallback * callback)
+void IEventDispatcher::RemoveEventListener(const EventID& eventId, const IEventCallback * callback)
 {
     const auto& listIt = _eventListeners.find(eventId);
     if (listIt == _eventListeners.end()) return;
 
-    for (auto it = listIt->second.begin(); it != listIt->second.end(); ++it)
+    auto& list = listIt->second;
+
+    for (auto it = list.begin(); it != list.end(); ++it)
     {
         IEventCallback * tmp = *it;
         if (*tmp == *callback)
         {
-            delete tmp;
-            std::swap(*it, listIt->second.back());
-            listIt->second.pop_back();
+            _deadEventListeners[eventId].push_back(tmp);
             return;
         }
     }
@@ -36,10 +39,48 @@ void IEventDispatcher::DispatchEvent(const Event& event)
     const auto& listIt = _eventListeners.find(event.GetID());
     if (listIt == _eventListeners.end()) return;
 
-    for (const auto& listener : listIt->second)
+    auto& list = listIt->second;
+
+    for (const auto& listener : list)
     {
+        if (_deadEventListeners.find(event.GetID()) != _deadEventListeners.end())
+        {
+            bool dead = false;
+            for (IEventCallback * callback : _deadEventListeners[event.GetID()])
+            {
+                if (listener == callback)
+                {
+                    dead = true;
+                    continue;
+                }
+            }
+            if (dead)
+                continue;
+        }
         listener->Invoke(event);
     }
+
+    for (auto deadEventList : _deadEventListeners)
+    {
+        const EventID& eventId = deadEventList.first;
+        auto& deadList = deadEventList.second;
+
+        for (IEventCallback * deadCallback : deadList)
+        {
+            auto& eventList = _eventListeners[eventId];
+            for (auto it = eventList.begin(); it != eventList.end(); ++it)
+            {
+                if (*it == deadCallback)
+                {
+                    delete deadCallback;
+                    std::swap(*it, eventList.back());
+                    eventList.pop_back();
+                    break;
+                }
+            }
+        }
+    }
+    _deadEventListeners.clear();
 }
 
 void IEventDispatcher::RemoveAllEventListeners()
@@ -53,6 +94,7 @@ void IEventDispatcher::RemoveAllEventListeners()
         it.second.clear();
     }
     _eventListeners.clear();
+    _deadEventListeners.clear();
 }
 
 void IEventDispatcher::RemoveAllEventListeners(const EventID& eventId)
@@ -65,6 +107,10 @@ void IEventDispatcher::RemoveAllEventListeners(const EventID& eventId)
         delete callback;
     }
     listIt->second.clear();
+    if (_deadEventListeners.find(eventId) != _deadEventListeners.end())
+    {
+        _deadEventListeners[eventId].clear();
+    }
 }
 
 void IEventDispatcher::InitScripting()
@@ -92,7 +138,7 @@ int IEventDispatcher::Script_RemoveEventListener(lua_State * L)
 
     std::string funcName = lua_tostring(L, 3);
     LuaEventCallback tmp(L, funcName);
-    disp->AddEventListener((EventID)lua_tointeger(L, 2), &tmp);
+    disp->RemoveEventListener((EventID)lua_tointeger(L, 2), &tmp);
 
     return 0;
 }

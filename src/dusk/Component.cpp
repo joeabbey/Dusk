@@ -16,6 +16,24 @@ Component::~Component()
 {
 }
 
+void Component::InitScripting()
+{
+    ScriptHost::AddFunction("dusk_Component_GetActor", &Component::Script_GetActor);
+
+    //MeshComponent::InitScripting();
+    //CameraComponent::InitScripting();
+    //ScriptComponent::InitScripting();
+}
+
+int Component::Script_GetActor(lua_State * L)
+{
+    Component * componenet = (Component *)lua_tointeger(L, 1);
+
+    lua_pushinteger(L, (ptrdiff_t)componenet->GetActor());
+
+    return 1;
+}
+
 MeshComponent::MeshComponent(Actor * parent, Mesh * mesh)
     : Component(parent)
     , _mesh(mesh)
@@ -122,6 +140,16 @@ ScriptComponent::~ScriptComponent()
 
 bool ScriptComponent::Load()
 {
+    if (!_scriptHost.Load())
+    {
+        return false;
+    }
+
+    lua_State * L = _scriptHost.GetLuaState();
+
+    lua_pushinteger(L, (ptrdiff_t)this);
+    lua_setglobal(L, "dusk_current_ScriptComponent");
+
     _scriptHost.RunFile(_filename);
 
     _loaded = true;
@@ -131,7 +159,7 @@ bool ScriptComponent::Load()
 
 void ScriptComponent::Free()
 {
-
+    _scriptHost.Free();
 }
 
 } // namespace dusk

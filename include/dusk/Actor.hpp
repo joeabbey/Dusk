@@ -18,6 +18,8 @@ public:
     enum class Events : EventID
     {
         _PREFIX = 200,
+        LOAD,
+        FREE,
         UPDATE,
         RENDER,
     };

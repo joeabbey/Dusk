@@ -1,5 +1,7 @@
 #include "dusk/EventCallbacks.hpp"
 
+#include <dusk/Log.hpp>
+
 namespace dusk {
 
 void LuaEventCallback::Invoke(const Event& event)
