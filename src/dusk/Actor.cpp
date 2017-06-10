@@ -6,8 +6,7 @@
 namespace dusk {
 
 Actor::Actor(Scene * parent, const std::string& name)
-    : _loaded(false)
-    , _parent(parent)
+    : _parent(parent)
     , _name(name)
     , _baseTransform(1)
     , _transform(1)
@@ -72,6 +71,8 @@ bool Actor::Load()
 {
     DuskBenchStart();
 
+    DispatchEvent(Event((EventID)Events::LOAD_START));
+
     for (Component * comp : _components)
     {
         if (!comp->Load())
@@ -81,9 +82,9 @@ bool Actor::Load()
         }
     }
 
-    DispatchEvent(Event((EventID)Events::LOAD));
-
     _loaded = true;
+
+    DispatchEvent(Event((EventID)Events::LOAD_FINISHED));
 
     DuskBenchEnd("Actor::Load()");
     return true;
@@ -91,12 +92,16 @@ bool Actor::Load()
 
 void Actor::Free()
 {
-    DispatchEvent(Event((EventID)Events::FREE));
+    DispatchEvent(Event((EventID)Events::FREE_START));
 
     for (Component * comp : _components)
     {
         comp->Free();
     }
+
+    _loaded = false;
+
+    DispatchEvent(Event((EventID)Events::FREE_FINISHED));
 }
 
 void Actor::Update(const Event& event)
@@ -110,7 +115,7 @@ void Actor::Render(const Event& event)
 {
     if (!_loaded) return;
 
-    //DuskLogInfo("Rendering %s", GetName().c_str());
+    // DuskLogInfo("Rendering %s", GetName().c_str());
 
     DispatchEvent(Event((EventID)Events::RENDER));
 }

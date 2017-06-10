@@ -4,10 +4,14 @@ local Scene = Dusk.Class(Dusk.IEventDispatcher, function(self, ptr)
 end)
 
 Scene.Events = {
-    LOAD   = 101,
-    FREE   = 102,
-    UPDATE = 103,
-    RENDER = 104
+    LOAD_START    = 101,
+    FREE_START    = 102,
+    LOAD_FINISHED = 103,
+    FREE_FINISHED = 104,
+    START         = 105,
+    STOP          = 106,
+    UPDATE        = 107,
+    RENDER        = 108
 }
 
 function Scene:GetActorByName(name)

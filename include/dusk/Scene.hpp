@@ -18,8 +18,12 @@ public:
     enum class Events : EventID
     {
         _PREFIX = 100,
-        LOAD,
-        FREE,
+        LOAD_START,
+        FREE_START,
+        LOAD_FINISHED,
+        FREE_FINISHED,
+        START,
+        STOP,
         UPDATE,
         RENDER,
     };
@@ -45,6 +49,9 @@ public:
     void SetCamera(Camera * camera) { _camera = camera; }
     Camera * GetCamera() const { return _camera; };
 
+    void Start();
+    void Stop();
+
     bool Load();
     void Free();
 
@@ -56,7 +63,7 @@ public:
 
 private:
 
-    bool _loaded;
+    bool _loaded = false;
 
     std::string _name;
 

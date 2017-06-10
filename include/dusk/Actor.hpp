@@ -18,8 +18,10 @@ public:
     enum class Events : EventID
     {
         _PREFIX = 200,
-        LOAD,
-        FREE,
+        LOAD_START,
+        FREE_START,
+        LOAD_FINISHED,
+        FREE_FINISHED,
         UPDATE,
         RENDER,
     };
@@ -71,7 +73,7 @@ public:
 
 private:
 
-    bool _loaded;
+    bool _loaded = false;
 
     Scene * _parent;
 

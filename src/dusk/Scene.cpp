@@ -6,8 +6,7 @@
 namespace dusk {
 
 Scene::Scene(const std::string& name)
-    : _loaded(false)
-    , _name(name)
+    : _name(name)
 	, _camera(nullptr)
     , _actors()
 {
@@ -53,13 +52,39 @@ void Scene::AddCamera(Camera * camera)
     }
 }
 
+void Scene::Start()
+{
+    App * app = App::GetInst();
+    app->AddEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
+    app->AddEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+
+    if (!IsLoaded())
+    {
+        Load();
+    }
+
+    DispatchEvent(Event((EventID)Events::START));
+}
+
+void Scene::Stop()
+{
+    App * app = App::GetInst();
+    app->RemoveEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
+    app->RemoveEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+
+    if (IsLoaded())
+    {
+        Free();
+    }
+
+    DispatchEvent(Event((EventID)Events::STOP));
+}
+
 bool Scene::Load()
 {
     DuskBenchStart();
 
-    App * app = App::GetInst();
-    app->AddEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
-    app->AddEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+    DispatchEvent(Event((EventID)Events::LOAD_START));
 
     if (!_scriptHost.Load())
     {
@@ -80,9 +105,9 @@ bool Scene::Load()
         }
     }
 
-    DispatchEvent(Event((EventID)Events::LOAD));
-
     _loaded = true;
+
+    DispatchEvent(Event((EventID)Events::LOAD_FINISHED));
 
     DuskBenchEnd("Scene::Load()");
     return true;
@@ -90,11 +115,7 @@ bool Scene::Load()
 
 void Scene::Free()
 {
-    DispatchEvent(Event((EventID)Events::FREE));
-
-    App * app = App::GetInst();
-    app->RemoveEventListener((EventID)App::Events::UPDATE, this, &Scene::Update);
-    app->RemoveEventListener((EventID)App::Events::RENDER, this, &Scene::Render);
+    DispatchEvent(Event((EventID)Events::FREE_START));
 
     _scriptHost.Free();
 
@@ -102,42 +123,19 @@ void Scene::Free()
     {
         actor->Free();
     }
+
+    _loaded = false;
+
+    DispatchEvent(Event((EventID)Events::FREE_FINISHED));
 }
 
 void Scene::Update(const Event& event)
 {
-    auto data = event.GetDataAs<UpdateEventData>();
-
     if (!_loaded) return;
 
     for (Camera * camera : _cameras)
     {
         camera->Update();
-    }
-
-    if (_name == "test1_scene")
-    {
-        static float timeout = 2;
-        timeout -= data->GetElapsedTime();
-        if (timeout < 0)
-        {
-            timeout = 2;
-
-            App * app = App::GetInst();
-            app->PushScene(app->GetSceneByName("test2_scene"));
-        }
-    }
-    else
-    {
-        static float timeout = 2;
-        timeout -= data->GetElapsedTime();
-        if (timeout < 0)
-        {
-            timeout = 2;
-
-            App * app = App::GetInst();
-            app->PushScene(app->GetSceneByName("test1_scene"));
-        }
     }
 
     DispatchEvent(Event((EventID)Events::UPDATE, event.GetData()));

@@ -37,7 +37,6 @@ bool ScriptHost::Load()
     {
         lua_register(_luaState, it.first.c_str(), it.second);
     }
-
     // Load Dusk-Lua library
     RunFile("assets/scripts/dusk/Dusk.lua");
 
@@ -62,6 +61,8 @@ bool ScriptHost::RunFile(const std::string& filename)
     int status = luaL_loadfile(_luaState, filename.c_str());
     if (status)
         goto error;
+
+    DuskLogInfo("Running script '%s'", filename.c_str());
 
     // sets the error callback to 0, this means errors will be pushed onto the stack
     status = lua_pcall(_luaState, 0, LUA_MULTRET, 0);

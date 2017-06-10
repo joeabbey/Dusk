@@ -403,26 +403,26 @@ void App::PushScene(Scene * scene)
 
     if (!_sceneStack.empty())
     {
-        _sceneStack.top()->Free();
+        _sceneStack.top()->Stop();
     }
 
     _sceneStack.push(scene);
 
     DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
-    _sceneStack.top()->Load();
+    _sceneStack.top()->Start();
 }
 
 void App::PopScene()
 {
     if (_sceneStack.empty()) return;
 
-    _sceneStack.top()->Free();
+    _sceneStack.top()->Stop();
     _sceneStack.pop();
 
     if (_sceneStack.empty()) return;
 
     DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
-    _sceneStack.top()->Load();
+    _sceneStack.top()->Start();
 }
 
 void App::Run()
@@ -459,7 +459,7 @@ void App::Run()
         timeOffset = glfwGetTime();
 
         glfwPollEvents();
-        
+
         updateEventData.Update(elapsed);
         DispatchEvent(Event((EventID)Events::UPDATE, updateEventData));
 
@@ -493,7 +493,7 @@ void App::Run()
 
     if (!_sceneStack.empty())
     {
-        _sceneStack.top()->Free();
+        _sceneStack.top()->Stop();
     }
 
     DestroyWindow();

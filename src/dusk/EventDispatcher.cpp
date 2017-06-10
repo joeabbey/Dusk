@@ -23,6 +23,11 @@ void IEventDispatcher::RemoveEventListener(const EventID& eventId, const IEventC
 
     auto& list = listIt->second;
 
+    if (_deadEventListeners.find(eventId) == _deadEventListeners.end())
+    {
+        _deadEventListeners.emplace(eventId, std::vector<IEventCallback *>());
+    }
+
     for (auto it = list.begin(); it != list.end(); ++it)
     {
         IEventCallback * tmp = *it;
@@ -45,11 +50,13 @@ void IEventDispatcher::DispatchEvent(const Event& event)
     {
         if (_deadEventListeners.find(event.GetID()) != _deadEventListeners.end())
         {
+            DuskLogWarn("Has dead events");
             bool dead = false;
             for (IEventCallback * callback : _deadEventListeners[event.GetID()])
             {
                 if (listener == callback)
                 {
+                    DuskLogWarn("Is dead");
                     dead = true;
                     continue;
                 }
@@ -72,6 +79,7 @@ void IEventDispatcher::DispatchEvent(const Event& event)
             {
                 if (*it == deadCallback)
                 {
+                    DuskLogWarn("Murder");
                     delete deadCallback;
                     std::swap(*it, eventList.back());
                     eventList.pop_back();
@@ -135,6 +143,8 @@ int IEventDispatcher::Script_AddEventListener(lua_State * L)
 int IEventDispatcher::Script_RemoveEventListener(lua_State * L)
 {
     IEventDispatcher * disp = (IEventDispatcher *)lua_tointeger(L, 1);
+
+    DuskLogWarn("Removing Lua Event Listener");
 
     std::string funcName = lua_tostring(L, 3);
     LuaEventCallback tmp(L, funcName);
