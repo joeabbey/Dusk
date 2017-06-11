@@ -10,12 +10,6 @@ git:
 
 # sourced from https://github.com/tplgy/bonefish/blob/master/.travis.yml
 
-addons:
-  apt:
-    packages:
-      - xorg-dev
-      - libglu1-mesa-dev
-
 matrix:
   include:
     - os: linux
@@ -23,7 +17,7 @@ matrix:
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
-          packages: [ 'g++-4.8', 'libstdc++-4.8-dev', 'ninja-build', 'cmake' ]
+          packages: [ 'g++-4.8', 'libstdc++-4.8-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=DEBUG
 
     - os: linux
@@ -31,7 +25,7 @@ matrix:
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
-          packages: [ 'g++-4.8', 'libstdc++-4.8-dev', 'ninja-build', 'cmake' ]
+          packages: [ 'g++-4.8', 'libstdc++-4.8-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=RELEASE
 
     - os: linux
@@ -39,7 +33,7 @@ matrix:
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
-          packages: [ 'libstdc++-4.8-dev', 'ninja-build', 'cmake' ]
+          packages: [ 'libstdc++-4.8-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=DEBUG
 
     - os: linux
@@ -47,7 +41,7 @@ matrix:
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
-          packages: [ 'libstdc++-4.8-dev', 'ninja-build', 'cmake' ]
+          packages: [ 'libstdc++-4.8-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=RELEASE
 
 before_install:
