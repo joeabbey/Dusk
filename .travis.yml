@@ -32,16 +32,16 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: [ 'llvm-toolchain-trusty', 'kalakris-cmake' ]
-          packages: [ 'clang-5', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
+          sources: [ 'llvm-toolchain-snapshot', 'kalakris-cmake' ]
+          packages: [ 'clang-5.0', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=DEBUG
 
     - os: linux
       compiler: clang
       addons:
         apt:
-          sources: [ 'llvm-toolchain-trusty', 'kalakris-cmake' ]
-          packages: [ 'clang-5', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
+          sources: [ 'llvm-toolchain-snapshot', 'kalakris-cmake' ]
+          packages: [ 'clang-5.0', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=RELEASE
 
 before_install:
