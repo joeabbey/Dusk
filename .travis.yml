@@ -10,6 +10,12 @@ git:
 
 # sourced from https://github.com/tplgy/bonefish/blob/master/.travis.yml
 
+addons:
+  apt:
+    packages:
+      - xorg-dev
+      - libglu1-mesa-dev
+
 matrix:
   include:
     - os: linux
