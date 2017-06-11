@@ -30,16 +30,13 @@ SET(LUA_INCLUDE_DIRS
 )
 
 IF(MSVC)
-    SET(LUA_LIBRARIES_DEBUG
-        "${CMAKE_BINARY_DIR}/depend/lua/Debug/lua.lib"
-        PARENT_SCOPE
-    )
-    SET(LUA_LIBRARIES_RELEASE
-        "${CMAKE_BINARY_DIR}/depend/lua/Release/lua.lib"
-        PARENT_SCOPE
-    )
+    SET(LUA_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/lua/Debug/lua.lib")
+    SET(LUA_LIBRARIES_DEBUG "${LUA_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(LUA_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/lua/Release/lua.lib")
+    SET(LUA_LIBRARIES_RELEASE "${LUA_LIBRARIES_RELEASE}" PARENT_SCOPE)
 ELSE()
-    SET(LUA_LIBRARIES "${CMAKE_BINARY_DIR}/depend/lua/liblua.so" PARENT_SCOPE)
+    SET(LUA_LIBRARIES "${CMAKE_BINARY_DIR}/depend/lua/liblua.so")
+    SET(LUA_LIBRARIES "${LUA_LIBRARIES}" PARENT_SCOPE)
 ENDIF()
 
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua)
@@ -49,12 +46,26 @@ EXECUTE_PROCESS(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
 )
 
-ADD_CUSTOM_TARGET(lua)
-ADD_CUSTOM_COMMAND(
-    TARGET lua PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} --build . --target liblua
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
-)
+IF (MSVC)
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LUA_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target liblua
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LUA_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target liblua
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
+    )
+    ADD_CUSTOM_TARGET(lua DEPENDS ${LUA_LIBRARIES_DEBUG} ${LUA_LIBRARIES_RELEASE})
+ELSE()
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LUA_LIBRARIES}
+        COMMAND ${CMAKE_COMMAND} --build . --target liblua
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
+    )
+    ADD_CUSTOM_TARGET(lua DEPENDS ${LUA_LIBRARIES})
+ENDIF()
 ADD_DEPENDENCIES(depend lua)
 
 ### zlib
@@ -70,16 +81,13 @@ SET(ZLIB_INCLUDE_DIRS
 )
 
 IF(MSVC)
-    SET(ZLIB_LIBRARIES_DEBUG
-        "${CMAKE_BINARY_DIR}/depend/zlib/Debug/zlibd.lib"
-        PARENT_SCOPE
-    )
-    SET(ZLIB_LIBRARIES_RELEASE
-        "${CMAKE_BINARY_DIR}/depend/zlib/Release/zlibd.lib"
-        PARENT_SCOPE
-    )
+    SET(ZLIB_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/lua/Debug/zlibd.lib")
+    SET(ZLIB_LIBRARIES_DEBUG "${ZLIB_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(ZLIB_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/lua/Release/zlibd.lib")
+    SET(ZLIB_LIBRARIES_RELEASE "${ZLIB_LIBRARIES_RELEASE}" PARENT_SCOPE)
 ELSE()
-    SET(ZLIB_LIBRARIES "${CMAKE_BINARY_DIR}/depend/zlib/libz.so" PARENT_SCOPE)
+    SET(ZLIB_LIBRARIES "${CMAKE_BINARY_DIR}/depend/zlib/libz.so")
+    SET(ZLIB_LIBRARIES "${ZLIB_LIBRARIES}" PARENT_SCOPE)
 ENDIF()
 
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib)
@@ -89,12 +97,26 @@ EXECUTE_PROCESS(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
 )
 
-ADD_CUSTOM_TARGET(zlib)
-ADD_CUSTOM_COMMAND(
-    TARGET zlib PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} --build . --target zlib
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
-)
+IF (MSVC)
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${ZLIB_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target zlib
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${ZLIB_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target zlib
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
+    )
+    ADD_CUSTOM_TARGET(zlib DEPENDS ${ZLIB_LIBRARIES_DEBUG} ${ZLIB_LIBRARIES_RELEASE})
+ELSE()
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${ZLIB_LIBRARIES}
+        COMMAND ${CMAKE_COMMAND} --build . --target zlib
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
+    )
+    ADD_CUSTOM_TARGET(zlib DEPENDS ${ZLIB_LIBRARIES})
+ENDIF()
 ADD_DEPENDENCIES(depend zlib)
 
 ### GLFW
@@ -113,20 +135,14 @@ SET(GLFW_INCLUDE_DIRS
 )
 
 IF(MSVC)
-    SET(GLFW_LIBRARIES_DEBUG
-        "${CMAKE_BINARY_DIR}/depend/glfw/src/Debug/glfw3.lib"
-        PARENT_SCOPE
-    )
-    SET(GLFW_LIBRARIES_RELEASE
-        "${CMAKE_BINARY_DIR}/depend/glfw/src/Release/glfw3.lib"
-        PARENT_SCOPE
-    )
+    SET(GLFW_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/glfw/src/Debug/glfw3.lib")
+    SET(GLFW_LIBRARIES_DEBUG "${GLFW_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(GLFW_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/glfw/src/Release/glfw3.lib")
+    SET(GLFW_LIBRARIES_RELEASE "${GLFW_LIBRARIES_RELEASE}" PARENT_SCOPE)
 ELSE()
     SET(GLFW_OPTIONS ${GLFW_OPTIONS} -DBUILD_SHARED_LIBS=ON)
-    SET(GLFW_LIBRARIES
-        "${CMAKE_BINARY_DIR}/depend/glfw/src/libglfw.so"
-        PARENT_SCOPE
-    )
+    SET(GLFW_LIBRARIES "${CMAKE_BINARY_DIR}/depend/glfw/src/libglfw.so")
+    SET(GLFW_LIBRARIES "${GLFW_LIBRARIES}" PARENT_SCOPE)
 ENDIF()
 
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw)
@@ -136,12 +152,26 @@ EXECUTE_PROCESS(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
 )
 
-ADD_CUSTOM_TARGET(glfw)
-ADD_CUSTOM_COMMAND(
-    TARGET glfw PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} --build . --target glfw
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
-)
+IF (MSVC)
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${GLFW_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target glfw
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${GLFW_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target glfw
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
+    )
+    ADD_CUSTOM_TARGET(glfw DEPENDS ${GLFW_LIBRARIES_DEBUG} ${GLFW_LIBRARIES_RELEASE})
+ELSE()
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${GLFW_LIBRARIES}
+        COMMAND ${CMAKE_COMMAND} --build . --target glfw
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
+    )
+    ADD_CUSTOM_TARGET(glfw DEPENDS ${GLFW_LIBRARIES})
+ENDIF()
 ADD_DEPENDENCIES(depend glfw)
 
 ### FlatBuffers
@@ -159,16 +189,13 @@ SET(FLATBUFFERS_INCLUDE_DIRS
 )
 
 IF(MSVC)
-    SET(FLATBUFFERS_LIBRARIES_DEBUG
-        "${CMAKE_BINARY_DIR}/depend/flatbuffers/Debug/flatbuffers.lib"
-        PARENT_SCOPE
-    )
-    SET(FLATBUFFERS_LIBRARIES_RELEASE
-        "${CMAKE_BINARY_DIR}/depend/flatbuffers/Release/flatbuffers.lib"
-        PARENT_SCOPE
-    )
+    SET(FLATBUFFERS_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/flatbuffers/Debug/flatbuffers.lib")
+    SET(FLATBUFFERS_LIBRARIES_DEBUG "${FLATBUFFERS_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(FLATBUFFERS_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/flatbuffers/Release/flatbuffers.lib")
+    SET(FLATBUFFERS_LIBRARIES_RELEASE "${FLATBUFFERS_LIBRARIES_RELEASE}" PARENT_SCOPE)
 ELSE()
-    SET(FLATBUFFERS_LIBRARIES "${CMAKE_BINARY_DIR}/depend/flatbuffers/libflatbuffers.a" PARENT_SCOPE)
+    SET(FLATBUFFERS_LIBRARIES "${CMAKE_BINARY_DIR}/depend/flatbuffers/libflatbuffers.a")
+    SET(FLATBUFFERS_LIBRARIES "${FLATBUFFERS_LIBRARIES}" PARENT_SCOPE)
 ENDIF()
 
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers)
@@ -178,12 +205,27 @@ EXECUTE_PROCESS(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
 )
 
-ADD_CUSTOM_TARGET(flatbuffers)
-ADD_CUSTOM_COMMAND(
-    TARGET flatbuffers PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} --build . --target flatbuffers
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
-)
+IF (MSVC)
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${FLATBUFFERS_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target flatbuffers
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${FLATBUFFERS_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target flatbuffers
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
+    )
+    ADD_CUSTOM_TARGET(flatbuffers
+        DEPENDS ${FLATBUFFERS_LIBRARIES_DEBUG} ${FLATBUFFERS_LIBRARIES_RELEASE})
+ELSE()
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${FLATBUFFERS_LIBRARIES}
+        COMMAND ${CMAKE_COMMAND} --build . --target flatbuffers
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
+    )
+    ADD_CUSTOM_TARGET(flatbuffers DEPENDS ${FLATBUFFERS_LIBRARIES})
+ENDIF()
 ADD_DEPENDENCIES(depend flatbuffers)
 
 SET_TARGET_PROPERTIES(
