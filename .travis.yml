@@ -1,9 +1,9 @@
 language: cpp
+sudo: false
 dist: trusty
 
 git:
   depth: 1
-
 
 # sources  list: https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json,
 # packages list: https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
@@ -32,16 +32,16 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: [ 'llvm-toolchain-trusty-4.0', 'kalakris-cmake' ]
-          packages: [ 'clang-4.0', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
+          sources: [ 'llvm-toolchain-trusty-4.0', 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
+          packages: [ 'clang-4.0', 'libstdc++-6-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=DEBUG
 
     - os: linux
       compiler: clang
       addons:
         apt:
-          sources: [ 'llvm-toolchain-trusty-4.0', 'kalakris-cmake' ]
-          packages: [ 'clang-4.0', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
+          sources: [ 'llvm-toolchain-trusty-4.0', 'ubuntu-toolchain-r-test', 'kalakris-cmake' ]
+          packages: [ 'clang-4.0', 'libstdc++-6-dev', 'ninja-build', 'cmake', 'xorg-dev', 'libglu1-mesa-dev' ]
       env: CMAKE_BUILD_TYPE=RELEASE
 
 before_install:
