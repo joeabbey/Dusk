@@ -1,0 +1,26 @@
+language: cpp
+
+git:
+  deoth: 1
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            ubuntu-toolchain-r-test
+          packages:
+            g++-5
+      env:
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+      env:
+        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
