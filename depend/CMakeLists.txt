@@ -49,12 +49,12 @@ EXECUTE_PROCESS(
 IF (MSVC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${LUA_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target liblua
+        COMMAND ${CMAKE_COMMAND} --build . --config Debug --target liblua
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${LUA_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target liblua
+        COMMAND ${CMAKE_COMMAND} --build . --config Release --target liblua
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/lua
     )
     ADD_CUSTOM_TARGET(lua DEPENDS ${LUA_LIBRARIES_DEBUG} ${LUA_LIBRARIES_RELEASE})
@@ -100,12 +100,12 @@ EXECUTE_PROCESS(
 IF (MSVC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${ZLIB_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target zlib
+        COMMAND ${CMAKE_COMMAND} --build . --config Debug --target zlib
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${ZLIB_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target zlib
+        COMMAND ${CMAKE_COMMAND} --build . --config Release --target zlib
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/zlib
     )
     ADD_CUSTOM_TARGET(zlib DEPENDS ${ZLIB_LIBRARIES_DEBUG} ${ZLIB_LIBRARIES_RELEASE})
@@ -155,12 +155,12 @@ EXECUTE_PROCESS(
 IF (MSVC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${GLFW_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target glfw
+        COMMAND ${CMAKE_COMMAND} --build . --config Debug --target glfw
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${GLFW_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target glfw
+        COMMAND ${CMAKE_COMMAND} --build . --config Release --target glfw
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/glfw
     )
     ADD_CUSTOM_TARGET(glfw DEPENDS ${GLFW_LIBRARIES_DEBUG} ${GLFW_LIBRARIES_RELEASE})
@@ -208,12 +208,12 @@ EXECUTE_PROCESS(
 IF (MSVC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${FLATBUFFERS_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Debug --target flatbuffers
+        COMMAND ${CMAKE_COMMAND} --build . --config Debug --target flatbuffers
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${FLATBUFFERS_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_COMMAND} --build . --config=Release --target flatbuffers
+        COMMAND ${CMAKE_COMMAND} --build . --config Release --target flatbuffers
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/flatbuffers
     )
     ADD_CUSTOM_TARGET(flatbuffers
