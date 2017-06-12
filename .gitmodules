@@ -20,7 +20,7 @@
 	branch = tags/v1.2.11
 [submodule "depend/flatbuffers"]
 	path = depend/flatbuffers
-	url = https://github.com/WhoBrokeTheBuild/flatbuffers
+	url = https://github.com/WhoBrokeTheBuild/flatbuffers.git
 	branch = master
 [submodule "depend/glfw"]
 	path = depend/glfw
