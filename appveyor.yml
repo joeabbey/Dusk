@@ -27,7 +27,6 @@ clone_depth: 1
 init:
   - cmd: cmake --version
   - cmd: msbuild /version
-  - cmd: git submodule update --init
 
 clone_folder: C:\projects\Dusk
 
