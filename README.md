@@ -1,7 +1,7 @@
 # Dusk Game/Simulation Engine
 
 [![Build Status](https://travis-ci.org/WhoBrokeTheBuild/Dusk.svg?branch=master)](https://travis-ci.org/WhoBrokeTheBuild/Dusk)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/WhoBrokeTheBuild/Dusk)](https://ci.appveyor.com/project/WhoBrokeTheBuild/dusk)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/WhoBrokeTheBuild/Dusk?svg=true)](https://ci.appveyor.com/project/WhoBrokeTheBuild/dusk)
 
 ## Building
 
@@ -28,5 +28,5 @@ prefixed on the example name.
 
 Example:
 ```
-cmake --build . --target=run-Cube
+cmake --build . --target run-Cube
 ```
