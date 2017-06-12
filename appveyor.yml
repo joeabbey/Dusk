@@ -15,7 +15,6 @@ configuration:
 clone_depth: 1
 
 init:
-  - cmd: git config --global core.autocrlf input
   - cmd: cmake --version
   - cmd: msbuild /version
 
