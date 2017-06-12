@@ -20,9 +20,8 @@
 	branch = tags/v1.2.11
 [submodule "depend/flatbuffers"]
 	path = depend/flatbuffers
-	url = https://github.com/google/flatbuffers
-    #branch = tags/v1.6.0
-    branch = 86b505e41282 # the latest release has an issue building with clang
+	url = https://github.com/WhoBrokeTheBuild/flatbuffers
+	branch = master
 [submodule "depend/glfw"]
 	path = depend/glfw
 	url = https://github.com/glfw/glfw
