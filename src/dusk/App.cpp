@@ -436,7 +436,16 @@ void App::Run()
     }
 
     // Load the starting scene
-    PushScene(_startScene);
+    if (_startScene)
+    {
+        _sceneStack.push(_startScene);
+    }
+    else
+    {
+        DuskLogWarn("No Start Scene set, undefined behavior");
+    }
+
+    DispatchEvent(Event((EventID)App::Events::START));
 
     double frame_delay = 1.0;   // MS until next frame
     double frame_elap  = 0.0;   // MS since last frame
@@ -450,6 +459,11 @@ void App::Run()
 
     updateEventData.SetTargetFPS(TARGET_FPS);
     frame_delay = (1000.0 / TARGET_FPS) / 1000.0;
+
+    if (!_sceneStack.empty())
+    {
+        _sceneStack.top()->Start();
+    }
 
     double timeOffset = glfwGetTime();
     while (!glfwWindowShouldClose(_glfwWindow))
@@ -490,6 +504,8 @@ void App::Run()
             fps_elap = 0.0;
         }
     }
+
+    DispatchEvent(Event((EventID)App::Events::STOP));
 
     if (!_sceneStack.empty())
     {

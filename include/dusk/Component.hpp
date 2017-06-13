@@ -48,8 +48,8 @@ public:
     bool Load() override;
     void Free() override;
 
-    void Update(const Event& event);
-    void Render(const Event& event);
+    virtual void Update(const Event& event);
+    virtual void Render(const Event& event);
 
     inline Mesh * GetMesh() const { return _mesh; };
 

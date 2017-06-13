@@ -65,10 +65,22 @@ protected:
 
     bool AddRenderGroup(Material * material,
                         GLenum drawMode,
+                        const std::vector<glm::vec3>& verts,
+                        const std::vector<glm::vec3>& norms,
+                        const std::vector<glm::vec2>& txcds);
+
+    bool AddRenderGroup(Material * material,
+                        GLenum drawMode,
                         const std::vector<float>& verts,
                         const std::vector<float>& norms,
                         const std::vector<float>& txcds);
 
+    bool AddRenderGroup(Material * material,
+                        GLenum drawMode,
+                        unsigned int vertCount,
+                        const float * verts,
+                        const float * norms,
+                        const float * txcds);
 private:
 
     struct RenderGroup
@@ -112,6 +124,163 @@ private:
     //bool LoadDMF(const std::string& filename);
 
 }; // class FileMesh
+
+class PlaneMesh : public Mesh
+{
+public:
+
+    PlaneMesh(Shader * shader,
+              Material * material,
+              unsigned int rows, unsigned int cols,
+              float width, float height)
+        : Mesh(shader)
+        , _material(material)
+        , _rows(rows)
+        , _cols(cols)
+        , _width(width)
+        , _height(height)
+    { }
+
+    virtual ~PlaneMesh()
+    {
+        delete _material;
+    }
+
+    virtual bool Load() override;
+
+private:
+
+    Material * _material;
+
+    unsigned int _rows;
+    unsigned int _cols;
+
+    float _width;
+    float _height;
+
+};
+
+class CuboidMesh : public Mesh
+{
+public:
+
+    CuboidMesh(Shader * shader,
+               Material * material,
+               float width,
+               float height,
+               float depth)
+        : Mesh(shader)
+        , _material(material)
+        , _width(width)
+        , _height(height)
+        , _depth(depth)
+    { }
+
+    virtual bool Load() override;
+
+private:
+
+    Material * _material;
+
+    float _width;
+    float _height;
+    float _depth;
+
+}; // class CubeMesh
+
+class CubeMesh : public CuboidMesh
+{
+public:
+
+    CubeMesh(Shader * shader, Material * material, float size)
+        : CuboidMesh(shader, material, size, size, size)
+    { }
+
+}; // class CubeMesh
+
+class UVSphereMesh : public Mesh
+{
+public:
+
+    Material * _material;
+
+    UVSphereMesh(Shader * shader,
+                 Material * material,
+                 unsigned int rows,
+                 unsigned int cols,
+                 float radius)
+        : Mesh(shader)
+        , _material(material)
+        , _rows(rows)
+        , _cols(cols)
+        , _radius(radius)
+    { }
+
+    virtual bool Load() override;
+
+private:
+
+    unsigned int _rows;
+    unsigned int _cols;
+
+    float _radius;
+
+}; // class UVSphereMesh
+
+class IcoSphereMesh : public Mesh
+{
+public:
+
+    IcoSphereMesh(Shader * shader,
+                  Material * material,
+                  unsigned int subdivisions,
+                  float radius)
+        : Mesh(shader)
+        , _material(material)
+        , _subdivisions(subdivisions)
+        , _radius(radius)
+    { }
+
+    virtual bool Load() override;
+
+private:
+
+    Material * _material;
+
+    unsigned int _subdivisions;
+
+    float _radius;
+
+}; // class IcoSphereMesh
+
+class ConeMesh : public Mesh
+{
+public:
+
+    ConeMesh(Shader * shader,
+             Material * material,
+             unsigned int points,
+             float radius,
+             float height)
+        : Mesh(shader)
+        , _material(material)
+        , _points(points)
+        , _radius(radius)
+        , _height(height)
+    { }
+
+    virtual bool Load() override;
+
+private:
+
+    Material * _material;
+
+    unsigned int _points;
+
+    float _radius;
+    float _height;
+
+}; // class ConeMesh
 
 } // namespace dusk
 

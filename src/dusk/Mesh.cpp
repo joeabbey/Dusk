@@ -122,13 +122,38 @@ void Mesh::Render()
 }
 
 bool Mesh::AddRenderGroup(Material * material,
-                          GLenum drawMode,
-                          const std::vector<float>& verts,
-                          const std::vector<float>& norms,
-                          const std::vector<float>& txcds)
+                    GLenum drawMode,
+                    const std::vector<glm::vec3>& verts,
+                    const std::vector<glm::vec3>& norms,
+                    const std::vector<glm::vec2>& txcds)
+{
+    return AddRenderGroup(material, drawMode, verts.size(),
+                         (float *)verts.data(),
+                         (norms.empty() ? nullptr : (float *)norms.data()),
+                         (txcds.empty() ? nullptr : (float *)txcds.data()));
+}
+
+bool Mesh::AddRenderGroup(Material * material,
+                    GLenum drawMode,
+                    const std::vector<float>& verts,
+                    const std::vector<float>& norms,
+                    const std::vector<float>& txcds)
+{
+    return AddRenderGroup(material, drawMode, verts.size() / 3,
+                         verts.data(),
+                         (norms.empty() ? nullptr : norms.data()),
+                         (txcds.empty() ? nullptr : txcds.data()));
+}
+
+bool Mesh::AddRenderGroup(Material * material,
+                    GLenum drawMode,
+                    unsigned int vertCount,
+                    const float * verts,
+                    const float * norms,
+                    const float * txcds)
 {
     RenderGroup group;
-    group.vertCount = (GLsizei)verts.size();
+    group.vertCount = (GLsizei)vertCount;
     group.material = material;
     group.drawMode = drawMode;
 
@@ -138,22 +163,22 @@ bool Mesh::AddRenderGroup(Material * material,
     glGenBuffers(3, group.glVBOs);
 
     glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verts.size(), verts.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * vertCount, verts, GL_STATIC_DRAW);
     glVertexAttribPointer(Mesh::AttrID::VERTS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(Mesh::AttrID::VERTS);
 
-    if (!norms.empty())
+    if (norms)
     {
         glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * norms.size(), norms.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * vertCount, norms, GL_STATIC_DRAW);
         glVertexAttribPointer(Mesh::AttrID::NORMS, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glEnableVertexAttribArray(Mesh::AttrID::NORMS);
     }
 
-    if (!txcds.empty())
+    if (txcds)
     {
         glBindBuffer(GL_ARRAY_BUFFER, group.glVBOs[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * txcds.size(), txcds.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * vertCount, txcds, GL_STATIC_DRAW);
         glVertexAttribPointer(Mesh::AttrID::TXCDS, 2, GL_FLOAT, GL_FALSE, 0, NULL);
         glEnableVertexAttribArray(Mesh::AttrID::TXCDS);
     }
@@ -163,6 +188,12 @@ bool Mesh::AddRenderGroup(Material * material,
 
     _renderGroups.push_back(group);
     return true;
+}
+
+FileMesh::FileMesh(Shader * shader, const std::string& filename)
+    : Mesh(shader)
+    , _filename(filename)
+{
 }
 
 bool FileMesh::Load()
@@ -186,12 +217,6 @@ bool FileMesh::Load()
 
     DuskBenchEnd("FileMesh::Load()");
     return ret;
-}
-
-FileMesh::FileMesh(Shader * shader, const std::string& filename)
-    : Mesh(shader)
-    , _filename(filename)
-{
 }
 
 bool FileMesh::LoadOBJ(const std::string& filename)
@@ -301,6 +326,263 @@ bool FileMesh::LoadOBJ(const std::string& filename)
     }
 
     return true;
+}
+
+bool PlaneMesh::Load()
+{
+    float squareWidth = _width / (float)_cols;
+    float squareHeight = _height / (float)_rows;
+
+    int vertCount = (_rows * _cols) + (_rows - 1) * (_cols - 2);
+
+    std::vector<glm::vec3> tmpVerts;
+    std::vector<glm::vec3> tmpNorms;
+    std::vector<glm::vec2> tmpTxcds;
+    tmpVerts.resize(_rows * _cols);
+    tmpNorms.resize(_rows * _cols);
+    tmpTxcds.resize(_rows * _cols);
+
+    std::vector<glm::vec3> verts;
+    std::vector<glm::vec3> norms;
+    std::vector<glm::vec2> txcds;
+    verts.resize(vertCount);
+    norms.resize(vertCount);
+    txcds.resize(vertCount);
+
+    // Generate all possible points in a grid
+    int i = 0;
+    for (unsigned int row = 0; row < _rows; row++)
+    {
+        for (unsigned int col = 0; col < _cols; col++)
+        {
+            tmpVerts[i] = glm::vec3((float)col * squareWidth, 0.0f, (float)row * squareHeight);
+            tmpNorms[i] = glm::vec3(0.0f, 1.0f, 0.0f);
+            tmpTxcds[i] = glm::vec2((float)col / (float)_cols, (float)row / (float)_rows);
+            ++i;
+        }
+    }
+
+    // Build the triangle strip from the generated points
+    i = 0;
+    for (unsigned int row = 0; row < _rows - 1; row++)
+    {
+        if ((row & 1) == 0)
+        {
+            // even rows
+            for (unsigned int col = 0; col < _cols; col++)
+            {
+                verts[i] = tmpVerts[col + row * _cols];
+                norms[i] = tmpNorms[col + row * _cols];
+                txcds[i] = tmpTxcds[col + row * _cols];
+                ++i;
+                verts[i] = tmpVerts[col + (row + 1) * _cols];
+                norms[i] = tmpNorms[col + (row + 1) * _cols];
+                txcds[i] = tmpTxcds[col + (row + 1) * _cols];
+                ++i;
+            }
+        }
+        else
+        {
+            // odd rows
+            for (unsigned int col = _cols - 1; col > 0; col--)
+            {
+                verts[i] = tmpVerts[col + (row + 1) * _cols];
+                norms[i] = tmpNorms[col + (row + 1) * _cols];
+                txcds[i] = tmpTxcds[col + (row + 1) * _cols];
+                ++i;
+                verts[i] = tmpVerts[col - 1 + row * _cols];
+                norms[i] = tmpNorms[col - 1 + row * _cols];
+                txcds[i] = tmpTxcds[col - 1 + row * _cols];
+                ++i;
+            }
+        }
+    }
+
+    // If ending on an odd row, finish off the last point
+    if ((_rows & 1) && _rows > 2)
+    {
+        verts[i] = tmpVerts[(_rows - 1) * _cols];
+        norms[i] = tmpNorms[(_rows - 1) * _cols];
+        txcds[i] = tmpTxcds[(_rows - 1) * _cols];
+        ++i;
+    }
+
+    AddRenderGroup(_material, GL_TRIANGLE_STRIP, verts, norms, txcds);
+
+    return Mesh::Load();
+}
+
+bool CuboidMesh::Load()
+{
+    std::vector<glm::vec3> verts = {
+        glm::vec3(0,      0,       _depth),
+        glm::vec3(0,      _height, _depth),
+        glm::vec3(0,      _height, 0),
+
+        glm::vec3(0,      0,       _depth),
+        glm::vec3(0,      _height, 0),
+        glm::vec3(0,      0,       0),
+
+        glm::vec3(_width, 0,       0),
+        glm::vec3(_width, _height, 0),
+        glm::vec3(_width, _height, _depth),
+
+        glm::vec3(_width, 0,       0),
+        glm::vec3(_width, _height, _depth),
+        glm::vec3(_width, 0,       _depth),
+
+        glm::vec3(_width, 0,       0),
+        glm::vec3(_width, 0,       _depth),
+        glm::vec3(0,      0,       _depth),
+
+        glm::vec3(_width, 0,       0),
+        glm::vec3(0,      0,       _depth),
+        glm::vec3(0,      0,       0),
+
+        glm::vec3(_width, _height, _depth),
+        glm::vec3(_width, _height, 0),
+        glm::vec3(0,      _height, 0),
+
+        glm::vec3(_width, _height, _depth),
+        glm::vec3(0,      _height, 0),
+        glm::vec3(0,      _height, _depth),
+
+        glm::vec3(0,      0,       0),
+        glm::vec3(_width, _height, 0),
+        glm::vec3(_width, 0,       0),
+
+        glm::vec3(0,      0,       0),
+        glm::vec3(_width, _height, 0),
+        glm::vec3(_width, 0,       0),
+
+        glm::vec3(_width, 0,       _depth),
+        glm::vec3(_width, _height, _depth),
+        glm::vec3(0,      _height, _depth),
+
+        glm::vec3(_width, 0,       _depth),
+        glm::vec3(0,      _height, _depth),
+        glm::vec3(0,      0,       _depth),
+    };
+
+    // Center cube
+    glm::vec3 offset = { _width * 0.5f, _height * 0.5f, _depth * 0.5f };
+    for (auto& v : verts)
+    {
+        v -= offset;
+    }
+
+    std::vector<glm::vec3> norms = {
+        glm::vec3(-1, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(-1, 0, 0),
+        glm::vec3(-1, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(-1, 0, 0),
+        glm::vec3(1, 0, 0),  glm::vec3(1, 0, 0),  glm::vec3(1, 0, 0),
+        glm::vec3(1, 0, 0),  glm::vec3(1, 0, 0),  glm::vec3(1, 0, 0),
+        glm::vec3(0, -1, 0), glm::vec3(0, -1, 0), glm::vec3(0, -1, 0),
+        glm::vec3(0, -1, 0), glm::vec3(0, -1, 0), glm::vec3(0, -1, 0),
+        glm::vec3(0, 1, 0),  glm::vec3(0, 1, 0),  glm::vec3(0, 1, 0),
+        glm::vec3(0, 1, 0),  glm::vec3(0, 1, 0),  glm::vec3(0, 1, 0),
+        glm::vec3(0, 0, -1), glm::vec3(0, 0, -1), glm::vec3(0, 0, -1),
+        glm::vec3(0, 0, -1), glm::vec3(0, 0, -1), glm::vec3(0, 0, -1),
+        glm::vec3(0, 0, 1),  glm::vec3(0, 0, 1),  glm::vec3(0, 0, 1),
+        glm::vec3(0, 0, 1),  glm::vec3(0, 0, 1),  glm::vec3(0, 0, 1),
+    };
+
+    std::vector<glm::vec2> txcds = {
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+        glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(1, 1),
+        glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1),
+    };
+
+    AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
+
+    return Mesh::Load();
+}
+
+bool UVSphereMesh::Load()
+{
+    //mesh.vertices.emplace_back(0.0f, 1.0f, 0.0f);
+	//for (uint32_t j = 0; j < parallels - 1; ++j)
+	//{
+	//	double const polar = M_PI * double(j+1) / double(parallels);
+	//	double const sp = std::sin(polar);
+	//	double const cp = std::cos(polar);
+	//	for (uint32_t i = 0; i < meridians; ++i)
+	//	{
+	//		double const azimuth = 2.0 * M_PI * double(i) / double(meridians);
+	//		double const sa = std::sin(azimuth);
+	//		double const ca = std::cos(azimuth);
+	//		double const x = sp * ca;
+	//		double const y = cp;
+	//		double const z = sp * sa;
+	//		mesh.vertices.emplace_back(x, y, z);
+	//	}
+	//}
+    //mesh.vertices.emplace_back(0.0f, -1.0f, 0.0f);
+
+    return Mesh::Load();
+}
+
+bool IcoSphereMesh::Load()
+{
+
+    return Mesh::Load();
+}
+
+bool ConeMesh::Load()
+{
+    glm::vec3 tip = glm::vec3(0, _height * 0.5f, 0);
+    glm::vec3 base = glm::vec3(0, -_height * 0.5f, 0);
+
+    std::vector<glm::vec3> verts;
+    std::vector<glm::vec3> norms;
+    std::vector<glm::vec2> txcds;
+
+    float angleSlice = (M_PI * 2.0f) / (float)_points;
+
+    std::vector<glm::vec3> basePoints;
+    for (unsigned int i = 0; i < _points; ++i)
+    {
+        float x = cosf(angleSlice * (float)i) * _radius;
+        float z = sinf(angleSlice * (float)i) * _radius;
+        basePoints.push_back(glm::vec3(x, -_height * 0.5f, z));
+    }
+
+    for (unsigned int i = 0; i < _points; ++i)
+    {
+        verts.push_back(basePoints[i]);
+        verts.push_back(tip);
+        if (i != _points - 1)
+        {
+            verts.push_back(basePoints[i + 1]);
+        }
+        else
+        {
+            verts.push_back(basePoints[0]);
+        }
+
+        verts.push_back(basePoints[i]);
+        verts.push_back(base);
+        if (i != _points - 1)
+        {
+            verts.push_back(basePoints[i + 1]);
+        }
+        else
+        {
+            verts.push_back(basePoints[0]);
+        }
+    }
+
+    AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
+
+    return Mesh::Load();
 }
 
 } // namespace dusk

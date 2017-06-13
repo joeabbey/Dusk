@@ -22,6 +22,8 @@ public:
         _PREFIX = 0,
         UPDATE,
         RENDER,
+        START,
+        STOP,
     };
 
     DISALLOW_COPY_AND_ASSIGN(App);
@@ -32,6 +34,8 @@ public:
     virtual ~App();
 
     bool LoadConfig(const std::string& filename);
+
+    Shader * GetShader(const std::string& name) const { return _shaders.at(name); }
 
     Scene * GetScene() const { return (_sceneStack.empty() ? nullptr : _sceneStack.top()); };
     Scene * GetSceneByName(const std::string& name) const;

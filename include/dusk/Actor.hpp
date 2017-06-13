@@ -56,11 +56,11 @@ public:
     std::vector<Component *> GetComponentsByTag(const std::string& tag) { return _componentsByTag[tag]; }
     Component * GetComponentByName(const std::string& name) { return _componentsByName[name]; }
 
-    bool Load();
-    void Free();
+    virtual bool Load();
+    virtual void Free();
 
-    void Update(const Event& event);
-    void Render(const Event& event);
+    virtual void Update(const Event& event);
+    virtual void Render(const Event& event);
 
     static void InitScripting();
 

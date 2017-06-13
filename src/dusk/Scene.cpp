@@ -52,6 +52,26 @@ void Scene::AddCamera(Camera * camera)
     }
 }
 
+void Scene::AddActorTag(Actor * actor, const std::string& tag)
+{
+    if (_actorTags.find(tag) == _actorTags.end())
+    {
+        _actorTags.emplace(tag, std::vector<Actor *>());
+    }
+
+    _actorTags[tag].push_back(actor);
+}
+
+const std::vector<Actor *>& Scene::GetActorsByTag(const std::string& tag) const
+{
+    if (_actorTags.find(tag) == _actorTags.end())
+    {
+        return std::vector<Actor *>();
+    }
+
+    return _actorTags.at(tag);
+}
+
 void Scene::Start()
 {
     App * app = App::GetInst();
@@ -144,6 +164,8 @@ void Scene::Update(const Event& event)
 void Scene::Render(const Event& event)
 {
     if (!_loaded) return;
+
+    //DuskLogInfo("Rendering %s", GetName().c_str());
 
     DispatchEvent(Event((EventID)Events::RENDER));
 }

@@ -53,11 +53,11 @@ void Actor::SetScale(const glm::vec3& scale)
 glm::mat4 Actor::GetTransform()
 {
     _transform = _baseTransform;
-    _transform = glm::scale(_transform, _scale);
+    _transform = glm::translate(_transform, _position);
     _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     _transform = glm::rotate(_transform, _rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    _transform = glm::translate(_transform, _position);
+    _transform = glm::scale(_transform, _scale);
 
     return _transform;
 }
@@ -115,7 +115,7 @@ void Actor::Render(const Event& event)
 {
     if (!_loaded) return;
 
-    // DuskLogInfo("Rendering %s", GetName().c_str());
+    //DuskLogInfo("Rendering %s", GetName().c_str());
 
     DispatchEvent(Event((EventID)Events::RENDER));
 }

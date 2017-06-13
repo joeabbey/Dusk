@@ -49,6 +49,9 @@ public:
     void SetCamera(Camera * camera) { _camera = camera; }
     Camera * GetCamera() const { return _camera; };
 
+    void AddActorTag(Actor * actor, const std::string& tag);
+    const std::vector<Actor *>& GetActorsByTag(const std::string& tag) const;
+
     void Start();
     void Stop();
 
@@ -74,6 +77,8 @@ private:
     std::vector<std::string> _scripts;
     std::vector<Camera *> _cameras;
     std::vector<Actor *> _actors;
+
+    std::unordered_map<std::string, std::vector<Actor *>> _actorTags;
 
 }; // class Scene
 
