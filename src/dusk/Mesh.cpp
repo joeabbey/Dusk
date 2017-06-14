@@ -127,7 +127,7 @@ bool Mesh::AddRenderGroup(Material * material,
                     const std::vector<glm::vec3>& norms,
                     const std::vector<glm::vec2>& txcds)
 {
-    return AddRenderGroup(material, drawMode, verts.size(),
+    return AddRenderGroup(material, drawMode, (unsigned int)verts.size(),
                          (float *)verts.data(),
                          (norms.empty() ? nullptr : (float *)norms.data()),
                          (txcds.empty() ? nullptr : (float *)txcds.data()));
@@ -139,7 +139,7 @@ bool Mesh::AddRenderGroup(Material * material,
                     const std::vector<float>& norms,
                     const std::vector<float>& txcds)
 {
-    return AddRenderGroup(material, drawMode, verts.size() / 3,
+    return AddRenderGroup(material, drawMode, (unsigned int)verts.size() / 3,
                          verts.data(),
                          (norms.empty() ? nullptr : norms.data()),
                          (txcds.empty() ? nullptr : txcds.data()));
@@ -545,7 +545,7 @@ bool ConeMesh::Load()
     std::vector<glm::vec3> norms;
     std::vector<glm::vec2> txcds;
 
-    float angleSlice = (M_PI * 2.0f) / (float)_points;
+    float angleSlice = (glm::pi<float>() * 2.0f) / (float)_points;
 
     std::vector<glm::vec3> basePoints;
     for (unsigned int i = 0; i < _points; ++i)
