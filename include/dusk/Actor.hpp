@@ -7,6 +7,9 @@
 //#include <dusk/MeshComponent.hpp>
 //#include <dusk/ScriptComponent.hpp>
 
+#include <typeindex>
+#include <typeinfo>
+
 namespace dusk {
 
 class Scene;
@@ -51,10 +54,35 @@ public:
     glm::mat4 GetTransform();
 
     void AddComponent(Component * comp);
+    void AddComponentTag(Component * comp, const std::string& tag);
 
-    std::vector<Component *> GetComponents() { return _components; }
-    std::vector<Component *> GetComponentsByTag(const std::string& tag) { return _componentsByTag[tag]; }
-    Component * GetComponentByName(const std::string& name) { return _componentsByName[name]; }
+    template <typename T>
+    void AddComponentType(Component * comp)
+    {
+        _componentsByType[typeid(T)].push_back(comp);
+    }
+
+    std::vector<Component *> GetComponents()
+    {
+        return _components;
+    }
+
+    std::vector<Component *> GetComponentsByTag(const std::string& tag)
+    {
+        return _componentsByTag[tag];
+    }
+
+    template <typename T>
+    std::vector<T *> GetComponentsByType()
+    {
+        T ** data = (T **)_componentsByType[typeid(T)].data();
+        return std::vector<T *>(data, data + _componentsByType[typeid(T)].size());
+    }
+
+    Component * GetComponentByName(const std::string& name)
+    {
+        return _componentsByName[name];
+    }
 
     virtual bool Load();
     virtual void Free();
@@ -89,6 +117,7 @@ private:
 
     std::unordered_map<std::string, Component*> _componentsByName;
     std::unordered_map<std::string, std::vector<Component*>> _componentsByTag;
+    std::unordered_map<std::type_index, std::vector<Component*>> _componentsByType;
 
 }; // class Actor
 

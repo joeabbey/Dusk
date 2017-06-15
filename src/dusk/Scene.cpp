@@ -54,22 +54,22 @@ void Scene::AddCamera(Camera * camera)
 
 void Scene::AddActorTag(Actor * actor, const std::string& tag)
 {
-    if (_actorTags.find(tag) == _actorTags.end())
+    if (_actorsByTag.find(tag) == _actorsByTag.end())
     {
-        _actorTags.emplace(tag, std::vector<Actor *>());
+        _actorsByTag.emplace(tag, std::vector<Actor *>());
     }
 
-    _actorTags[tag].push_back(actor);
+    _actorsByTag[tag].push_back(actor);
 }
 
-const std::vector<Actor *>& Scene::GetActorsByTag(const std::string& tag) const
+std::vector<Actor *> Scene::GetActorsByTag(const std::string& tag) const
 {
-    if (_actorTags.find(tag) == _actorTags.end())
+    if (_actorsByTag.find(tag) == _actorsByTag.end())
     {
         return std::vector<Actor *>();
     }
 
-    return _actorTags.at(tag);
+    return _actorsByTag.at(tag);
 }
 
 void Scene::Start()

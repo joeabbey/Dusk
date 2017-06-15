@@ -38,6 +38,7 @@ MeshComponent::MeshComponent(Actor * parent, Mesh * mesh)
     : Component(parent)
     , _mesh(mesh)
 {
+    GetActor()->AddComponentType<MeshComponent>(this);
     GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
     GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
 }
@@ -91,6 +92,7 @@ CameraComponent::CameraComponent(Actor * parent, Camera * camera)
     : Component(parent)
     , _camera(camera)
 {
+    GetActor()->AddComponentType<CameraComponent>(this);
     GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &CameraComponent::Update);
 }
 
@@ -128,7 +130,9 @@ ScriptComponent::ScriptComponent(Actor * parent, const std::string& filename)
     : Component(parent)
     , _scriptHost()
     , _filename(filename)
-{ }
+{
+    GetActor()->AddComponentType<ScriptComponent>(this);
+}
 
 ScriptComponent::~ScriptComponent()
 {

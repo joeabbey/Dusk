@@ -50,7 +50,20 @@ public:
     Camera * GetCamera() const { return _camera; };
 
     void AddActorTag(Actor * actor, const std::string& tag);
-    const std::vector<Actor *>& GetActorsByTag(const std::string& tag) const;
+    std::vector<Actor *> GetActorsByTag(const std::string& tag) const;
+
+    template <typename T>
+    void AddActorType(Actor * actor)
+    {
+        _actorsByType[typeid(T)].push_back(actor);
+    }
+
+    template <typename T>
+    std::vector<T *> GetActorsByType()
+    {
+        T ** data = (T **)_actorsByType[typeid(T)].data();
+        return std::vector<T *>(data, data + _actorsByType[typeid(T)].size());
+    }
 
     void Start();
     void Stop();
@@ -78,7 +91,8 @@ private:
     std::vector<Camera *> _cameras;
     std::vector<Actor *> _actors;
 
-    std::unordered_map<std::string, std::vector<Actor *>> _actorTags;
+    std::unordered_map<std::string, std::vector<Actor *>> _actorsByTag;
+    std::unordered_map<std::type_index, std::vector<Actor*>> _actorsByType;
 
 }; // class Scene
 
