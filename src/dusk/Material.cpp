@@ -14,8 +14,7 @@ Material::Material(glm::vec4 ambient,
                    const std::string& diffuseMap,
                    const std::string& specularMap,
                    const std::string& bumpMap)
-    : _loaded(false)
-    , _ambient(ambient)
+    : _ambient(ambient)
     , _diffuse(diffuse)
     , _specular(specular)
     , _shininess(shininess)
@@ -27,19 +26,19 @@ Material::Material(glm::vec4 ambient,
 {
     if (!ambientMap.empty())
     {
-        _ambientMap = new Texture(ambientMap);
+        _ambientMap = std::make_shared<Texture>(ambientMap);
     }
     if (!diffuseMap.empty())
     {
-        _diffuseMap = new Texture(diffuseMap);
+        _diffuseMap = std::make_shared<Texture>(diffuseMap);
     }
     if (!specularMap.empty())
     {
-        _specularMap = new Texture(specularMap);
+        _specularMap = std::make_shared<Texture>(specularMap);
     }
     if (!bumpMap.empty())
     {
-        _bumpMap = new Texture(bumpMap);
+        _bumpMap = std::make_shared<Texture>(bumpMap);
     }
 
     _shaderData.ambient  = _ambient;
@@ -57,79 +56,15 @@ Material::Material(glm::vec4 ambient,
 
 Material::~Material()
 {
-    delete _ambientMap;
-    _ambientMap = nullptr;
-
-    delete _diffuseMap;
-    _diffuseMap = nullptr;
-
-    delete _specularMap;
-    _specularMap = nullptr;
-
-    delete _bumpMap;
-    _bumpMap = nullptr;
-}
-
-bool Material::Load(Shader * shader)
-{
-    bool retval = true;
-
-    shader->Bind();
-
-    if (_ambientMap)
-    {
-        DuskLogInfo("Loading ambient map");
-        retval &= _ambientMap->Load();
-    }
-    if (_diffuseMap)
-    {
-        DuskLogInfo("Loading diffuse map");
-        retval &= _diffuseMap->Load();
-    }
-    if (_specularMap)
-    {
-        DuskLogInfo("Loading specular map");
-        retval &= _specularMap->Load();
-    }
-    if (_bumpMap)
-    {
-        DuskLogInfo("Loading bump map");
-        retval &= _bumpMap->Load();
-    }
-
-    Shader::AddData("DuskMaterialData", &_shaderData, sizeof(MaterialData));
-    shader->BindData("DuskMaterialData");
-
-    _loaded = true;
-
-    return retval;
-}
-
-void Material::Free()
-{
-    if (_ambientMap)
-    {
-        _ambientMap->Free();
-    }
-    if (_diffuseMap)
-    {
-        _diffuseMap->Free();
-    }
-    if (_specularMap)
-    {
-        _specularMap->Free();
-    }
-    if (_bumpMap)
-    {
-        _bumpMap->Free();
-    }
-
-    _loaded = false;
 }
 
 void Material::Bind(Shader * shader)
 {
+    // TODO: Move
+    shader->Bind();
+
     Shader::UpdateData("DuskMaterialData", &_shaderData, sizeof(_shaderData));
+    shader->BindData("DuskMaterialData");
 
     glUniform1i(shader->GetUniformLocation("_AmbientMap"), Material::TextureID::AMBIENT);
     glUniform1i(shader->GetUniformLocation("_DiffuseMap"), Material::TextureID::DIFFUSE);

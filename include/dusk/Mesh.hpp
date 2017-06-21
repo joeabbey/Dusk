@@ -2,6 +2,8 @@
 #define DUSK_MESH_HPP
 
 #include <dusk/Config.hpp>
+
+#include <dusk/EventDispatcher.hpp>
 #include <dusk/Shader.hpp>
 #include <dusk/Material.hpp>
 
@@ -16,6 +18,8 @@ struct TransformData
 };
 
 class Mesh
+    : public std::enable_shared_from_this<Mesh>
+    , public IEventDispatcher
 {
 public:
 
@@ -31,6 +35,8 @@ public:
     Mesh(Shader * shader);
     virtual ~Mesh();
 
+    static std::shared_ptr<Mesh> Parse(nlohmann::json & data);
+
     void SetBaseTransform(const glm::mat4& baseTransform);
 
     void SetPosition(const glm::vec3& pos);
@@ -43,9 +49,6 @@ public:
     glm::vec3 GetScale() const { return _scale; }
 
     glm::mat4 GetTransform();
-
-    virtual bool Load();
-    virtual void Free();
 
     virtual void Update();
     virtual void Render();
@@ -63,19 +66,19 @@ public:
 
 protected:
 
-    bool AddRenderGroup(Material * material,
+    bool AddRenderGroup(std::shared_ptr<Material> material,
                         GLenum drawMode,
                         const std::vector<glm::vec3>& verts,
                         const std::vector<glm::vec3>& norms,
                         const std::vector<glm::vec2>& txcds);
 
-    bool AddRenderGroup(Material * material,
+    bool AddRenderGroup(std::shared_ptr<Material> material,
                         GLenum drawMode,
                         const std::vector<float>& verts,
                         const std::vector<float>& norms,
                         const std::vector<float>& txcds);
 
-    bool AddRenderGroup(Material * material,
+    bool AddRenderGroup(std::shared_ptr<Material> material,
                         GLenum drawMode,
                         unsigned int vertCount,
                         const float * verts,
@@ -85,7 +88,7 @@ private:
 
     struct RenderGroup
     {
-        Material * material;
+        std::shared_ptr<Material> material;
 
 		GLsizei vertCount;
 
@@ -114,8 +117,6 @@ public:
 
     FileMesh(Shader * shader, const std::string& filename);
 
-    virtual bool Load() override;
-
 private:
 
     std::string _filename;
@@ -130,27 +131,13 @@ class PlaneMesh : public Mesh
 public:
 
     PlaneMesh(Shader * shader,
-              Material * material,
+              std::shared_ptr<Material> material,
               unsigned int rows, unsigned int cols,
-              float width, float height)
-        : Mesh(shader)
-        , _material(material)
-        , _rows(rows)
-        , _cols(cols)
-        , _width(width)
-        , _height(height)
-    { }
-
-    virtual ~PlaneMesh()
-    {
-        delete _material;
-    }
-
-    virtual bool Load() override;
+              float width, float height);
 
 private:
 
-    Material * _material;
+    std::shared_ptr<Material> _material;
 
     unsigned int _rows;
     unsigned int _cols;
@@ -165,22 +152,14 @@ class CuboidMesh : public Mesh
 public:
 
     CuboidMesh(Shader * shader,
-               Material * material,
+               std::shared_ptr<Material> material,
                float width,
                float height,
-               float depth)
-        : Mesh(shader)
-        , _material(material)
-        , _width(width)
-        , _height(height)
-        , _depth(depth)
-    { }
-
-    virtual bool Load() override;
+               float depth);
 
 private:
 
-    Material * _material;
+    std::shared_ptr<Material> _material;
 
     float _width;
     float _height;
@@ -192,7 +171,7 @@ class CubeMesh : public CuboidMesh
 {
 public:
 
-    CubeMesh(Shader * shader, Material * material, float size)
+    CubeMesh(Shader * shader, std::shared_ptr<Material> material, float size)
         : CuboidMesh(shader, material, size, size, size)
     { }
 
@@ -202,10 +181,8 @@ class UVSphereMesh : public Mesh
 {
 public:
 
-    Material * _material;
-
     UVSphereMesh(Shader * shader,
-                 Material * material,
+                 std::shared_ptr<Material> material,
                  unsigned int rows,
                  unsigned int cols,
                  float radius)
@@ -214,11 +191,16 @@ public:
         , _rows(rows)
         , _cols(cols)
         , _radius(radius)
-    { }
-
-    virtual bool Load() override;
+    {
+        (void)_material;
+        (void)_rows;
+        (void)_cols;
+        (void)_radius;
+    }
 
 private:
+
+    std::shared_ptr<Material> _material;
 
     unsigned int _rows;
     unsigned int _cols;
@@ -232,20 +214,22 @@ class IcoSphereMesh : public Mesh
 public:
 
     IcoSphereMesh(Shader * shader,
-                  Material * material,
+                  std::shared_ptr<Material> material,
                   unsigned int subdivisions,
                   float radius)
         : Mesh(shader)
         , _material(material)
         , _subdivisions(subdivisions)
         , _radius(radius)
-    { }
-
-    virtual bool Load() override;
+    {
+        (void)_material;
+        (void)_subdivisions;
+        (void)_radius;
+    }
 
 private:
 
-    Material * _material;
+    std::shared_ptr<Material> _material;
 
     unsigned int _subdivisions;
 
@@ -258,22 +242,14 @@ class ConeMesh : public Mesh
 public:
 
     ConeMesh(Shader * shader,
-             Material * material,
+             std::shared_ptr<Material> material,
              unsigned int points,
              float radius,
-             float height)
-        : Mesh(shader)
-        , _material(material)
-        , _points(points)
-        , _radius(radius)
-        , _height(height)
-    { }
-
-    virtual bool Load() override;
+             float height);
 
 private:
 
-    Material * _material;
+    std::shared_ptr<Material> _material;
 
     unsigned int _points;
 

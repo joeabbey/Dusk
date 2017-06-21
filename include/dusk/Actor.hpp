@@ -21,24 +21,18 @@ public:
     enum class Events : EventID
     {
         _PREFIX = 200,
-        LOAD_START,
-        FREE_START,
-        LOAD_FINISHED,
-        FREE_FINISHED,
         UPDATE,
         RENDER,
     };
 
     DISALLOW_COPY_AND_ASSIGN(Actor);
 
-    Actor(Scene * parent, const std::string& name);
+    Actor(Scene * parent);
     virtual ~Actor();
 
-    bool IsLoaded() const { return _loaded; }
+    static std::unique_ptr<Actor> Parse(nlohmann::json & data, Scene * parent);
 
     Scene * GetScene() const { return _parent; };
-
-    std::string GetName() const { return _name; }
 
     void SetBaseTransform(const glm::mat4& baseTransform);
 
@@ -53,39 +47,7 @@ public:
 
     glm::mat4 GetTransform();
 
-    void AddComponent(Component * comp);
-    void AddComponentTag(Component * comp, const std::string& tag);
-
-    template <typename T>
-    void AddComponentType(Component * comp)
-    {
-        _componentsByType[typeid(T)].push_back(comp);
-    }
-
-    std::vector<Component *> GetComponents()
-    {
-        return _components;
-    }
-
-    std::vector<Component *> GetComponentsByTag(const std::string& tag)
-    {
-        return _componentsByTag[tag];
-    }
-
-    template <typename T>
-    std::vector<T *> GetComponentsByType()
-    {
-        T ** data = (T **)_componentsByType[typeid(T)].data();
-        return std::vector<T *>(data, data + _componentsByType[typeid(T)].size());
-    }
-
-    Component * GetComponentByName(const std::string& name)
-    {
-        return _componentsByName[name];
-    }
-
-    virtual bool Load();
-    virtual void Free();
+    void AddComponent(std::unique_ptr<Component> comp);
 
     virtual void Update(const Event& event);
     virtual void Render(const Event& event);
@@ -101,8 +63,6 @@ public:
 
 private:
 
-    bool _loaded = false;
-
     Scene * _parent;
 
     std::string _name;
@@ -113,11 +73,7 @@ private:
     glm::vec3 _rotation;
     glm::vec3 _scale;
 
-    std::vector<Component*> _components;
-
-    std::unordered_map<std::string, Component*> _componentsByName;
-    std::unordered_map<std::string, std::vector<Component*>> _componentsByTag;
-    std::unordered_map<std::type_index, std::vector<Component*>> _componentsByType;
+    std::vector<std::unique_ptr<Component>> _components;
 
 }; // class Actor
 

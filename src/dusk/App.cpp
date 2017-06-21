@@ -2,8 +2,8 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
-
 #include <fstream>
+#include <memory>
 
 namespace dusk {
 
@@ -16,17 +16,15 @@ App::App(int argc, char** argv)
     DuskLogInfo("Starting Application");
 
     _Inst = this;
+
+    CreateWindow();
 }
 
 App::~App()
 {
     DuskLogInfo("Stopping Application");
 
-    for (auto& it : _scenes)
-    {
-        delete it.second;
-    }
-    _scenes.clear();
+    DestroyWindow();
 }
 
 void App::CreateWindow()
@@ -47,6 +45,7 @@ void App::CreateWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_SAMPLES, 16);
+    glfwWindowHint(GLFW_VISIBLE, false);
     _glfwWindow = glfwCreateWindow(WindowWidth, WindowHeight, WindowTitle.c_str(), NULL, NULL);
     if (!_glfwWindow)
     {
@@ -122,227 +121,7 @@ bool App::ParseWindow(nlohmann::json& data)
 	return true;
 }
 
-bool App::ParseShader(nlohmann::json& data)
-{
-	std::vector<Shader::FileInfo> files;
-
-	for (auto& file : data["Files"])
-	{
-		GLenum shaderType = GL_INVALID_ENUM;
-
-		const std::string& type = file["Type"];
-		if ("Vertex" == type)
-		{
-			shaderType = GL_VERTEX_SHADER;
-		}
-		else if ("Fragment" == type)
-		{
-			shaderType = GL_FRAGMENT_SHADER;
-		}
-		else if ("Geometry" == type)
-		{
-			shaderType = GL_GEOMETRY_SHADER;
-		}
-		// Compute Shader, GL 4.3+
-		/*
-		else if ("Compute" == type)
-		{
-		shaderType = GL_COMPUTE_SHADER;
-		}
-		*/
-		// Tessellation Shaders, GL 4.0+
-		/*
-		else if ("TessControl" == type)
-		{
-		shaderType = GL_TESS_CONTROL_SHADER;
-		}
-		else if ("TessEvaluation" == type)
-		{
-		shaderType = GL_TESS_EVALUATION_SHADER;
-		}
-		*/
-
-		files.push_back({
-			shaderType,
-			file["File"],
-		});
-	}
-
-	Shader * shader = new Shader(data["Name"], data["BindData"], files);
-	_shaders.emplace(data["Name"], shader);
-	return true;
-}
-
-bool App::ParseScene(nlohmann::json& data)
-{
-	Scene * scene = new Scene(data["Name"].get<std::string>());
-
-	for (auto& script : data["Scripts"])
-	{
-        scene->AddScript(script.get<std::string>());
-	}
-
-	for (auto& camera : data["Cameras"])
-	{
-		Camera * tmp = ParseCamera(camera);
-		if (!tmp)
-		{
-			DuskLogError("Failed to parse camera");
-			delete scene;
-			return false;
-		}
-		scene->AddCamera(tmp);
-	}
-
-	for (auto& actor : data["Actors"])
-	{
-		Actor * tmp = ParseActor(actor, scene);
-		if (!tmp)
-		{
-			DuskLogError("Failed to parse actor");
-			delete scene;
-			return false;
-		}
-		scene->AddActor(tmp);
-	}
-
-	_scenes.emplace(data["Name"], scene);
-	return true;
-}
-
-Camera * App::ParseCamera(nlohmann::json& data)
-{
-	Camera * camera = new Camera();
-
-	if (data.find("Position") != data.end())
-	{
-		camera->SetPosition({
-			data["Position"][0], data["Position"][1], data["Position"][2]
-		});
-	}
-
-	if (data.find("Forward") != data.end())
-	{
-		camera->SetForward({
-			data["Forward"][0], data["Forward"][1], data["Forward"][2]
-		});
-	}
-
-	if (data.find("Up") != data.end())
-	{
-		camera->SetUp({
-			data["Up"][0], data["Up"][1], data["Up"][2]
-		});
-	}
-
-	if (data.find("FOV") != data.end())
-	{
-		camera->SetFOV(data["FOV"]);
-	}
-
-	if (data.find("Aspect") != data.end())
-	{
-		camera->SetAspect(data["Aspect"]);
-	}
-
-	if (data.find("Clip") != data.end())
-	{
-		camera->SetClip(data["Clip"][0], data["Clip"][1]);
-	}
-
-	return camera;
-}
-
-Mesh * App::ParseMesh(nlohmann::json& data)
-{
-	Mesh * mesh = nullptr;
-
-	Shader * shader = _shaders[data["Shader"]];
-
-	if (data.find("File") != data.end())
-	{
-		mesh = new FileMesh(shader, data["File"].get<std::string>());
-	}
-	else if (data.find("Shape") != data.end())
-	{
-		// TODO
-	}
-
-	return mesh;
-}
-
-Actor * App::ParseActor(nlohmann::json& data, Scene * scene)
-{
-	Actor * actor = new Actor(scene, data["Name"].get<std::string>());
-
-	DuskLogInfo("Read Actor %s", data["Name"].get<std::string>().c_str());
-
-	if (data.find("Position") != data.end())
-	{
-		actor->SetPosition({
-			data["Position"][0], data["Position"][1], data["Position"][2]
-		});
-	}
-
-	if (data.find("Rotation") != data.end())
-	{
-		actor->SetRotation({
-			data["Rotation"][0], data["Rotation"][1], data["Rotation"][2]
-		});
-	}
-
-	if (data.find("Scale") != data.end())
-	{
-		actor->SetScale({
-			data["Scale"][0], data["Scale"][1], data["Scale"][2]
-		});
-	}
-
-	for (auto& component : data["Components"])
-	{
-		Component * tmp = ParseComponent(component, actor);
-		if (!tmp)
-		{
-			DuskLogError("Failed to parse componenet");
-			delete actor;
-			return nullptr;
-		}
-		actor->AddComponent(tmp);
-	}
-
-	return actor;
-}
-
-Component * App::ParseComponent(nlohmann::json& data, Actor * actor)
-{
-	Component * component = nullptr;
-
-	const std::string& type = data["Type"];
-	if ("Mesh" == type)
-	{
-		Mesh * mesh = ParseMesh(data);
-		if (!mesh)
-		{
-			DuskLogError("Failed to parse mesh");
-			delete mesh;
-			return nullptr;
-		}
-		component = new MeshComponent(actor, mesh);
-	}
-	else if ("Script" == type)
-	{
-		component = new ScriptComponent(actor, data["File"].get<std::string>());
-	}
-	else if ("Camera" == type)
-	{
-		Camera * camera = ParseCamera(data);
-		component = new CameraComponent(actor, camera);
-	}
-
-	return component;
-}
-
-bool App::LoadConfig(const std::string& filename)
+void App::LoadConfig(const std::string& filename)
 {
     DuskBenchStart();
 
@@ -354,96 +133,50 @@ bool App::LoadConfig(const std::string& filename)
     if (!file.is_open())
     {
         DuskLogError("Failed to open config file '%s'", filename.c_str());
-        return false;
+        return;
     }
 
 	data << file;
 
-	bool retval = true;
-
 	if (data.find("Window") != data.end())
 	{
-		retval &= ParseWindow(data["Window"]);
+		ParseWindow(data["Window"]);
 	}
 
     for (auto& shader : data["Shaders"])
     {
-		retval &= ParseShader(shader);
+        _shaders.emplace(shader["ID"], Shader::Parse(shader));
     }
 
-    for (auto& scene : data["Scenes"])
+    if (data.find("DefaultScene") != data.end())
     {
-		retval &= ParseScene(scene);
-    }
+        std::string sceneFilename = data["DefaultScene"].get<std::string>();
+        DuskLogInfo("Loading scene config file '%s'", sceneFilename.c_str());
 
-    const auto& startScene = _scenes.find(data["StartScene"]);
-    if (startScene != _scenes.end())
-    {
-        _startScene = startScene->second;
+        std::ifstream sceneFile(sceneFilename);
+        nlohmann::json scene;
+
+        if (!sceneFile.is_open())
+        {
+            DuskLogError("Failed to open scene file '%s'", sceneFilename.c_str());
+            return;
+        }
+
+        scene << sceneFile;
+        _scene.reset(nullptr);
+        _scene = Scene::Parse(scene);
+
+        sceneFile.close();
     }
 
     file.close();
 
     DuskBenchEnd("App::LoadConfig()");
-    return retval;
-}
-
-Scene * App::GetSceneByName(const std::string& name) const
-{
-    if (_scenes.find(name) != _scenes.end())
-    {
-        return _scenes.at(name);
-    }
-    return nullptr;
-}
-
-void App::PushScene(Scene * scene)
-{
-    if (!scene) return;
-
-    if (!_sceneStack.empty())
-    {
-        _sceneStack.top()->Stop();
-    }
-
-    _sceneStack.push(scene);
-
-    DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
-    _sceneStack.top()->Start();
-}
-
-void App::PopScene()
-{
-    if (_sceneStack.empty()) return;
-
-    _sceneStack.top()->Stop();
-    _sceneStack.pop();
-
-    if (_sceneStack.empty()) return;
-
-    DuskLogInfo("Starting Scene %s", _sceneStack.top()->GetName().c_str());
-    _sceneStack.top()->Start();
 }
 
 void App::Run()
 {
-    CreateWindow();
-
-    // Load the shaders, now that we have a GL Context
-    for (const auto& it : _shaders)
-    {
-        it.second->Load();
-    }
-
-    // Load the starting scene
-    if (_startScene)
-    {
-        _sceneStack.push(_startScene);
-    }
-    else
-    {
-        DuskLogWarn("No Start Scene set, undefined behavior");
-    }
+    glfwShowWindow(_glfwWindow);
 
     DispatchEvent(Event((EventID)App::Events::START));
 
@@ -460,9 +193,9 @@ void App::Run()
     updateEventData.SetTargetFPS(TARGET_FPS);
     frame_delay = (1000.0 / TARGET_FPS) / 1000.0;
 
-    if (!_sceneStack.empty())
+    if (_scene)
     {
-        _sceneStack.top()->Start();
+        _scene->Start();
     }
 
     double timeOffset = glfwGetTime();
@@ -507,12 +240,12 @@ void App::Run()
 
     DispatchEvent(Event((EventID)App::Events::STOP));
 
-    if (!_sceneStack.empty())
+    if (!_scene)
     {
-        _sceneStack.top()->Stop();
+        _scene->Stop();
     }
 
-    DestroyWindow();
+    glfwHideWindow(_glfwWindow);
 }
 
 void App::InitScripting()
@@ -520,9 +253,6 @@ void App::InitScripting()
     ScriptHost::AddFunction("dusk_App_GetInst", &App::Script_GetInst);
     ScriptHost::AddFunction("dusk_App_LoadConfig", &App::Script_LoadConfig);
     ScriptHost::AddFunction("dusk_App_GetScene", &App::Script_GetScene);
-    ScriptHost::AddFunction("dusk_App_GetSceneByName", &App::Script_GetSceneByName);
-    ScriptHost::AddFunction("dusk_App_PushScene", &App::Script_PushScene);
-    ScriptHost::AddFunction("dusk_App_PopScene", &App::Script_PopScene);
 
     IEventDispatcher::InitScripting();
 
@@ -542,10 +272,9 @@ int App::Script_LoadConfig(lua_State * L)
 {
     App * app = (App *)lua_tointeger(L, 1);
 
-    bool result = app->LoadConfig(std::string(lua_tostring(L, 2)));
-    lua_pushboolean(L, result);
+    app->LoadConfig(std::string(lua_tostring(L, 2)));
 
-    return 1;
+    return 0;
 }
 
 int App::Script_GetScene(lua_State * L)
@@ -555,35 +284,6 @@ int App::Script_GetScene(lua_State * L)
     lua_pushinteger(L, (ptrdiff_t)app->GetScene());
 
     return 1;
-}
-
-int App::Script_GetSceneByName(lua_State * L)
-{
-    App * app = (App *)lua_tointeger(L, 1);
-    std::string name = lua_tostring(L, 2);
-
-    lua_pushinteger(L, (ptrdiff_t)app->GetSceneByName(name));
-
-    return 1;
-}
-
-int App::Script_PushScene(lua_State * L)
-{
-    App * app = (App *)lua_tointeger(L, 1);
-    Scene * scene = (Scene *)lua_tointeger(L, 2);
-
-    app->PushScene(scene);
-
-    return 0;
-}
-
-int App::Script_PopScene(lua_State * L)
-{
-    App * app = (App *)lua_tointeger(L, 1);
-
-    app->PopScene();
-
-    return 0;
 }
 
 void App::GLFW_ErrorCallback(int code, const char * message)

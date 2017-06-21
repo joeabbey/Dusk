@@ -5,12 +5,8 @@ local Actor = Dusk.Class(Dusk.IEventDispatcher, function(self, ptr)
 end)
 
 Actor.Events = {
-    LOAD_START    = 201,
-    FREE_START    = 202,
-    LOAD_FINISHED = 203,
-    FREE_FINISHED = 204,
-    UPDATE        = 205,
-    RENDER        = 206
+    UPDATE = 201,
+    RENDER = 202
 }
 
 function Actor:GetPosition()

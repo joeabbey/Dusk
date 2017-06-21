@@ -5,29 +5,55 @@
 
 namespace dusk {
 
-Actor::Actor(Scene * parent, const std::string& name)
+Actor::Actor(Scene * parent)
     : _parent(parent)
-    , _name(name)
     , _baseTransform(1)
     , _transform(1)
     , _position(0)
     , _rotation(0)
     , _scale(1)
-    , _components()
 {
     GetScene()->AddEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
     GetScene()->AddEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+}
+
+std::unique_ptr<Actor> Actor::Parse(nlohmann::json & data, Scene * parent)
+{
+    Actor * actor = new Actor(parent);
+
+	if (data.find("Position") != data.end())
+	{
+		actor->SetPosition({
+			data["Position"][0], data["Position"][1], data["Position"][2]
+		});
+	}
+
+	if (data.find("Rotation") != data.end())
+	{
+		actor->SetRotation({
+			data["Rotation"][0], data["Rotation"][1], data["Rotation"][2]
+		});
+	}
+
+	if (data.find("Scale") != data.end())
+	{
+		actor->SetScale({
+			data["Scale"][0], data["Scale"][1], data["Scale"][2]
+		});
+	}
+
+	for (auto& component : data["Components"])
+	{
+        actor->AddComponent(Component::Parse(component, actor));
+	}
+
+    return std::unique_ptr<Actor>(actor);
 }
 
 Actor::~Actor()
 {
     GetScene()->RemoveEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
     GetScene()->RemoveEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
-
-    for (Component * comp : _components)
-    {
-        delete comp;
-    }
 }
 
 void Actor::SetBaseTransform(const glm::mat4& baseTransform)
@@ -62,61 +88,18 @@ glm::mat4 Actor::GetTransform()
     return _transform;
 }
 
-void Actor::AddComponent(Component * comp)
+void Actor::AddComponent(std::unique_ptr<Component> comp)
 {
-    _components.push_back(comp);
-}
-
-bool Actor::Load()
-{
-    DuskBenchStart();
-
-    DispatchEvent(Event((EventID)Events::LOAD_START));
-
-    for (Component * comp : _components)
-    {
-        if (!comp->Load())
-        {
-            DuskLogError("Failed to load actor '%s'", GetName().c_str());
-            return false;
-        }
-    }
-
-    _loaded = true;
-
-    DispatchEvent(Event((EventID)Events::LOAD_FINISHED));
-
-    DuskBenchEnd("Actor::Load()");
-    return true;
-}
-
-void Actor::Free()
-{
-    DispatchEvent(Event((EventID)Events::FREE_START));
-
-    for (Component * comp : _components)
-    {
-        comp->Free();
-    }
-
-    _loaded = false;
-
-    DispatchEvent(Event((EventID)Events::FREE_FINISHED));
+    _components.push_back(std::move(comp));
 }
 
 void Actor::Update(const Event& event)
 {
-    if (!_loaded) return;
-
     DispatchEvent(Event((EventID)Events::UPDATE, event.GetData()));
 }
 
 void Actor::Render(const Event& event)
 {
-    if (!_loaded) return;
-
-    //DuskLogInfo("Rendering %s", GetName().c_str());
-
     DispatchEvent(Event((EventID)Events::RENDER));
 }
 

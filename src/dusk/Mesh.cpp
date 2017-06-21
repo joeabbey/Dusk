@@ -15,11 +15,35 @@ Mesh::Mesh(Shader * shader)
     , _rotation(0)
     , _scale(1)
     , _renderGroups()
-{ }
+{
+    // Add to cache
+    // Add to index
+
+    Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
+    _shader->BindData("DuskTransformData");
+}
 
 Mesh::~Mesh()
 {
-    Free();
+}
+
+std::shared_ptr<Mesh> Mesh::Parse(nlohmann::json & data)
+{
+    std::shared_ptr<Mesh> mesh;
+
+    App * app = App::GetInst();
+    Shader * shader = app->GetShader(data["Shader"]);
+
+    if (data.find("File") != data.end())
+    {
+    	mesh.reset(new FileMesh(shader, data["File"].get<std::string>()));
+    }
+    else if (data.find("Shape") != data.end())
+    {
+    	// TODO
+    }
+
+    return mesh;
 }
 
 void Mesh::SetBaseTransform(const glm::mat4& baseTransform)
@@ -54,42 +78,6 @@ glm::mat4 Mesh::GetTransform()
     return _transform;
 }
 
-bool Mesh::Load()
-{
-    DuskBenchStart();
-
-    bool ret = true;
-
-    for (RenderGroup& group : _renderGroups)
-    {
-        if (group.material)
-        {
-            ret &= group.material->Load(_shader);
-        }
-    }
-
-    Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
-    _shader->BindData("DuskTransformData");
-
-    DuskBenchEnd("Mesh::Load()");
-    return ret;
-}
-
-void Mesh::Free()
-{
-    for (RenderGroup& group : _renderGroups)
-    {
-        if (group.material)
-        {
-            group.material->Free();
-        }
-        delete group.material;
-        glDeleteVertexArrays(1, &group.glVAO);
-        glDeleteBuffers(3, group.glVBOs);
-    }
-    _renderGroups.clear();
-}
-
 void Mesh::Update()
 {
 }
@@ -99,7 +87,7 @@ void Mesh::Render()
     _shader->Bind();
 
     // TODO: Move camera somewhere else
-    Camera * camera = App::GetInst()->GetScene()->GetCamera();
+    Camera * camera = App::GetInst()->GetScene()->GetCurrentCamera();
 
     _shaderData.model = GetTransform();
     _shaderData.view = camera->GetView();
@@ -121,11 +109,11 @@ void Mesh::Render()
     glBindVertexArray(0);
 }
 
-bool Mesh::AddRenderGroup(Material * material,
-                    GLenum drawMode,
-                    const std::vector<glm::vec3>& verts,
-                    const std::vector<glm::vec3>& norms,
-                    const std::vector<glm::vec2>& txcds)
+bool Mesh::AddRenderGroup(std::shared_ptr<Material> material,
+                          GLenum drawMode,
+                          const std::vector<glm::vec3>& verts,
+                          const std::vector<glm::vec3>& norms,
+                          const std::vector<glm::vec2>& txcds)
 {
     return AddRenderGroup(material, drawMode, (unsigned int)verts.size(),
                          (float *)verts.data(),
@@ -133,11 +121,11 @@ bool Mesh::AddRenderGroup(Material * material,
                          (txcds.empty() ? nullptr : (float *)txcds.data()));
 }
 
-bool Mesh::AddRenderGroup(Material * material,
-                    GLenum drawMode,
-                    const std::vector<float>& verts,
-                    const std::vector<float>& norms,
-                    const std::vector<float>& txcds)
+bool Mesh::AddRenderGroup(std::shared_ptr<Material> material,
+                          GLenum drawMode,
+                          const std::vector<float>& verts,
+                          const std::vector<float>& norms,
+                          const std::vector<float>& txcds)
 {
     return AddRenderGroup(material, drawMode, (unsigned int)verts.size() / 3,
                          verts.data(),
@@ -145,12 +133,12 @@ bool Mesh::AddRenderGroup(Material * material,
                          (txcds.empty() ? nullptr : txcds.data()));
 }
 
-bool Mesh::AddRenderGroup(Material * material,
-                    GLenum drawMode,
-                    unsigned int vertCount,
-                    const float * verts,
-                    const float * norms,
-                    const float * txcds)
+bool Mesh::AddRenderGroup(std::shared_ptr<Material> material,
+                          GLenum drawMode,
+                          unsigned int vertCount,
+                          const float * verts,
+                          const float * norms,
+                          const float * txcds)
 {
     RenderGroup group;
     group.vertCount = (GLsizei)vertCount;
@@ -194,29 +182,17 @@ FileMesh::FileMesh(Shader * shader, const std::string& filename)
     : Mesh(shader)
     , _filename(filename)
 {
-}
-
-bool FileMesh::Load()
-{
-    DuskBenchStart();
     DuskLogInfo("Loading model from '%s'", _filename.c_str());
-
-    bool ret = true;
 
     std::string ext = GetExtension(_filename);
     if (ext == "obj")
     {
-        ret &= LoadOBJ(_filename);
+        LoadOBJ(_filename);
     }
     else if (ext == "dmf" || ext == "dmfz")
     {
-        //ret = LoadDMF(_filename);
+        //LoadDMF(_filename);
     }
-
-    ret &= Mesh::Load();
-
-    DuskBenchEnd("FileMesh::Load()");
-    return ret;
 }
 
 bool FileMesh::LoadOBJ(const std::string& filename)
@@ -295,7 +271,7 @@ bool FileMesh::LoadOBJ(const std::string& filename)
             index += fv;
         }
 
-        Material * material = nullptr;
+        std::shared_ptr<Material> material;
         if (mat)
         {
             std::string ambient_texname = (mat->ambient_texname.empty()
@@ -311,7 +287,7 @@ bool FileMesh::LoadOBJ(const std::string& filename)
                 ? std::string()
                 : dirname + mat->bump_texname);
 
-            material = new Material(
+            material.reset(new Material(
                 glm::vec4(mat->ambient[0], mat->ambient[1], mat->ambient[2], 1.0f),
                 glm::vec4(mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.0f),
                 glm::vec4(mat->specular[0], mat->specular[1], mat->specular[2], 1.0f),
@@ -320,7 +296,7 @@ bool FileMesh::LoadOBJ(const std::string& filename)
                 diffuse_texname,
                 specular_texname,
                 bump_texname
-            );
+            ));
         }
         AddRenderGroup(material, GL_TRIANGLES, verts, norms, txcds);
     }
@@ -328,7 +304,16 @@ bool FileMesh::LoadOBJ(const std::string& filename)
     return true;
 }
 
-bool PlaneMesh::Load()
+PlaneMesh::PlaneMesh(Shader * shader,
+                     std::shared_ptr<Material> material,
+                     unsigned int rows, unsigned int cols,
+                     float width, float height)
+    : Mesh(shader)
+    , _material(material)
+    , _rows(rows)
+    , _cols(cols)
+    , _width(width)
+    , _height(height)
 {
     float squareWidth = _width / (float)_cols;
     float squareHeight = _height / (float)_rows;
@@ -408,11 +393,18 @@ bool PlaneMesh::Load()
     }
 
     AddRenderGroup(_material, GL_TRIANGLE_STRIP, verts, norms, txcds);
-
-    return Mesh::Load();
 }
 
-bool CuboidMesh::Load()
+CuboidMesh::CuboidMesh(Shader * shader,
+                       std::shared_ptr<Material> material,
+                       float width,
+                       float height,
+                       float depth)
+    : Mesh(shader)
+    , _material(material)
+    , _width(width)
+    , _height(height)
+    , _depth(depth)
 {
     std::vector<glm::vec3> verts = {
         glm::vec3(0,      0,       _depth),
@@ -502,12 +494,10 @@ bool CuboidMesh::Load()
     };
 
     AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
-
-    return Mesh::Load();
 }
 
-bool UVSphereMesh::Load()
-{
+//bool UVSphereMesh::Load()
+//{
     //mesh.vertices.emplace_back(0.0f, 1.0f, 0.0f);
 	//for (uint32_t j = 0; j < parallels - 1; ++j)
 	//{
@@ -527,16 +517,19 @@ bool UVSphereMesh::Load()
 	//}
     //mesh.vertices.emplace_back(0.0f, -1.0f, 0.0f);
 
-    return Mesh::Load();
-}
+//    return Mesh::Load();
+//}
 
-bool IcoSphereMesh::Load()
-{
-
-    return Mesh::Load();
-}
-
-bool ConeMesh::Load()
+ConeMesh::ConeMesh(Shader * shader,
+                   std::shared_ptr<Material> material,
+                   unsigned int points,
+                   float radius,
+                   float height)
+    : Mesh(shader)
+    , _material(material)
+    , _points(points)
+    , _radius(radius)
+    , _height(height)
 {
     glm::vec3 tip = glm::vec3(0, _height * 0.5f, 0);
     glm::vec3 base = glm::vec3(0, -_height * 0.5f, 0);
@@ -581,8 +574,6 @@ bool ConeMesh::Load()
     }
 
     AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
-
-    return Mesh::Load();
 }
 
 } // namespace dusk

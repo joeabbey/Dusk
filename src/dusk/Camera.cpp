@@ -21,7 +21,52 @@ Camera::Camera(float fov /*= 45.0f*/, glm::vec3 up /*= glm::vec3(0, 1, 0)*/, glm
     , _velocity(0)
 {
     // TODO: Something?
-    SetAspect((float)App::GetInst()->WindowWidth, (float)App::GetInst()->WindowHeight);
+    int width, height;
+    glfwGetFramebufferSize(App::GetInst()->GetGLFWWindow(), &width, &height);
+    SetAspect((float)width, (float)height);
+}
+
+std::unique_ptr<Camera> Camera::Parse(nlohmann::json & data)
+{
+	std::unique_ptr<Camera> camera(new Camera());
+
+	if (data.find("Position") != data.end())
+	{
+		camera->SetPosition({
+			data["Position"][0], data["Position"][1], data["Position"][2]
+		});
+	}
+
+	if (data.find("Forward") != data.end())
+	{
+		camera->SetForward({
+			data["Forward"][0], data["Forward"][1], data["Forward"][2]
+		});
+	}
+
+	if (data.find("Up") != data.end())
+	{
+		camera->SetUp({
+			data["Up"][0], data["Up"][1], data["Up"][2]
+		});
+	}
+
+	if (data.find("FOV") != data.end())
+	{
+		camera->SetFOV(data["FOV"]);
+	}
+
+	if (data.find("Aspect") != data.end())
+	{
+		camera->SetAspect(data["Aspect"]);
+	}
+
+	if (data.find("Clip") != data.end())
+	{
+		camera->SetClip(data["Clip"][0], data["Clip"][1]);
+	}
+
+	return camera;
 }
 
 void Camera::SetBaseTransform(const glm::mat4& baseTransform)

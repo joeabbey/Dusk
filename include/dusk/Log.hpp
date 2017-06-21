@@ -21,6 +21,7 @@ namespace dusk {
         LOG_WARN,
         LOG_ERROR,
         LOG_PERF,
+        LOG_VERBOSE,
     };
 
     static inline void Log(LogLevel level, const char * format, ...)
@@ -58,6 +59,10 @@ namespace dusk {
             imColor = ImColor(139, 0, 139);
             fgColor = 35; // Magenta
             break;
+        case LOG_VERBOSE:
+            imColor = ImColor(0, 255, 0);
+            fgColor = 32; // Green
+            break;
         }
 
         UI::Log(imColor, buffer);
@@ -73,26 +78,24 @@ namespace dusk {
         #endif
     }
 
-#if defined(NDEBUG)
-#   define DuskLogInfo(M, ...)  do { } while(0)
-#   define DuskLogWarn(M, ...)  do { } while(0)
-#   define DuskLogError(M, ...) do { } while(0)
-#   define DuskLogPerf(M, ...)  do { } while(0)
+#ifndef DUSK_VERBOSE_LOGGING
+#   define DuskLogVerbose(M, ...)  do { } while(0)
 #else
-
-#   define DuskLogInfo(M, ...) \
-        do { dusk::Log(dusk::LogLevel::LOG_INFO, "[INFO](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
-
-#   define DuskLogWarn(M, ...) \
-        do { dusk::Log(dusk::LogLevel::LOG_WARN, "[WARN](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
-
-#   define DuskLogError(M, ...) \
-        do { dusk::Log(dusk::LogLevel::LOG_ERROR, "[ERROR](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
-
-#   define DuskLogPerf(M, ...) \
-        do { dusk::Log(dusk::LogLevel::LOG_PERF, "[PERF](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
-
+#   define DuskLogVerbose(M, ...) \
+        do { dusk::Log(dusk::LogLevel::LOG_VERBOSE, "[VERBOSE](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 #endif
+
+#define DuskLogInfo(M, ...) \
+    do { dusk::Log(dusk::LogLevel::LOG_INFO, "[INFO](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+
+#define DuskLogWarn(M, ...) \
+    do { dusk::Log(dusk::LogLevel::LOG_WARN, "[WARN](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+
+#define DuskLogError(M, ...) \
+    do { dusk::Log(dusk::LogLevel::LOG_ERROR, "[ERROR](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+
+#define DuskLogPerf(M, ...) \
+    do { dusk::Log(dusk::LogLevel::LOG_PERF, "[PERF](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
 // clang-format on
 

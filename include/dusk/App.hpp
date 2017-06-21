@@ -33,14 +33,11 @@ public:
     explicit App(int argc, char** argv);
     virtual ~App();
 
-    bool LoadConfig(const std::string& filename);
+    void LoadConfig(const std::string& filename);
 
-    Shader * GetShader(const std::string& name) const { return _shaders.at(name); }
+    Shader * GetShader(const std::string& name) const { return _shaders.at(name).get(); }
 
-    Scene * GetScene() const { return (_sceneStack.empty() ? nullptr : _sceneStack.top()); };
-    Scene * GetSceneByName(const std::string& name) const;
-    void PushScene(Scene * scene);
-    void PopScene();
+    Scene * GetScene() const { return _scene.get(); };
 
     void Run();
 
@@ -53,9 +50,8 @@ public:
     static int Script_GetInst(lua_State * L);
     static int Script_LoadConfig(lua_State * L);
     static int Script_GetScene(lua_State * L);
-    static int Script_GetSceneByName(lua_State * L);
-    static int Script_PushScene(lua_State * L);
-    static int Script_PopScene(lua_State * L);
+
+    GLFWwindow * GetGLFWWindow() const { return _glfwWindow; }
 
     static void GLFW_ErrorCallback(int code, const char * message);
     static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -68,24 +64,15 @@ private:
     static App * _Inst;
 
 	bool ParseWindow(nlohmann::json& data);
-	bool ParseShader(nlohmann::json& data);
-	bool ParseScene(nlohmann::json & data);
-	Camera * ParseCamera(nlohmann::json& data);
-	Mesh * ParseMesh(nlohmann::json& data);
-	Actor * ParseActor(nlohmann::json& data, Scene * scene);
-	Component * ParseComponent(nlohmann::json& data, Actor * actor);
 
     void CreateWindow();
     void DestroyWindow();
 
     const float TARGET_FPS = 60.0f;
 
-    // TODO: Move
-    std::unordered_map<std::string, Shader *> _shaders;
+    std::unordered_map<std::string, std::unique_ptr<Shader>> _shaders;
 
-    Scene * _startScene = nullptr;
-    std::stack<Scene *> _sceneStack;
-    std::unordered_map<std::string, Scene *> _scenes;
+    std::unique_ptr<Scene> _scene;
 
     GLFWwindow * _glfwWindow;
 

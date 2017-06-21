@@ -20,15 +20,10 @@ public:
         std::string filename;
     };
 
-    Shader(const std::string& name, const std::vector<std::string>& data, const std::vector<FileInfo>& files);
+    static std::unique_ptr<Shader> Parse(nlohmann::json & data);
+
+    Shader(const std::vector<std::string>& data, const std::vector<FileInfo>& files);
     virtual ~Shader();
-
-    bool IsLoaded() const { return _loaded; }
-
-    std::string GetName() const { return _name; }
-
-    bool Load();
-    void Free();
 
     void Bind();
 
@@ -38,8 +33,6 @@ public:
 
     void BindData(const std::string& name);
 
-    static void DefineData(const std::string& name, size_t size);
-
     static void AddData(const std::string& name, void * data, size_t size)
         { UpdateData(name, data, size); }
 
@@ -47,24 +40,23 @@ public:
 
 private:
 
+
     struct ShaderData
     {
         GLuint glUBO;
         size_t size;
         int index;
-        bool loaded;
     };
 
     static std::unordered_map<std::string, ShaderData> _DataRecords;
     static int _MaxDataIndex;
 
-    bool _loaded;
-    std::string _name;
     std::vector<FileInfo> _files;
 
-    std::unordered_map<std::string, bool> _boundData;
+    std::vector<std::string> _boundData;
     GLuint _glProgram;
 
+    bool LoadProgram();
     GLuint LoadShader(const std::string& filename, GLuint type);
 
     static bool LoadFile(const std::string& filename, std::string& buffer);

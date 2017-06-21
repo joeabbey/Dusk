@@ -10,6 +10,23 @@ std::unordered_map<std::string, lua_CFunction> ScriptHost::_Functions;
 ScriptHost::ScriptHost()
 {
     _ScriptHosts.push_back(this);
+
+    _luaState = luaL_newstate();
+    if (!_luaState)
+    {
+        DuskLogError("Failed to create Lua state");
+        return;
+    }
+
+    luaL_openlibs(_luaState);
+
+    for (const auto& it : _Functions)
+    {
+        lua_register(_luaState, it.first.c_str(), it.second);
+    }
+    
+    // Load Dusk-Lua library
+    RunFile("assets/scripts/dusk/Dusk.lua");
 }
 
 ScriptHost::~ScriptHost()
@@ -20,40 +37,12 @@ ScriptHost::~ScriptHost()
         std::swap(*it, _ScriptHosts.back());
         _ScriptHosts.pop_back();
     }
-}
 
-bool ScriptHost::Load()
-{
-    _luaState = luaL_newstate();
-    if (!_luaState)
-    {
-        DuskLogError("Failed to create Lua state");
-        return false;
-    }
-
-    luaL_openlibs(_luaState);
-
-    for (const auto& it : _Functions)
-    {
-        lua_register(_luaState, it.first.c_str(), it.second);
-    }
-    // Load Dusk-Lua library
-    RunFile("assets/scripts/dusk/Dusk.lua");
-
-    _loaded = true;
-
-    return true;
-}
-
-void ScriptHost::Free()
-{
     if (_luaState)
     {
         lua_close(_luaState);
         _luaState = nullptr;
     }
-
-    _loaded = false;
 }
 
 bool ScriptHost::RunFile(const std::string& filename)

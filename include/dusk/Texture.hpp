@@ -3,11 +3,15 @@
 
 #include <dusk/Config.hpp>
 
+#include <dusk/EventDispatcher.hpp>
+#include <memory>
 #include <string>
 
 namespace dusk {
 
 class Texture
+    : public std::enable_shared_from_this<Texture>
+    , public IEventDispatcher
 {
 public:
 

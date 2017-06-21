@@ -14,6 +14,8 @@ public:
     Camera(float fov = 45.0f, glm::vec3 up = glm::vec3(0, 1, 0), glm::vec2 clip = glm::vec2(0.1f, 1000.0f));
     virtual ~Camera() = default;
 
+    static std::unique_ptr<Camera> Parse(nlohmann::json & data);
+
     void SetBaseTransform(const glm::mat4& baseTransform);
 
     glm::mat4 GetView();

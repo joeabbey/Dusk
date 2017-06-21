@@ -8,17 +8,7 @@ namespace dusk {
 Texture::Texture(const std::string& filename)
     : _filename(filename)
     , _glID(0)
-{ }
-
-Texture::~Texture()
 {
-    Free();
-}
-
-bool Texture::Load()
-{
-    DuskBenchStart();
-
     DuskLogInfo("Loading image '%s'", _filename.c_str());
 
     // OpenGL is weird
@@ -57,9 +47,7 @@ bool Texture::Load()
     image = nullptr;
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    DuskBenchEnd("Texture::Load()");
-    return true;
+    return;
 
 error:
 
@@ -70,14 +58,11 @@ error:
     _glID = 0;
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    return false;
 }
 
-void Texture::Free()
+Texture::~Texture()
 {
     glDeleteTextures(1, &_glID);
-    _glID = 0;
 }
 
 void Texture::Bind()

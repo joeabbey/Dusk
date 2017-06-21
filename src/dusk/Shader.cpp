@@ -10,34 +10,84 @@ namespace dusk {
 std::unordered_map<std::string, Shader::ShaderData> Shader::_DataRecords;
 int Shader::_MaxDataIndex = 0;
 
-Shader::Shader(const std::string& name, const std::vector<std::string>& data, const std::vector<FileInfo>& files)
-    : _name(name)
-    , _files(files)
+std::unique_ptr<Shader> Shader::Parse(nlohmann::json & data)
+{
+    std::vector<FileInfo> files;
+
+	for (auto& file : data["Files"])
+	{
+		GLenum shaderType = GL_INVALID_ENUM;
+
+		const std::string& type = file["Type"];
+		if ("Vertex" == type)
+		{
+			shaderType = GL_VERTEX_SHADER;
+		}
+		else if ("Fragment" == type)
+		{
+			shaderType = GL_FRAGMENT_SHADER;
+		}
+		else if ("Geometry" == type)
+		{
+			shaderType = GL_GEOMETRY_SHADER;
+		}
+		// Compute Shader, GL 4.3+
+		/*
+		else if ("Compute" == type)
+		{
+		shaderType = GL_COMPUTE_SHADER;
+		}
+		*/
+		// Tessellation Shaders, GL 4.0+
+		/*
+		else if ("TessControl" == type)
+		{
+		shaderType = GL_TESS_CONTROL_SHADER;
+		}
+		else if ("TessEvaluation" == type)
+		{
+		shaderType = GL_TESS_EVALUATION_SHADER;
+		}
+		*/
+
+		files.push_back({
+			shaderType,
+			file["File"],
+		});
+	}
+
+    return std::unique_ptr<Shader>(new Shader(data["BindData"], files));
+}
+
+Shader::Shader(const std::vector<std::string>& bindData, const std::vector<FileInfo>& files)
+    : _files(files)
     , _glProgram(0)
 {
-    for (const auto& dataName : data)
+    LoadProgram();
+
+    for (const auto& data : bindData)
     {
-        _boundData.emplace(dataName, false);
+        auto tmp = _DataRecords.find(data);
+        if (tmp == _DataRecords.end()) continue;
+
+        BindData(data);
     }
 }
 
 Shader::~Shader()
 {
-    Free();
+    glDeleteProgram(_glProgram);
+    _glProgram = 0;
 }
 
-bool Shader::Load()
+bool Shader::LoadProgram()
 {
-    DuskBenchStart();
-
-    // TODO: Cleanup the cleanup code
-
     std::vector<GLuint> shaderIds;
     GLint programLinked = GL_FALSE;
 
     if (_files.empty())
     {
-        DuskLogWarn("Shader has no files '%s'", _name.c_str());
+        DuskLogWarn("Shader has no files");
         return false;
     }
 
@@ -65,7 +115,7 @@ bool Shader::Load()
     glGetProgramiv(_glProgram, GL_LINK_STATUS, &programLinked);
     if (!programLinked)
     {
-        DuskLogError("Failed to link shader program '%s'", _name.c_str());
+        DuskLogError("Failed to link shader program");
         PrintShaderProgramLog(_glProgram);
         goto error;
     }
@@ -76,18 +126,6 @@ bool Shader::Load()
         glDeleteShader(id);
     }
 
-    _loaded = true;
-
-    for (const auto& it : _boundData)
-    {
-        auto tmp = _DataRecords.find(it.first);
-        if (tmp == _DataRecords.end()) continue;
-
-        UpdateData(it.first, nullptr, tmp->second.size);
-        BindData(it.first);
-    }
-
-    DuskBenchEnd("Shader::Load()");
     return true;
 
 error:
@@ -102,12 +140,6 @@ error:
     _glProgram = 0;
 
     return false;
-}
-
-void Shader::Free()
-{
-    glDeleteProgram(_glProgram);
-    _glProgram = 0;
 }
 
 void Shader::Bind()
@@ -263,61 +295,40 @@ void Shader::PrintShaderProgramLog(GLuint program)
 
 void Shader::BindData(const std::string& name)
 {
-    const auto& it = _DataRecords.find(name);
+    if (std::find(_boundData.begin(), _boundData.end(), name) != _boundData.end())
+    {
+        return;
+    }
 
-    if (_boundData[name]) return;
+    const auto& it = _DataRecords.find(name);
 
     if (it != _DataRecords.end())
     {
-        if (_boundData.find(name) == _boundData.end())
+        _boundData.push_back(name);
+
+        ShaderData& record = it->second;
+
+        glUseProgram(_glProgram);
+        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
+
+        GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
+        if (GL_INVALID_INDEX == dataIndex)
         {
-            _boundData.emplace(name, false);
-        }
-
-        if (_loaded)
-        {
-            ShaderData& record = it->second;
-
-            glUseProgram(_glProgram);
-            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-
-            GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
-            if (GL_INVALID_INDEX == dataIndex)
-            {
-                DuskLogWarn("Could not bind Shader Data %s, does not exist in shader", name.c_str());
-                glUseProgram(0);
-                return;
-            }
-            glUniformBlockBinding(_glProgram, dataIndex, record.index);
-            glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
-
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            DuskLogWarn("Could not bind Shader Data %s, does not exist in shader", name.c_str());
             glUseProgram(0);
-
-            _boundData[name] = true;
-
-            DuskLogInfo("Binding shader %u to data %s", _glProgram, name.c_str());
+            return;
         }
+        glUniformBlockBinding(_glProgram, dataIndex, record.index);
+        glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glUseProgram(0);
+
+        DuskLogInfo("Binding shader %u to data %s", _glProgram, name.c_str());
     }
     else
     {
         DuskLogError("Failed to bind shader to data %s, does not exist", name.c_str());
-    }
-}
-
-void Shader::DefineData(const std::string& name, size_t size)
-{
-    const auto& it = _DataRecords.find(name);
-
-    if (it == _DataRecords.end())
-    {
-        _DataRecords.emplace(name, ShaderData());
-        ShaderData& record = _DataRecords[name];
-        record.size = size;
-        record.index = _MaxDataIndex;
-        record.loaded = false;
-
-        ++_MaxDataIndex;
     }
 }
 
@@ -331,7 +342,6 @@ void Shader::UpdateData(const std::string& name, void * data, size_t size)
         ShaderData& record = _DataRecords[name];
         record.size = size;
         record.index = _MaxDataIndex;
-        record.loaded = true;
 
         ++_MaxDataIndex;
 
@@ -346,24 +356,10 @@ void Shader::UpdateData(const std::string& name, void * data, size_t size)
     {
         ShaderData& record = it->second;
 
-        if (record.loaded)
-        {
-            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-            GLvoid * dataPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-            memcpy(dataPtr, data, record.size);
-            glUnmapBuffer(GL_UNIFORM_BUFFER);
-        }
-        else
-        {
-            record.loaded = true;
-
-            glGenBuffers(1, &record.glUBO);
-            glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-            glBufferData(GL_UNIFORM_BUFFER, record.size, data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-            DuskLogInfo("Added Shader Data %s at index %d", name.c_str(), record.index);
-        }
+        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
+        GLvoid * dataPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+        memcpy(dataPtr, data, record.size);
+        glUnmapBuffer(GL_UNIFORM_BUFFER);
     }
 }
 

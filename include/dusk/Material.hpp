@@ -5,6 +5,7 @@
 
 #include <dusk/Texture.hpp>
 #include <dusk/Shader.hpp>
+#include <memory>
 
 namespace dusk {
 
@@ -24,6 +25,7 @@ struct MaterialData
 };
 
 class Material
+    : public std::enable_shared_from_this<Material>
 {
 public:
 
@@ -49,14 +51,9 @@ public:
 
     ~Material();
 
-    bool Load(Shader * shader);
-    void Free();
-
     void Bind(Shader * shader);
 
 private:
-
-    bool _loaded;
 
     MaterialData _shaderData;
 
@@ -67,10 +64,10 @@ private:
     float _shininess;
     float _dissolve;
 
-    Texture * _ambientMap;
-    Texture * _diffuseMap;
-    Texture * _specularMap;
-    Texture * _bumpMap;
+    std::shared_ptr<Texture> _ambientMap;
+    std::shared_ptr<Texture> _diffuseMap;
+    std::shared_ptr<Texture> _specularMap;
+    std::shared_ptr<Texture> _bumpMap;
 
 };
 

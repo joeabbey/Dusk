@@ -2,10 +2,12 @@
 #define DUSK_COMPONENT_HPP
 
 #include <dusk/Config.hpp>
+
 #include <dusk/Mesh.hpp>
 #include <dusk/Camera.hpp>
 #include <dusk/ScriptHost.hpp>
 #include <dusk/Event.hpp>
+#include <memory>
 
 namespace dusk {
 
@@ -20,19 +22,14 @@ public:
     Component(Actor * parent);
     virtual ~Component();
 
+    static std::unique_ptr<Component> Parse(nlohmann::json & data, Actor * actor);
+
     Actor * GetActor() const { return _parent; };
-
-    bool IsLoaded() const { return _loaded; }
-
-    virtual bool Load() = 0;
-    virtual void Free() = 0;
 
     static void InitScripting();
     static int Script_GetActor(lua_State * L);
 
 protected:
-
-    bool _loaded;
 
     Actor * _parent;
 
@@ -42,20 +39,17 @@ class MeshComponent : public Component
 {
 public:
 
-    MeshComponent(Actor * parent, Mesh * mesh);
+    MeshComponent(Actor * parent, std::shared_ptr<Mesh> mesh);
     virtual ~MeshComponent();
-
-    bool Load() override;
-    void Free() override;
 
     virtual void Update(const Event& event);
     virtual void Render(const Event& event);
 
-    inline Mesh * GetMesh() const { return _mesh; };
+    inline Mesh * GetMesh() const { return _mesh.get(); };
 
 protected:
 
-    Mesh * _mesh;
+    std::shared_ptr<Mesh> _mesh;
 
 }; // class MeshComponent
 
@@ -63,20 +57,17 @@ class CameraComponent : public Component
 {
 public:
 
-    CameraComponent(Actor * parent, Camera * camera);
+    CameraComponent(Actor * parent, std::unique_ptr<Camera> camera);
     virtual ~CameraComponent();
-
-    bool Load() override;
-    void Free() override;
 
     void Update(const Event& event);
     void Render(const Event& event);
 
-    inline Camera * GetCamera() const { return _camera; };
+    inline Camera * GetCamera() const { return _camera.get(); };
 
 protected:
 
-    Camera * _camera;
+    std::unique_ptr<Camera> _camera;
 
 }; // class CameraComponent
 
@@ -85,10 +76,7 @@ class ScriptComponent : public Component
 public:
 
     ScriptComponent(Actor * parent, const std::string& filename);
-    virtual ~ScriptComponent();
-
-    bool Load() override;
-    void Free() override;
+    virtual ~ScriptComponent() = default;
 
 protected:
 

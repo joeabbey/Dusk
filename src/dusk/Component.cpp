@@ -7,13 +7,33 @@
 namespace dusk {
 
 Component::Component(Actor * parent)
-    : _loaded(false)
-    , _parent(parent)
+    : _parent(parent)
 {
 }
 
 Component::~Component()
 {
+}
+
+std::unique_ptr<Component> Component::Parse(nlohmann::json & data, Actor * actor)
+{
+    std::unique_ptr<Component> component;
+
+	const std::string& type = data["Type"];
+	if ("Mesh" == type)
+	{
+		component.reset(new MeshComponent(actor, Mesh::Parse(data)));
+	}
+	else if ("Script" == type)
+	{
+		component.reset(new ScriptComponent(actor, data["File"].get<std::string>()));
+	}
+	else if ("Camera" == type)
+	{
+		component.reset(new CameraComponent(actor, Camera::Parse(data)));
+	}
+
+	return component;
 }
 
 void Component::InitScripting()
@@ -34,11 +54,10 @@ int Component::Script_GetActor(lua_State * L)
     return 1;
 }
 
-MeshComponent::MeshComponent(Actor * parent, Mesh * mesh)
+MeshComponent::MeshComponent(Actor * parent, std::shared_ptr<Mesh> mesh)
     : Component(parent)
     , _mesh(mesh)
 {
-    GetActor()->AddComponentType<MeshComponent>(this);
     GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
     GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
 }
@@ -47,82 +66,33 @@ MeshComponent::~MeshComponent()
 {
     GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
     GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
-
-    if (IsLoaded())
-    {
-        Free();
-    }
-}
-
-bool MeshComponent::Load()
-{
-    if (!_mesh->Load())
-    {
-        DuskLogError("Failed to load mesh");
-        return false;
-    }
-
-    _loaded = true;
-
-    return true;
-}
-
-void MeshComponent::Free()
-{
-    _mesh->Free();
-    _loaded = false;
 }
 
 void MeshComponent::Update(const Event& event)
 {
-    if (!_loaded) return;
-
     _mesh->SetBaseTransform(GetActor()->GetTransform());
     _mesh->Update();
 }
 
 void MeshComponent::Render(const Event& event)
 {
-    if (!_loaded) return;
-
     _mesh->Render();
 }
 
-CameraComponent::CameraComponent(Actor * parent, Camera * camera)
+CameraComponent::CameraComponent(Actor * parent, std::unique_ptr<Camera> camera)
     : Component(parent)
-    , _camera(camera)
+    , _camera(std::move(camera))
 {
-    GetActor()->AddComponentType<CameraComponent>(this);
     GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &CameraComponent::Update);
 }
 
 CameraComponent::~CameraComponent()
 {
     GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &CameraComponent::Update);
-
-    delete _camera;
-
-    if (IsLoaded())
-    {
-        Free();
-    }
-}
-
-bool CameraComponent::Load()
-{
-    _loaded = true;
-
-    return true;
-}
-
-void CameraComponent::Free()
-{
 }
 
 void CameraComponent::Update(const Event& event)
 {
-    if (!_loaded) return;
-
     _camera->SetBaseTransform(glm::inverse(GetActor()->GetTransform()));
 }
 
@@ -131,39 +101,12 @@ ScriptComponent::ScriptComponent(Actor * parent, const std::string& filename)
     , _scriptHost()
     , _filename(filename)
 {
-    GetActor()->AddComponentType<ScriptComponent>(this);
-}
-
-ScriptComponent::~ScriptComponent()
-{
-    if (IsLoaded())
-    {
-        Free();
-    }
-}
-
-bool ScriptComponent::Load()
-{
-    if (!_scriptHost.Load())
-    {
-        return false;
-    }
-
     lua_State * L = _scriptHost.GetLuaState();
 
     lua_pushinteger(L, (ptrdiff_t)this);
     lua_setglobal(L, "dusk_current_ScriptComponent");
 
     _scriptHost.RunFile(_filename);
-
-    _loaded = true;
-
-    return true;
-}
-
-void ScriptComponent::Free()
-{
-    _scriptHost.Free();
 }
 
 } // namespace dusk
