@@ -34,26 +34,26 @@ std::shared_ptr<Mesh> Mesh::Parse(nlohmann::json & data)
         mesh = PlaneMesh::Create(material, data["Rows"], data["Cols"],
                                            data["Width"], data["Height"]);
     }
-    //else if (type == "Cuboid")
-    //{
-    //    mesh = CuboidMesh::Create(material, data["Width"], data["Height"], data["Depth"]);
-    //}
-    //else if (type == "Cube")
-    //{
-    //    mesh = CubeMesh::Create(material, data["Size"]);
-    //}
-    //else if (type == "UVSphere")
-    //{
-    //    mesh = UVSphereMesh::Create(material, data["Rows"], data["Cols"], data["Radius"]);
-    //}
-    //else if (type == "IcoSphere")
-    //{
-    //    mesh = IcoSphereMesh::Create(material, data["subdivisions"], data["Radius"]);
-    //}
-    //else if (type == "Cone")
-    //{
-    //	mesh = ConeMesh::Create(material, data["Points"], data["Radius"], data["Height"]);
-    //}
+    else if (type == "Cuboid")
+    {
+        mesh = CuboidMesh::Create(material, data["Width"], data["Height"], data["Depth"]);
+    }
+    else if (type == "Cube")
+    {
+        mesh = CubeMesh::Create(material, data["Size"]);
+    }
+    else if (type == "UVSphere")
+    {
+        mesh = UVSphereMesh::Create(material, data["Rows"], data["Cols"], data["Radius"]);
+    }
+    else if (type == "IcoSphere")
+    {
+        mesh = IcoSphereMesh::Create(material, data["subdivisions"], data["Radius"]);
+    }
+    else if (type == "Cone")
+    {
+    	mesh = ConeMesh::Create(material, data["Points"], data["Radius"], data["Height"]);
+    }
 
     return mesh;
 }
