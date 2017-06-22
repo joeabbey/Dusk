@@ -149,7 +149,7 @@ void App::LoadConfig(const std::string& filename)
 
     for (auto& shader : data["Shaders"])
     {
-        _shaders.emplace(shader["ID"], Shader::Parse(shader));
+        _shaders[shader["ID"]] = Shader::Parse(shader);
     }
 
     if (data.find("DefaultScene") != data.end())
