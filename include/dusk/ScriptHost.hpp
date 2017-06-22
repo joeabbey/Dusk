@@ -4,6 +4,7 @@
 #include <dusk/Config.hpp>
 
 #include <unordered_map>
+#include <memory>
 
 namespace dusk {
 

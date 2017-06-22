@@ -3,24 +3,13 @@
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
 #include <dusk/App.hpp>
-#include <dusk/Camera.hpp>
+#include <dusk/Asset.hpp>
 
 namespace dusk {
 
-Mesh::Mesh(Shader * shader)
-    : _shader(shader)
-    , _baseTransform(1)
-    , _transform(1)
-    , _position(0)
-    , _rotation(0)
-    , _scale(1)
-    , _renderGroups()
+Mesh::Mesh()
+    : _renderGroups()
 {
-    // Add to cache
-    // Add to index
-
-    Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
-    _shader->BindData("DuskTransformData");
 }
 
 Mesh::~Mesh()
@@ -30,77 +19,56 @@ Mesh::~Mesh()
 std::shared_ptr<Mesh> Mesh::Parse(nlohmann::json & data)
 {
     std::shared_ptr<Mesh> mesh;
+    std::shared_ptr<Material> material(nullptr);
 
-    App * app = App::GetInst();
-    Shader * shader = app->GetShader(data["Shader"]);
+    const std::string& type = data["Type"];
 
-    if (data.find("File") != data.end())
+    // TODO: Infer type
+
+    if (type == "File")
     {
-    	mesh.reset(new FileMesh(shader, data["File"].get<std::string>()));
+    	mesh = FileMesh::Create(data["File"].get<std::string>());
     }
-    else if (data.find("Shape") != data.end())
+    else if (type == "Plane")
     {
-    	// TODO
+        mesh = PlaneMesh::Create(material, data["Rows"], data["Cols"],
+                                           data["Width"], data["Height"]);
     }
+    //else if (type == "Cuboid")
+    //{
+    //    mesh = CuboidMesh::Create(material, data["Width"], data["Height"], data["Depth"]);
+    //}
+    //else if (type == "Cube")
+    //{
+    //    mesh = CubeMesh::Create(material, data["Size"]);
+    //}
+    //else if (type == "UVSphere")
+    //{
+    //    mesh = UVSphereMesh::Create(material, data["Rows"], data["Cols"], data["Radius"]);
+    //}
+    //else if (type == "IcoSphere")
+    //{
+    //    mesh = IcoSphereMesh::Create(material, data["subdivisions"], data["Radius"]);
+    //}
+    //else if (type == "Cone")
+    //{
+    //	mesh = ConeMesh::Create(material, data["Points"], data["Radius"], data["Height"]);
+    //}
 
     return mesh;
-}
-
-void Mesh::SetBaseTransform(const glm::mat4& baseTransform)
-{
-    _baseTransform = baseTransform;
-}
-
-void Mesh::SetPosition(const glm::vec3& pos)
-{
-    _position = pos;
-}
-
-void Mesh::SetRotation(const glm::vec3& rot)
-{
-    _rotation = rot;
-}
-
-void Mesh::SetScale(const glm::vec3& scale)
-{
-    _scale = scale;
-}
-
-glm::mat4 Mesh::GetTransform()
-{
-    _transform = _baseTransform;
-    _transform = glm::scale(_transform, _scale);
-    _transform = glm::rotate(_transform, _rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    _transform = glm::rotate(_transform, _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    _transform = glm::rotate(_transform, _rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    _transform = glm::translate(_transform, _position);
-
-    return _transform;
 }
 
 void Mesh::Update()
 {
 }
 
-void Mesh::Render()
+void Mesh::Render(Shader * shader)
 {
-    _shader->Bind();
-
-    // TODO: Move camera somewhere else
-    Camera * camera = App::GetInst()->GetScene()->GetCurrentCamera();
-
-    _shaderData.model = GetTransform();
-    _shaderData.view = camera->GetView();
-    _shaderData.proj = camera->GetProjection();
-    _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
-
-    Shader::UpdateData("DuskTransformData", &_shaderData, sizeof(_shaderData));
-
     for (RenderGroup& group : _renderGroups)
     {
         if (group.material)
         {
-            group.material->Bind(_shader);
+            group.material->Bind(shader);
         }
 
         glBindVertexArray(group.glVAO);
@@ -178,8 +146,21 @@ bool Mesh::AddRenderGroup(std::shared_ptr<Material> material,
     return true;
 }
 
-FileMesh::FileMesh(Shader * shader, const std::string& filename)
-    : Mesh(shader)
+std::shared_ptr<FileMesh> FileMesh::Create(const std::string& filename)
+{
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(filename);
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new FileMesh(filename));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<FileMesh>(ptr);
+}
+
+FileMesh::FileMesh(const std::string& filename)
+    : Mesh()
     , _filename(filename)
 {
     DuskLogInfo("Loading model from '%s'", _filename.c_str());
@@ -304,11 +285,31 @@ bool FileMesh::LoadOBJ(const std::string& filename)
     return true;
 }
 
-PlaneMesh::PlaneMesh(Shader * shader,
-                     std::shared_ptr<Material> material,
+std::shared_ptr<PlaneMesh> PlaneMesh::Create(std::shared_ptr<Material> material,
+                                             unsigned int rows, unsigned int cols,
+                                             float width, float height)
+{
+    std::stringstream ss;
+    ss << "PlaneMesh[" << rows << ","
+                       << cols << ","
+                       << width << ","
+                       << height << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new PlaneMesh(material, rows, cols, width, height));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<PlaneMesh>(ptr);
+}
+
+PlaneMesh::PlaneMesh(std::shared_ptr<Material> material,
                      unsigned int rows, unsigned int cols,
                      float width, float height)
-    : Mesh(shader)
+    : Mesh()
     , _material(material)
     , _rows(rows)
     , _cols(cols)
@@ -395,12 +396,33 @@ PlaneMesh::PlaneMesh(Shader * shader,
     AddRenderGroup(_material, GL_TRIANGLE_STRIP, verts, norms, txcds);
 }
 
-CuboidMesh::CuboidMesh(Shader * shader,
-                       std::shared_ptr<Material> material,
+std::shared_ptr<CuboidMesh>
+CuboidMesh::Create(std::shared_ptr<Material> material,
+                   float width,
+                   float height,
+                   float depth)
+{
+    std::stringstream ss;
+    ss << "CuboidMesh[" << width << ","
+                       << height << ","
+                       << depth << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new CuboidMesh(material, width, height, depth));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<CuboidMesh>(ptr);
+}
+
+CuboidMesh::CuboidMesh(std::shared_ptr<Material> material,
                        float width,
                        float height,
                        float depth)
-    : Mesh(shader)
+    : Mesh()
     , _material(material)
     , _width(width)
     , _height(height)
@@ -496,6 +518,65 @@ CuboidMesh::CuboidMesh(Shader * shader,
     AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
 }
 
+std::shared_ptr<CubeMesh>
+CubeMesh::Create(std::shared_ptr<Material> material, float size)
+{
+    std::stringstream ss;
+    ss << "CubeMesh[" << size << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new CubeMesh(material, size));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<CubeMesh>(ptr);
+}
+
+std::shared_ptr<UVSphereMesh>
+UVSphereMesh::Create(std::shared_ptr<Material> material,
+                     unsigned int rows,
+                     unsigned int cols,
+                     float radius)
+{
+    std::stringstream ss;
+    ss << "UVSphereMesh[" << rows << ","
+                          << cols << ","
+                          << radius << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new UVSphereMesh(material, rows, cols, radius));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<UVSphereMesh>(ptr);
+}
+
+std::shared_ptr<IcoSphereMesh>
+IcoSphereMesh::Create(std::shared_ptr<Material> material,
+                     unsigned int subdivisions,
+                     float radius)
+{
+    std::stringstream ss;
+    ss << "IcoSphereMesh[" << subdivisions << ","
+                           << radius << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new IcoSphereMesh(material, subdivisions, radius));
+        app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<IcoSphereMesh>(ptr);
+}
+
 //bool UVSphereMesh::Load()
 //{
     //mesh.vertices.emplace_back(0.0f, 1.0f, 0.0f);
@@ -520,12 +601,33 @@ CuboidMesh::CuboidMesh(Shader * shader,
 //    return Mesh::Load();
 //}
 
-ConeMesh::ConeMesh(Shader * shader,
-                   std::shared_ptr<Material> material,
+std::shared_ptr<ConeMesh>
+ConeMesh::Create(std::shared_ptr<Material> material,
+       unsigned int points,
+       float radius,
+       float height)
+{
+    std::stringstream ss;
+    ss << "ConeMesh[" << points << ","
+                      << radius << ","
+                      << height << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+       ptr.reset(new ConeMesh(material, points, radius, height));
+       app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<ConeMesh>(ptr);
+}
+
+ConeMesh::ConeMesh(std::shared_ptr<Material> material,
                    unsigned int points,
                    float radius,
                    float height)
-    : Mesh(shader)
+    : Mesh()
     , _material(material)
     , _points(points)
     , _radius(radius)

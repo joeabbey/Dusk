@@ -20,9 +20,9 @@ std::unique_ptr<Component> Component::Parse(nlohmann::json & data, Actor * actor
     std::unique_ptr<Component> component;
 
 	const std::string& type = data["Type"];
-	if ("Mesh" == type)
+	if ("Model" == type)
 	{
-		component.reset(new MeshComponent(actor, Mesh::Parse(data)));
+		component.reset(new ModelComponent(actor, Model::Parse(data)));
 	}
 	else if ("Script" == type)
 	{
@@ -40,7 +40,7 @@ void Component::InitScripting()
 {
     ScriptHost::AddFunction("dusk_Component_GetActor", &Component::Script_GetActor);
 
-    //MeshComponent::InitScripting();
+    //ModelComponent::InitScripting();
     //CameraComponent::InitScripting();
     //ScriptComponent::InitScripting();
 }
@@ -54,29 +54,29 @@ int Component::Script_GetActor(lua_State * L)
     return 1;
 }
 
-MeshComponent::MeshComponent(Actor * parent, std::shared_ptr<Mesh> mesh)
+ModelComponent::ModelComponent(Actor * parent, std::unique_ptr<Model> model)
     : Component(parent)
-    , _mesh(mesh)
+    , _model(std::move(model))
 {
-    GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
-    GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
+    GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &ModelComponent::Update);
+    GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &ModelComponent::Render);
 }
 
-MeshComponent::~MeshComponent()
+ModelComponent::~ModelComponent()
 {
-    GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &MeshComponent::Update);
-    GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &MeshComponent::Render);
+    GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &ModelComponent::Update);
+    GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &ModelComponent::Render);
 }
 
-void MeshComponent::Update(const Event& event)
+void ModelComponent::Update(const Event& event)
 {
-    _mesh->SetBaseTransform(GetActor()->GetTransform());
-    _mesh->Update();
+    _model->SetBaseTransform(GetActor()->GetTransform());
+    _model->Update();
 }
 
-void MeshComponent::Render(const Event& event)
+void ModelComponent::Render(const Event& event)
 {
-    _mesh->Render();
+    _model->Render();
 }
 
 CameraComponent::CameraComponent(Actor * parent, std::unique_ptr<Camera> camera)

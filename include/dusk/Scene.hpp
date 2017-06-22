@@ -2,12 +2,13 @@
 #define DUSK_SCENE_HPP
 
 #include <dusk/Config.hpp>
+
 #include <dusk/EventDispatcher.hpp>
 #include <dusk/Actor.hpp>
 #include <dusk/Camera.hpp>
-
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace dusk {
 

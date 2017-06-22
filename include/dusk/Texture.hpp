@@ -4,8 +4,8 @@
 #include <dusk/Config.hpp>
 
 #include <dusk/EventDispatcher.hpp>
-#include <memory>
 #include <string>
+#include <memory>
 
 namespace dusk {
 
@@ -17,7 +17,7 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Texture);
 
-    Texture(const std::string& filename);
+    static std::shared_ptr<Texture> Create(const std::string& filename);
     ~Texture();
 
     bool Load();
@@ -26,6 +26,8 @@ public:
     void Bind();
 
 private:
+
+    Texture(const std::string& filename);
 
     std::string _filename;
 

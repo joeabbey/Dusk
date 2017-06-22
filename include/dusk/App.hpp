@@ -4,10 +4,12 @@
 #include <dusk/Config.hpp>
 #include <dusk/EventDispatcher.hpp>
 #include <dusk/Scene.hpp>
+#include <dusk/Asset.hpp>
 
 #include <string>
 #include <stack>
 #include <unordered_map>
+#include <memory>
 
 namespace dusk {
 
@@ -51,6 +53,11 @@ public:
     static int Script_LoadConfig(lua_State * L);
     static int Script_GetScene(lua_State * L);
 
+    AssetCache<Texture> * GetTextureCache() const { return _textureCache.get(); }
+    AssetIndex<Texture> * GetTextureIndex() const { return _textureIndex.get(); }
+    AssetCache<Mesh> * GetMeshCache() const { return _meshCache.get(); }
+    AssetIndex<Mesh> * GetMeshIndex() const { return _meshIndex.get(); }
+
     GLFWwindow * GetGLFWWindow() const { return _glfwWindow; }
 
     static void GLFW_ErrorCallback(int code, const char * message);
@@ -69,6 +76,11 @@ private:
     void DestroyWindow();
 
     const float TARGET_FPS = 60.0f;
+
+    std::unique_ptr<AssetCache<Texture>> _textureCache;
+    std::unique_ptr<AssetIndex<Texture>> _textureIndex;
+    std::unique_ptr<AssetCache<Mesh>> _meshCache;
+    std::unique_ptr<AssetIndex<Mesh>> _meshIndex;
 
     std::unordered_map<std::string, std::unique_ptr<Shader>> _shaders;
 

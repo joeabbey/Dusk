@@ -2,8 +2,23 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
+#include <dusk/App.hpp>
+#include <dusk/Asset.hpp>
 
 namespace dusk {
+
+std::shared_ptr<Texture> Texture::Create(const std::string& filename)
+{
+    App * app = App::GetInst();
+    AssetId id = app->GetTextureIndex()->GetId(filename);
+    std::shared_ptr<Texture> ptr = app->GetTextureCache()->Get(id);
+    if (!ptr)
+    {
+        ptr.reset(new Texture(filename));
+        app->GetTextureCache()->Add(id, ptr);
+    }
+    return ptr;
+}
 
 Texture::Texture(const std::string& filename)
     : _filename(filename)

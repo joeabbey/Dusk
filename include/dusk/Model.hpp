@@ -1,35 +1,34 @@
-#ifndef DUSK_ACTOR_HPP
-#define DUSK_ACTOR_HPP
+#ifndef DUSK_MODEL_HPP
+#define DUSK_MODEL_HPP
 
 #include <dusk/Config.hpp>
 
-#include <dusk/EventDispatcher.hpp>
-#include <dusk/Component.hpp>
+#include <dusk/Mesh.hpp>
 #include <memory>
 
-namespace dusk {
+namespace dusk
+{
 
-class Scene;
+struct TransformData
+{
+    alignas(64) glm::mat4 model = glm::mat4(1);
+    alignas(64) glm::mat4 view  = glm::mat4(1);
+    alignas(64) glm::mat4 proj  = glm::mat4(1);
+    alignas(64) glm::mat4 mvp   = glm::mat4(1);
+};
 
-class Actor : public IEventDispatcher
+class Model
 {
 public:
 
-    enum class Events : EventID
-    {
-        _PREFIX = 200,
-        UPDATE,
-        RENDER,
-    };
+    DISALLOW_COPY_AND_ASSIGN(Model);
 
-    DISALLOW_COPY_AND_ASSIGN(Actor);
+    Model(Shader * shader);
+    virtual ~Model();
 
-    Actor(Scene * parent);
-    virtual ~Actor();
+    static std::unique_ptr<Model> Parse(nlohmann::json & data);
 
-    static std::unique_ptr<Actor> Parse(nlohmann::json & data, Scene * parent);
-
-    Scene * GetScene() const { return _parent; };
+    void AddMesh(std::shared_ptr<Mesh> mesh);
 
     void SetBaseTransform(const glm::mat4& baseTransform);
 
@@ -44,11 +43,10 @@ public:
 
     glm::mat4 GetTransform();
 
-    void AddComponent(std::unique_ptr<Component> comp);
+    virtual void Update();
+    virtual void Render();
 
-    virtual void Update(const Event& event);
-    virtual void Render(const Event& event);
-
+    /*
     static void InitScripting();
 
     static int Script_GetPosition(lua_State * L);
@@ -57,12 +55,13 @@ public:
     static int Script_SetRotation(lua_State * L);
     static int Script_GetScale(lua_State * L);
     static int Script_SetScale(lua_State * L);
+    */
 
 private:
 
-    Scene * _parent;
+    Shader * _shader;
 
-    std::string _name;
+    TransformData _shaderData;
 
     glm::mat4 _baseTransform;
     glm::mat4 _transform;
@@ -70,10 +69,10 @@ private:
     glm::vec3 _rotation;
     glm::vec3 _scale;
 
-    std::vector<std::unique_ptr<Component>> _components;
+    std::vector<std::shared_ptr<Mesh>> _meshes;
 
-}; // class Actor
+}; // class Model
 
 } // namespace dusk
 
-#endif // DUSK_ACTOR_HPP
+#endif // DUSK_MODEL_HPP

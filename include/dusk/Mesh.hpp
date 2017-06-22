@@ -6,16 +6,10 @@
 #include <dusk/EventDispatcher.hpp>
 #include <dusk/Shader.hpp>
 #include <dusk/Material.hpp>
+#include <memory>
+#include <sstream>
 
 namespace dusk {
-
-struct TransformData
-{
-    alignas(64) glm::mat4 model = glm::mat4(1);
-    alignas(64) glm::mat4 view  = glm::mat4(1);
-    alignas(64) glm::mat4 proj  = glm::mat4(1);
-    alignas(64) glm::mat4 mvp   = glm::mat4(1);
-};
 
 class Mesh
     : public std::enable_shared_from_this<Mesh>
@@ -32,39 +26,16 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Mesh);
 
-    Mesh(Shader * shader);
     virtual ~Mesh();
 
     static std::shared_ptr<Mesh> Parse(nlohmann::json & data);
 
-    void SetBaseTransform(const glm::mat4& baseTransform);
-
-    void SetPosition(const glm::vec3& pos);
-    glm::vec3 GetPosition() const { return _position; }
-
-    void SetRotation(const glm::vec3& rot);
-    glm::vec3 GetRotation() const { return _rotation; }
-
-    void SetScale(const glm::vec3& scale);
-    glm::vec3 GetScale() const { return _scale; }
-
-    glm::mat4 GetTransform();
-
     virtual void Update();
-    virtual void Render();
-
-    /*
-    static void InitScripting();
-
-    static int Script_GetPosition(lua_State * L);
-    static int Script_SetPosition(lua_State * L);
-    static int Script_GetRotation(lua_State * L);
-    static int Script_SetRotation(lua_State * L);
-    static int Script_GetScale(lua_State * L);
-    static int Script_SetScale(lua_State * L);
-    */
+    virtual void Render(Shader * shader);
 
 protected:
+
+    Mesh();
 
     bool AddRenderGroup(std::shared_ptr<Material> material,
                         GLenum drawMode,
@@ -97,16 +68,6 @@ private:
         GLuint glVBOs[3];
     };
 
-    Shader * _shader;
-
-    TransformData _shaderData;
-
-    glm::mat4 _baseTransform;
-    glm::mat4 _transform;
-    glm::vec3 _position;
-    glm::vec3 _rotation;
-    glm::vec3 _scale;
-
     std::vector<RenderGroup> _renderGroups;
 
 }; // class Mesh
@@ -115,7 +76,12 @@ class FileMesh : public Mesh
 {
 public:
 
-    FileMesh(Shader * shader, const std::string& filename);
+    static std::shared_ptr<FileMesh>
+    Create(const std::string& filename);
+
+protected:
+
+    FileMesh(const std::string& filename);
 
 private:
 
@@ -130,14 +96,20 @@ class PlaneMesh : public Mesh
 {
 public:
 
-    PlaneMesh(Shader * shader,
-              std::shared_ptr<Material> material,
+    static std::shared_ptr<PlaneMesh>
+    Create(std::shared_ptr<Material> material,
+           unsigned int rows, unsigned int cols,
+           float width, float height);
+
+protected:
+
+    PlaneMesh(std::shared_ptr<Material> material,
               unsigned int rows, unsigned int cols,
               float width, float height);
 
-private:
-
     std::shared_ptr<Material> _material;
+
+private:
 
     unsigned int _rows;
     unsigned int _cols;
@@ -151,11 +123,18 @@ class CuboidMesh : public Mesh
 {
 public:
 
-    CuboidMesh(Shader * shader,
-               std::shared_ptr<Material> material,
-               float width,
-               float height,
-               float depth);
+    static std::shared_ptr<CuboidMesh>
+    Create(std::shared_ptr<Material> material,
+           float width,
+           float height,
+           float depth);
+
+protected:
+
+    CuboidMesh(std::shared_ptr<Material> material,
+        float width,
+        float height,
+        float depth);
 
 private:
 
@@ -171,8 +150,13 @@ class CubeMesh : public CuboidMesh
 {
 public:
 
-    CubeMesh(Shader * shader, std::shared_ptr<Material> material, float size)
-        : CuboidMesh(shader, material, size, size, size)
+    static std::shared_ptr<CubeMesh>
+    Create(std::shared_ptr<Material> material, float size);
+
+protected:
+
+    CubeMesh(std::shared_ptr<Material> material, float size)
+        : CuboidMesh(material, size, size, size)
     { }
 
 }; // class CubeMesh
@@ -181,12 +165,19 @@ class UVSphereMesh : public Mesh
 {
 public:
 
-    UVSphereMesh(Shader * shader,
-                 std::shared_ptr<Material> material,
+    static std::shared_ptr<UVSphereMesh>
+    Create(std::shared_ptr<Material> material,
+           unsigned int rows,
+           unsigned int cols,
+           float radius);
+
+protected:
+
+    UVSphereMesh(std::shared_ptr<Material> material,
                  unsigned int rows,
                  unsigned int cols,
                  float radius)
-        : Mesh(shader)
+        : Mesh()
         , _material(material)
         , _rows(rows)
         , _cols(cols)
@@ -213,11 +204,17 @@ class IcoSphereMesh : public Mesh
 {
 public:
 
-    IcoSphereMesh(Shader * shader,
-                  std::shared_ptr<Material> material,
+    static std::shared_ptr<IcoSphereMesh>
+    Create(std::shared_ptr<Material> material,
+           unsigned int subdivisions,
+           float radius);
+
+protected:
+
+    IcoSphereMesh(std::shared_ptr<Material> material,
                   unsigned int subdivisions,
                   float radius)
-        : Mesh(shader)
+        : Mesh()
         , _material(material)
         , _subdivisions(subdivisions)
         , _radius(radius)
@@ -241,8 +238,15 @@ class ConeMesh : public Mesh
 {
 public:
 
-    ConeMesh(Shader * shader,
-             std::shared_ptr<Material> material,
+    static std::shared_ptr<ConeMesh>
+    Create(std::shared_ptr<Material> material,
+           unsigned int points,
+           float radius,
+           float height);
+
+protected:
+
+    ConeMesh(std::shared_ptr<Material> material,
              unsigned int points,
              float radius,
              float height);

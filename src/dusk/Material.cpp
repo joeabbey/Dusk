@@ -26,19 +26,19 @@ Material::Material(glm::vec4 ambient,
 {
     if (!ambientMap.empty())
     {
-        _ambientMap = std::make_shared<Texture>(ambientMap);
+        _ambientMap = Texture::Create(ambientMap);
     }
     if (!diffuseMap.empty())
     {
-        _diffuseMap = std::make_shared<Texture>(diffuseMap);
+        _diffuseMap = Texture::Create(diffuseMap);
     }
     if (!specularMap.empty())
     {
-        _specularMap = std::make_shared<Texture>(specularMap);
+        _specularMap = Texture::Create(specularMap);
     }
     if (!bumpMap.empty())
     {
-        _bumpMap = std::make_shared<Texture>(bumpMap);
+        _bumpMap = Texture::Create(bumpMap);
     }
 
     _shaderData.ambient  = _ambient;
@@ -61,8 +61,6 @@ Material::~Material()
 void Material::Bind(Shader * shader)
 {
     // TODO: Move
-    shader->Bind();
-
     Shader::UpdateData("DuskMaterialData", &_shaderData, sizeof(_shaderData));
     shader->BindData("DuskMaterialData");
 

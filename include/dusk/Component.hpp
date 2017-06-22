@@ -3,7 +3,7 @@
 
 #include <dusk/Config.hpp>
 
-#include <dusk/Mesh.hpp>
+#include <dusk/Model.hpp>
 #include <dusk/Camera.hpp>
 #include <dusk/ScriptHost.hpp>
 #include <dusk/Event.hpp>
@@ -35,23 +35,23 @@ protected:
 
 }; // class Component
 
-class MeshComponent : public Component
+class ModelComponent : public Component
 {
 public:
 
-    MeshComponent(Actor * parent, std::shared_ptr<Mesh> mesh);
-    virtual ~MeshComponent();
+    ModelComponent(Actor * parent, std::unique_ptr<Model> model);
+    virtual ~ModelComponent();
 
     virtual void Update(const Event& event);
     virtual void Render(const Event& event);
 
-    inline Mesh * GetMesh() const { return _mesh.get(); };
+    inline Model * GetModel() const { return _model.get(); };
 
 protected:
 
-    std::shared_ptr<Mesh> _mesh;
+    std::unique_ptr<Model> _model;
 
-}; // class MeshComponent
+}; // class ModelComponent
 
 class CameraComponent : public Component
 {

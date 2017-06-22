@@ -9,6 +9,7 @@
 #include <dusk/UI.hpp>
 #include <dusk/Shader.hpp>
 #include <dusk/Mesh.hpp>
+#include <dusk/Model.hpp>
 //#include <dusk/Sound.hpp>
 #include <dusk/Actor.hpp>
 #include <dusk/Scene.hpp>

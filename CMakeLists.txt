@@ -110,6 +110,7 @@ SET(Dusk_INCLUDES
     include/dusk/Benchmark.hpp
     include/dusk/Util.hpp
     include/dusk/ScriptHost.hpp
+    include/dusk/Asset.hpp
     include/dusk/Timer.hpp
     include/dusk/Event.hpp
     include/dusk/EventCallbacks.hpp
@@ -123,6 +124,7 @@ SET(Dusk_INCLUDES
     include/dusk/Shader.hpp
     include/dusk/Texture.hpp
     include/dusk/Mesh.hpp
+    include/dusk/Model.hpp
     include/dusk/Material.hpp
 
     # imgui
@@ -155,6 +157,7 @@ SET(Dusk_SOURCES
     src/dusk/Shader.cpp
     src/dusk/Texture.cpp
     src/dusk/Mesh.cpp
+    src/dusk/Model.cpp
     src/dusk/Material.cpp
 
     # imgui

@@ -10,6 +10,10 @@ namespace dusk {
 App * App::_Inst = nullptr;
 
 App::App(int argc, char** argv)
+    : _textureCache(new AssetCache<Texture>())
+    , _textureIndex(new AssetIndex<Texture>())
+    , _meshCache(new AssetCache<Mesh>())
+    , _meshIndex(new AssetIndex<Mesh>())
 {
     App::InitScripting();
 
