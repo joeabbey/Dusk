@@ -249,12 +249,14 @@ IF (MSVC)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build /p:Configuration=Debug /p:Platform=${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/libogg_static.sln;
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:Configuration=Debug /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build /p:Configuration=Release /p:Platform=${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/libogg_static.sln;
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:Configuration=Release /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_TARGET(ogg DEPENDS ${OGG_LIBRARIES_DEBUG} ${OGG_LIBRARIES_RELEASE})
@@ -301,14 +303,14 @@ IF (MSVC)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
-                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Debug /p:Platform=${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Debug /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
-                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Release /p:Platform=${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Release /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_TARGET(vorbis DEPENDS ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
@@ -387,6 +389,6 @@ ENDIF()
 ADD_DEPENDENCIES(depend flatbuffers)
 
 SET_TARGET_PROPERTIES(
-    depend glm json lua zlib glfw flatbuffers
+    depend glm json lua zlib glfw openal ogg vorbis flatbuffers
     PROPERTIES FOLDER "depend"
 )
