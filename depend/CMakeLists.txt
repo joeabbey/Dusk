@@ -238,23 +238,23 @@ IF (MSVC)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/x64/Debug/libogg_static.lib")
         SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/x64/Release/libogg_static.lib")
-        SET(OGG_PLATFORM "Platform=x64")
+        SET(OGG_PLATFORM "x64")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
         SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/Win32/Debug/libogg_static.lib")
         SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/Win32/Release/libogg_static.lib")
-        SET(OGG_PLATFORM "Platform=Win32")
+        SET(OGG_PLATFORM "Win32")
     endif()
     SET(OGG_LIBRARIES_DEBUG "${OGG_LIBRARIES_DEBUG}" PARENT_SCOPE)
     SET(OGG_LIBRARIES_RELEASE "${OGG_LIBRARIES_RELEASE}" PARENT_SCOPE)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build "/p:Configuration=Debug;${OGG_PLATFORM}"
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build /p:Configuration=Debug /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build "/p:Configuration=Release;${OGG_PLATFORM}"
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build /p:Configuration=Release /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_TARGET(ogg DEPENDS ${OGG_LIBRARIES_DEBUG} ${OGG_LIBRARIES_RELEASE})
@@ -290,11 +290,11 @@ IF (MSVC)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         SET(VORBIS_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Debug/libvorbis_static.lib")
         SET(VORBIS_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Release/libvorbis_static.lib")
-        SET(VORBIS_PLATFORM "Platform=x64")
+        SET(VORBIS_PLATFORM "x64")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
         SET(VORBIS_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Debug/libvorbis_static.lib")
         SET(VORBIS_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Release/libvorbis_static.lib")
-        SET(VORBIS_PLATFORM "Platform=Win32")
+        SET(VORBIS_PLATFORM "Win32")
     endif()
     SET(VORBIS_LIBRARIES_DEBUG "${VORBIS_LIBRARIES_DEBUG}" PARENT_SCOPE)
     SET(VORBIS_LIBRARIES_RELEASE "${VORBIS_LIBRARIES_RELEASE}" PARENT_SCOPE)
@@ -302,16 +302,16 @@ IF (MSVC)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_DEBUG}
         COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
-                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build "/p:Configuration=Debug;${VORBIS_PLATFORM}"
+                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Debug /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_RELEASE}
         COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
-                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build "/p:Configuration=Release;${VORBIS_PLATFORM}"
+                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Release /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
-    ADD_CUSTOM_TARGET(vorbis DEPENDS ogg ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
+    ADD_CUSTOM_TARGET(vorbis DEPENDS ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
 ELSE()
     SET(VORBIS_LIBRARIES "${CMAKE_SOURCE_DIR}/depend/libvorbis/lib/.libs/libvorbis.so")
     SET(VORBIS_LIBRARIES "${VORBIS_LIBRARIES}" PARENT_SCOPE)
@@ -319,7 +319,9 @@ ELSE()
     SET(VORBIS_AUTOCONF_STAMP "${CMAKE_SOURCE_DIR}/depend/libvorbis/stamp-h1")
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_AUTOCONF_STAMP}
-        COMMAND ./autogen.sh
+        COMMAND CPPFLAGS="-I${CMAKE_SOURCE_DIR}/depend/libogg/include"
+                LDFLAGS="-L${CMAKE_SOURCE_DIR}/depend/libogg/src/.libs"
+                ./autogen.sh
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_COMMAND(
