@@ -249,12 +249,12 @@ IF (MSVC)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /p:Configuration=Debug;${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build "/p:Configuration=Debug;${OGG_PLATFORM}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /p:Configuration=Release;${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2015/libogg_static.sln /t:Build "/p:Configuration=Release;${OGG_PLATFORM}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_TARGET(ogg DEPENDS ${OGG_LIBRARIES_DEBUG} ${OGG_LIBRARIES_RELEASE})
@@ -301,15 +301,17 @@ IF (MSVC)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_DEBUG}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /p:Configuration=Debug;${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
+                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build "/p:Configuration=Debug;${VORBIS_PLATFORM}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_RELEASE}
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /p:Configuration=Release;${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
+                ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build "/p:Configuration=Release;${VORBIS_PLATFORM}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
-    ADD_CUSTOM_TARGET(vorbis DEPENDS ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
+    ADD_CUSTOM_TARGET(vorbis DEPENDS ogg ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
 ELSE()
     SET(VORBIS_LIBRARIES "${CMAKE_SOURCE_DIR}/depend/libvorbis/lib/.libs/libvorbis.so")
     SET(VORBIS_LIBRARIES "${VORBIS_LIBRARIES}" PARENT_SCOPE)
@@ -326,7 +328,7 @@ ELSE()
         COMMAND make
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
-    ADD_CUSTOM_TARGET(vorbis DEPENDS ${VORBIS_LIBRARIES})
+    ADD_CUSTOM_TARGET(vorbis DEPENDS ogg ${VORBIS_LIBRARIES})
 ENDIF()
 ADD_DEPENDENCIES(depend vorbis)
 
