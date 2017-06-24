@@ -196,9 +196,9 @@ EXECUTE_PROCESS(
 )
 
 IF (MSVC)
-    SET(OPENAL_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/openal/Debug/OpenAL.lib")
+    SET(OPENAL_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/openal/Debug/OpenAL32.lib")
     SET(OPENAL_LIBRARIES_DEBUG "${OPENAL_LIBRARIES_DEBUG}" PARENT_SCOPE)
-    SET(OPENAL_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/openal/Release/OpenAL.lib")
+    SET(OPENAL_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/openal/Release/OpenAL32.lib")
     SET(OPENAL_LIBRARIES_RELEASE "${OPENAL_LIBRARIES_RELEASE}" PARENT_SCOPE)
 
     ADD_CUSTOM_COMMAND(
@@ -235,32 +235,38 @@ SET(OGG_INCLUDE_DIRS
 )
 
 IF (MSVC)
+    MESSAGE(STATUS "Using libogg_static.sln")
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/x64/Debug/libogg_static.lib")
-        SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/x64/Release/libogg_static.lib")
+        SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/x64/Debug/libogg_static.lib")
+        SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/x64/Release/libogg_static.lib")
         SET(OGG_PLATFORM "x64")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/Win32/Debug/libogg_static.lib")
-        SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2015/Win32/Release/libogg_static.lib")
+        SET(OGG_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/Win32/Debug/libogg_static.lib")
+        SET(OGG_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/Win32/Release/libogg_static.lib")
         SET(OGG_PLATFORM "Win32")
     endif()
     SET(OGG_LIBRARIES_DEBUG "${OGG_LIBRARIES_DEBUG}" PARENT_SCOPE)
     SET(OGG_LIBRARIES_RELEASE "${OGG_LIBRARIES_RELEASE}" PARENT_SCOPE)
 
+    FILE(REMOVE_RECURSE
+        ${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/UpgradeLog.htm
+        ${CMAKE_SOURCE_DIR}/depend/libogg/win32/VS2010/Backup
+    )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_DEBUG}
         COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/libogg_static.sln;
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:Configuration=Debug /p:Platform=${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Debug /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${OGG_LIBRARIES_RELEASE}
         COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/libogg_static.sln;
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:Configuration=Release /p:Platform=${OGG_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/libogg_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Release /p:Platform=${OGG_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libogg
     )
     ADD_CUSTOM_TARGET(ogg DEPENDS ${OGG_LIBRARIES_DEBUG} ${OGG_LIBRARIES_RELEASE})
 ELSE()
+    MESSAGE(STATUS "Using autogen.sh")
     SET(OGG_LIBRARIES "${CMAKE_SOURCE_DIR}/depend/libogg/src/.libs/libogg.so")
     SET(OGG_LIBRARIES "${OGG_LIBRARIES}" PARENT_SCOPE)
 
@@ -289,6 +295,7 @@ SET(VORBIS_INCLUDE_DIRS
 )
 
 IF (MSVC)
+    MESSAGE(STATUS "Using vorbis_static.sln")
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         SET(VORBIS_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Debug/libvorbis_static.lib")
         SET(VORBIS_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Release/libvorbis_static.lib")
@@ -301,20 +308,25 @@ IF (MSVC)
     SET(VORBIS_LIBRARIES_DEBUG "${VORBIS_LIBRARIES_DEBUG}" PARENT_SCOPE)
     SET(VORBIS_LIBRARIES_RELEASE "${VORBIS_LIBRARIES_RELEASE}" PARENT_SCOPE)
 
+    FILE(REMOVE_RECURSE
+        ${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/UpgradeLog.htm
+        ${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Backup
+    )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_DEBUG}
         COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Debug /p:Platform=${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Debug /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_LIBRARIES_RELEASE}
         COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/vorbis_static.sln;
-        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:Configuration=Release /p:Platform=${VORBIS_PLATFORM}
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/vorbis_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Release /p:Platform=${VORBIS_PLATFORM}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
     )
     ADD_CUSTOM_TARGET(vorbis DEPENDS ${VORBIS_LIBRARIES_DEBUG} ${VORBIS_LIBRARIES_RELEASE})
 ELSE()
+    MESSAGE(STATUS "Using autogen.sh")
     SET(VORBIS_LIBRARIES "${CMAKE_SOURCE_DIR}/depend/libvorbis/lib/.libs/libvorbis.so")
     SET(VORBIS_LIBRARIES "${VORBIS_LIBRARIES}" PARENT_SCOPE)
 
