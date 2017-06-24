@@ -333,7 +333,8 @@ ELSE()
     SET(VORBIS_AUTOCONF_STAMP "${CMAKE_SOURCE_DIR}/depend/libvorbis/stamp-h1")
     ADD_CUSTOM_COMMAND(
         OUTPUT ${VORBIS_AUTOCONF_STAMP}
-        COMMAND CPPFLAGS="-I${CMAKE_SOURCE_DIR}/depend/libogg/include"
+        COMMAND ${CMAKE_COMMANDS} -E env
+                CPPFLAGS="-I${CMAKE_SOURCE_DIR}/depend/libogg/include"
                 LDFLAGS="-L${CMAKE_SOURCE_DIR}/depend/libogg/src/.libs"
                 ./autogen.sh
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libvorbis
