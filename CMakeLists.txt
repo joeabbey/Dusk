@@ -138,6 +138,7 @@ SET(Dusk_INCLUDES
     include/dusk/Mesh.hpp
     include/dusk/Model.hpp
     include/dusk/Material.hpp
+    include/dusk/Sound.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -171,6 +172,7 @@ SET(Dusk_SOURCES
     src/dusk/Mesh.cpp
     src/dusk/Model.cpp
     src/dusk/Material.cpp
+    src/dusk/Sound.cpp
 
     # imgui
     src/imgui/imgui.cpp

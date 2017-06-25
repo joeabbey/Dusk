@@ -10,25 +10,41 @@
                           DUSK_VERSION_PATCH)
 #define DUSK_VERSION "@PROJECT_VERSION@-@DUSK_REVISION@"
 
+// glad
 #define WIN32_LEAN_AND_MEAN
 #include <glad/glad.h>
 
+// GLFW
 #include <GLFW/glfw3.h>
 
+// OpenAL
+#include <AL/al.h>
+#include <AL/alc.h>
+
+// Ogg/Vorbis
+#include <vorbis/codec.h>
+#include <vorbis/vorbisfile.h>
+
+// glm
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/norm.hpp>
 
+// Lua
 #include <lua.hpp>
 
+// nlohmann json
 #include <json.hpp>
 
+// ImGUI
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw_gl3.h>
 
+// TinyObjLoader
 #include <tinyobjloader/tiny_obj_loader.h>
 
+// STB
 #include <stb/stb_image.h>
 
 #undef CreateWindow

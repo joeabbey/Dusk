@@ -86,6 +86,9 @@ private:
 
     std::unique_ptr<Scene> _scene;
 
+    ALCdevice * _alDevice;
+    ALCcontext * _alContext;
+
     GLFWwindow * _glfwWindow;
 
 }; // class App

@@ -303,12 +303,20 @@ SET(VORBIS_INCLUDE_DIRS
 IF (MSVC)
     MESSAGE(STATUS "Using vorbis_static.sln")
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        SET(VORBIS_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Debug/libvorbis_static.lib")
-        SET(VORBIS_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Release/libvorbis_static.lib")
+        SET(VORBIS_LIBRARIES_DEBUG
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Debug/libvorbis_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Debug/libvorbisfile_static.lib")
+        SET(VORBIS_LIBRARIES_RELEASE
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Release/libvorbis_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/x64/Release/libvorbisfile_static.lib")
         SET(VORBIS_PLATFORM "x64")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        SET(VORBIS_LIBRARIES_DEBUG "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Debug/libvorbis_static.lib")
-        SET(VORBIS_LIBRARIES_RELEASE "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Release/libvorbis_static.lib")
+        SET(VORBIS_LIBRARIES_DEBUG
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Debug/libvorbis_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Debug/libvorbisfile_static.lib")
+        SET(VORBIS_LIBRARIES_RELEASE
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Release/libvorbis_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libvorbis/win32/VS2010/Win32/Release/libvorbisfile_static.lib")
         SET(VORBIS_PLATFORM "Win32")
     endif()
     SET(VORBIS_LIBRARIES_DEBUG "${VORBIS_LIBRARIES_DEBUG}" PARENT_SCOPE)

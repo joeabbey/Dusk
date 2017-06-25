@@ -35,6 +35,10 @@ void App::CreateWindow()
 {
     DuskBenchStart();
 
+    _alDevice = alcOpenDevice(NULL);
+    _alContext = alcCreateContext(_alDevice, NULL);
+    alcMakeContextCurrent(_alContext);
+
     if (!glfwInit())
     {
         DuskLogError("Failed to initialize GLFW");
@@ -97,6 +101,9 @@ void App::DestroyWindow()
     _glfwWindow = nullptr;
 
     glfwTerminate();
+
+    alcDestroyContext(_alContext);
+    alcCloseDevice(_alDevice);
 }
 
 bool App::ParseWindow(nlohmann::json& data)
