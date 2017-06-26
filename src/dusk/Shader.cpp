@@ -4,6 +4,7 @@
 #include <dusk/Benchmark.hpp>
 
 #include <fstream>
+#include <sstream>
 
 namespace dusk {
 
@@ -188,6 +189,7 @@ GLuint Shader::LoadShader(const std::string& filename, GLuint type)
     if (!shaderCompiled)
     {
         DuskLogError("Failed to compile shader '%s'", filename.c_str());
+        PrintShader(buffer);
         PrintShaderLog(shader);
         goto error;
     }
@@ -253,6 +255,18 @@ error:
 
     file.close();
     return retval;
+}
+
+void Shader::PrintShader(const std::string& shader)
+{
+    std::istringstream iss(shader);
+
+    unsigned int lineNum = 1;
+    std::string line;
+    while (std::getline(iss, line))
+    {
+        printf("%d: %s\n", lineNum++, line.c_str());
+    }
 }
 
 void Shader::PrintShaderLog(GLuint shader)

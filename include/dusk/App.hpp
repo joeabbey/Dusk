@@ -57,6 +57,8 @@ public:
     AssetIndex<Texture> * GetTextureIndex() const { return _textureIndex.get(); }
     AssetCache<Mesh> * GetMeshCache() const { return _meshCache.get(); }
     AssetIndex<Mesh> * GetMeshIndex() const { return _meshIndex.get(); }
+    AssetCache<Material> * GetMaterialCache() const { return _materialCache.get(); }
+    AssetIndex<Material> * GetMaterialIndex() const { return _materialIndex.get(); }
 
     GLFWwindow * GetGLFWWindow() const { return _glfwWindow; }
 
@@ -81,6 +83,8 @@ private:
     std::unique_ptr<AssetIndex<Texture>> _textureIndex;
     std::unique_ptr<AssetCache<Mesh>> _meshCache;
     std::unique_ptr<AssetIndex<Mesh>> _meshIndex;
+    std::unique_ptr<AssetCache<Material>> _materialCache;
+    std::unique_ptr<AssetIndex<Material>> _materialIndex;
 
     std::unordered_map<std::string, std::unique_ptr<Shader>> _shaders;
 

@@ -11,17 +11,14 @@ namespace dusk {
 
 struct MaterialData
 {
-    alignas(16)  glm::vec4 ambient  = glm::vec4(0, 0, 0, 1);
-    alignas(16)  glm::vec4 diffuse  = glm::vec4(0, 0, 0, 1);
-    alignas(16)  glm::vec4 specular = glm::vec4(0, 0, 0, 1);
+    alignas(16)  glm::vec4 Ambient  = glm::vec4(0, 0, 0, 1);
+    alignas(16)  glm::vec4 Diffuse  = glm::vec4(0, 0, 0, 1);
+    alignas(16)  glm::vec4 Specular = glm::vec4(0, 0, 0, 1);
 
-    alignas(4)   float shininess = 0.0f;
-    alignas(4)   float dissolve  = 0.0f;
+    alignas(4)   GLfloat Shininess = 0.0f;
+    alignas(4)   GLfloat Dissolve  = 0.0f;
 
-    alignas(4)   bool hasAmbientMap  = false;
-    alignas(4)   bool hasDiffuseMap  = false;
-    alignas(4)   bool hasSpecularMap = false;
-    alignas(4)   bool hasBumpMap     = false;
+    alignas(4)   GLuint MapFlags = 0;
 };
 
 class Material
@@ -39,6 +36,33 @@ public:
         BUMP     = 3,
     };
 
+    enum MapFlags : GLuint
+    {
+        AMBIENT_MAP_FLAG  = 1,
+        DIFFUSE_MAP_FLAG  = 2,
+        SPECULAR_MAP_FLAG = 4,
+        BUMP_MAP_FLAG     = 8,
+    };
+
+    static std::shared_ptr<Material> Parse(nlohmann::json & data);
+
+    static std::shared_ptr<Material>
+    Create(glm::vec4 ambient,
+           glm::vec4 diffuse,
+           glm::vec4 specular,
+           float shininess,
+           float dissolve,
+           const std::string& ambientMap,
+           const std::string& diffuseMap,
+           const std::string& specularMap,
+           const std::string& bumpMap);
+
+    ~Material();
+
+    void Bind(Shader * shader);
+
+private:
+
     Material(glm::vec4 ambient,
              glm::vec4 diffuse,
              glm::vec4 specular,
@@ -48,12 +72,6 @@ public:
              const std::string& diffuseMap,
              const std::string& specularMap,
              const std::string& bumpMap);
-
-    ~Material();
-
-    void Bind(Shader * shader);
-
-private:
 
     MaterialData _shaderData;
 

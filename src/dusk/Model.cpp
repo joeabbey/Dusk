@@ -18,6 +18,11 @@ Model::Model(Shader * shader)
     memset(&_shaderData, 0, sizeof(_shaderData));
     Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
     _shader->BindData("DuskTransformData");
+
+    // TODO: Move
+    MaterialData tmpData;
+    Shader::AddData("DuskMaterialData", &tmpData, sizeof(tmpData));
+    _shader->BindData("DuskMaterialData");
 }
 
 Model::~Model()

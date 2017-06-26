@@ -14,6 +14,8 @@ App::App(int argc, char** argv)
     , _textureIndex(new AssetIndex<Texture>())
     , _meshCache(new AssetCache<Mesh>())
     , _meshIndex(new AssetIndex<Mesh>())
+    , _materialCache(new AssetCache<Material>())
+    , _materialIndex(new AssetIndex<Material>())
 {
     App::InitScripting();
 

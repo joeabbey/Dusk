@@ -161,6 +161,34 @@ protected:
 
 }; // class CubeMesh
 
+class CylinderMesh : public Mesh
+{
+public:
+
+    static std::shared_ptr<CylinderMesh>
+    Create(std::shared_ptr<Material> material,
+           unsigned int points,
+           float radius,
+           float height);
+
+protected:
+
+    CylinderMesh(std::shared_ptr<Material> material,
+             unsigned int points,
+             float radius,
+             float height);
+
+private:
+
+    std::shared_ptr<Material> _material;
+
+    unsigned int _points;
+
+    float _radius;
+    float _height;
+
+}; // class CylinderMesh
+
 class UVSphereMesh : public Mesh
 {
 public:

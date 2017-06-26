@@ -23,6 +23,11 @@ std::shared_ptr<Mesh> Mesh::Parse(nlohmann::json & data)
 
     const std::string& type = data["Type"];
 
+    if (data.find("Material") != data.end())
+    {
+        material = Material::Parse(data["Material"]);
+    }
+
     // TODO: Infer type
 
     if (type == "File")
@@ -41,6 +46,10 @@ std::shared_ptr<Mesh> Mesh::Parse(nlohmann::json & data)
     else if (type == "Cube")
     {
         mesh = CubeMesh::Create(material, data["Size"]);
+    }
+    else if (type == "Cylinder")
+    {
+    	mesh = CylinderMesh::Create(material, data["Points"], data["Radius"], data["Height"]);
     }
     else if (type == "UVSphere")
     {
@@ -268,7 +277,7 @@ bool FileMesh::LoadOBJ(const std::string& filename)
                 ? std::string()
                 : dirname + mat->bump_texname);
 
-            material.reset(new Material(
+            material = Material::Create(
                 glm::vec4(mat->ambient[0], mat->ambient[1], mat->ambient[2], 1.0f),
                 glm::vec4(mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.0f),
                 glm::vec4(mat->specular[0], mat->specular[1], mat->specular[2], 1.0f),
@@ -277,7 +286,7 @@ bool FileMesh::LoadOBJ(const std::string& filename)
                 diffuse_texname,
                 specular_texname,
                 bump_texname
-            ));
+            );
         }
         AddRenderGroup(material, GL_TRIANGLES, verts, norms, txcds);
     }
@@ -316,17 +325,22 @@ PlaneMesh::PlaneMesh(std::shared_ptr<Material> material,
     , _width(width)
     , _height(height)
 {
+    unsigned int tmpRows = _rows + 1;
+    unsigned int tmpCols = _cols + 1;
+
+    float halfWidth = _width * 0.5f;
+    float halfHeight = _height * 0.5f;
     float squareWidth = _width / (float)_cols;
     float squareHeight = _height / (float)_rows;
 
-    int vertCount = (_rows * _cols) + (_rows - 1) * (_cols - 2);
+    int vertCount = (tmpRows * tmpCols) + (tmpRows - 1) * (tmpCols - 2);
 
     std::vector<glm::vec3> tmpVerts;
     std::vector<glm::vec3> tmpNorms;
     std::vector<glm::vec2> tmpTxcds;
-    tmpVerts.resize(_rows * _cols);
-    tmpNorms.resize(_rows * _cols);
-    tmpTxcds.resize(_rows * _cols);
+    tmpVerts.resize(tmpRows * tmpCols);
+    tmpNorms.resize(tmpRows * tmpCols);
+    tmpTxcds.resize(tmpRows * tmpCols);
 
     std::vector<glm::vec3> verts;
     std::vector<glm::vec3> norms;
@@ -337,59 +351,59 @@ PlaneMesh::PlaneMesh(std::shared_ptr<Material> material,
 
     // Generate all possible points in a grid
     int i = 0;
-    for (unsigned int row = 0; row < _rows; row++)
+    for (unsigned int row = 0; row < tmpRows; row++)
     {
-        for (unsigned int col = 0; col < _cols; col++)
+        for (unsigned int col = 0; col < tmpCols; col++)
         {
-            tmpVerts[i] = glm::vec3((float)col * squareWidth, 0.0f, (float)row * squareHeight);
+            tmpVerts[i] = glm::vec3((float)col * squareWidth - halfWidth, 0.0f, (float)row * squareHeight - halfHeight);
             tmpNorms[i] = glm::vec3(0.0f, 1.0f, 0.0f);
-            tmpTxcds[i] = glm::vec2((float)col / (float)_cols, (float)row / (float)_rows);
+            tmpTxcds[i] = glm::vec2((float)col / (float)(tmpCols - 1), (float)row / (float)(tmpRows - 1));
             ++i;
         }
     }
 
     // Build the triangle strip from the generated points
     i = 0;
-    for (unsigned int row = 0; row < _rows - 1; row++)
+    for (unsigned int row = 0; row < tmpRows - 1; row++)
     {
         if ((row & 1) == 0)
         {
-            // even rows
-            for (unsigned int col = 0; col < _cols; col++)
+            // even tmpRows
+            for (unsigned int col = 0; col < tmpCols; col++)
             {
-                verts[i] = tmpVerts[col + row * _cols];
-                norms[i] = tmpNorms[col + row * _cols];
-                txcds[i] = tmpTxcds[col + row * _cols];
+                verts[i] = tmpVerts[col + row * tmpCols];
+                norms[i] = tmpNorms[col + row * tmpCols];
+                txcds[i] = tmpTxcds[col + row * tmpCols];
                 ++i;
-                verts[i] = tmpVerts[col + (row + 1) * _cols];
-                norms[i] = tmpNorms[col + (row + 1) * _cols];
-                txcds[i] = tmpTxcds[col + (row + 1) * _cols];
+                verts[i] = tmpVerts[col + (row + 1) * tmpCols];
+                norms[i] = tmpNorms[col + (row + 1) * tmpCols];
+                txcds[i] = tmpTxcds[col + (row + 1) * tmpCols];
                 ++i;
             }
         }
         else
         {
-            // odd rows
-            for (unsigned int col = _cols - 1; col > 0; col--)
+            // odd tmpRows
+            for (unsigned int col = tmpCols - 1; col > 0; col--)
             {
-                verts[i] = tmpVerts[col + (row + 1) * _cols];
-                norms[i] = tmpNorms[col + (row + 1) * _cols];
-                txcds[i] = tmpTxcds[col + (row + 1) * _cols];
+                verts[i] = tmpVerts[col + (row + 1) * tmpCols];
+                norms[i] = tmpNorms[col + (row + 1) * tmpCols];
+                txcds[i] = tmpTxcds[col + (row + 1) * tmpCols];
                 ++i;
-                verts[i] = tmpVerts[col - 1 + row * _cols];
-                norms[i] = tmpNorms[col - 1 + row * _cols];
-                txcds[i] = tmpTxcds[col - 1 + row * _cols];
+                verts[i] = tmpVerts[col - 1 + row * tmpCols];
+                norms[i] = tmpNorms[col - 1 + row * tmpCols];
+                txcds[i] = tmpTxcds[col - 1 + row * tmpCols];
                 ++i;
             }
         }
     }
 
     // If ending on an odd row, finish off the last point
-    if ((_rows & 1) && _rows > 2)
+    if ((tmpRows & 1) && tmpRows > 2)
     {
-        verts[i] = tmpVerts[(_rows - 1) * _cols];
-        norms[i] = tmpNorms[(_rows - 1) * _cols];
-        txcds[i] = tmpTxcds[(_rows - 1) * _cols];
+        verts[i] = tmpVerts[(tmpRows - 1) * tmpCols];
+        norms[i] = tmpNorms[(tmpRows - 1) * tmpCols];
+        txcds[i] = tmpTxcds[(tmpRows - 1) * tmpCols];
         ++i;
     }
 
@@ -535,6 +549,98 @@ CubeMesh::Create(std::shared_ptr<Material> material, float size)
     return std::dynamic_pointer_cast<CubeMesh>(ptr);
 }
 
+std::shared_ptr<CylinderMesh>
+CylinderMesh::Create(std::shared_ptr<Material> material,
+       unsigned int points,
+       float radius,
+       float height)
+{
+    std::stringstream ss;
+    ss << "CylinderMesh[" << points << ","
+                          << radius << ","
+                          << height << "]";
+
+    App * app = App::GetInst();
+    AssetId id = app->GetMeshIndex()->GetId(ss.str());
+    std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
+    if (!ptr)
+    {
+       ptr.reset(new CylinderMesh(material, points, radius, height));
+       app->GetMeshCache()->Add(id, ptr);
+    }
+    return std::dynamic_pointer_cast<CylinderMesh>(ptr);
+}
+
+CylinderMesh::CylinderMesh(std::shared_ptr<Material> material,
+                           unsigned int points,
+                           float radius,
+                           float height)
+    : Mesh()
+    , _material(material)
+    , _points(points)
+    , _radius(radius)
+    , _height(height)
+{
+    glm::vec3 top = glm::vec3(0, _height * 0.5f, 0);
+    glm::vec3 base = glm::vec3(0, -_height * 0.5f, 0);
+
+    std::vector<glm::vec3> verts;
+    std::vector<glm::vec3> norms;
+    std::vector<glm::vec2> txcds;
+
+    float angleSlice = (glm::pi<float>() * 2.0f) / (float)_points;
+
+    std::vector<glm::vec3> basePoints;
+    std::vector<glm::vec3> topPoints;
+    for (unsigned int i = 0; i < _points; ++i)
+    {
+        float x = cosf(angleSlice * (float)i) * _radius;
+        float z = sinf(angleSlice * (float)i) * _radius;
+        basePoints.push_back(glm::vec3(x, -_height * 0.5f, z));
+        topPoints.push_back(glm::vec3(x, _height * 0.5f, z));
+    }
+
+    glm::vec3 norm;
+    for (unsigned int i = 0; i < _points; ++i)
+    {
+        unsigned int next = (i != _points - 1 ? i + 1 : 0);
+
+        norm = glm::normalize(glm::cross(top-topPoints[i], topPoints[next]-topPoints[i]));
+        verts.push_back(topPoints[i]);
+        verts.push_back(top);
+        verts.push_back(topPoints[next]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
+
+        norm = glm::normalize(glm::cross(basePoints[next]-topPoints[next], topPoints[i]-topPoints[next]));
+        verts.push_back(topPoints[next]);
+        verts.push_back(basePoints[next]);
+        verts.push_back(topPoints[i]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
+
+        norm = glm::normalize(glm::cross(topPoints[i]-basePoints[i], basePoints[next]-basePoints[i]));
+        verts.push_back(basePoints[i]);
+        verts.push_back(topPoints[i]);
+        verts.push_back(basePoints[next]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
+
+        norm = glm::normalize(glm::cross(base-basePoints[i], basePoints[next]-basePoints[i]));
+        verts.push_back(basePoints[i]);
+        verts.push_back(base);
+        verts.push_back(basePoints[next]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
+    }
+
+    AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);
+}
+
 std::shared_ptr<UVSphereMesh>
 UVSphereMesh::Create(std::shared_ptr<Material> material,
                      unsigned int rows,
@@ -650,29 +756,26 @@ ConeMesh::ConeMesh(std::shared_ptr<Material> material,
         basePoints.push_back(glm::vec3(x, -_height * 0.5f, z));
     }
 
+    glm::vec3 norm;
     for (unsigned int i = 0; i < _points; ++i)
     {
+        unsigned int next = (i != _points - 1 ? i + 1 : 0);
+
+        norm = glm::normalize(glm::cross(tip-basePoints[i], basePoints[next]-basePoints[i]));
         verts.push_back(basePoints[i]);
         verts.push_back(tip);
-        if (i != _points - 1)
-        {
-            verts.push_back(basePoints[i + 1]);
-        }
-        else
-        {
-            verts.push_back(basePoints[0]);
-        }
+        verts.push_back(basePoints[next]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
 
+        norm = glm::normalize(glm::cross(base-basePoints[i], basePoints[next]-basePoints[i]));
         verts.push_back(basePoints[i]);
         verts.push_back(base);
-        if (i != _points - 1)
-        {
-            verts.push_back(basePoints[i + 1]);
-        }
-        else
-        {
-            verts.push_back(basePoints[0]);
-        }
+        verts.push_back(basePoints[next]);
+        norms.push_back(norm);
+        norms.push_back(norm);
+        norms.push_back(norm);
     }
 
     AddRenderGroup(_material, GL_TRIANGLES, verts, norms, txcds);

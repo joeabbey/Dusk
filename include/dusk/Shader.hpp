@@ -62,6 +62,7 @@ private:
 
     static bool LoadFile(const std::string& filename, std::string& buffer);
 
+    static void PrintShader(const std::string& shader);
     static void PrintShaderLog(GLuint shader);
     static void PrintShaderProgramLog(GLuint program);
 
