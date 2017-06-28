@@ -61,6 +61,9 @@ public:
 
     void Bind(Shader * shader);
 
+    // TODO: Fix
+    std::string GetId();
+
 private:
 
     Material(glm::vec4 ambient,

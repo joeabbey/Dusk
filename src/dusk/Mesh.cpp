@@ -304,6 +304,11 @@ std::shared_ptr<PlaneMesh> PlaneMesh::Create(std::shared_ptr<Material> material,
                        << width << ","
                        << height << "]";
 
+    if (material)
+    {
+        ss << material->GetId();
+    }
+
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
     std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
@@ -420,6 +425,11 @@ CuboidMesh::Create(std::shared_ptr<Material> material,
     ss << "CuboidMesh[" << width << ","
                        << height << ","
                        << depth << "]";
+
+    if (material)
+    {
+        ss << material->GetId();
+    }
 
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
@@ -538,6 +548,11 @@ CubeMesh::Create(std::shared_ptr<Material> material, float size)
     std::stringstream ss;
     ss << "CubeMesh[" << size << "]";
 
+    if (material)
+    {
+        ss << material->GetId();
+    }
+
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
     std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
@@ -559,6 +574,11 @@ CylinderMesh::Create(std::shared_ptr<Material> material,
     ss << "CylinderMesh[" << points << ","
                           << radius << ","
                           << height << "]";
+
+    if (material)
+    {
+      ss << material->GetId();
+    }
 
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
@@ -652,6 +672,11 @@ UVSphereMesh::Create(std::shared_ptr<Material> material,
                           << cols << ","
                           << radius << "]";
 
+    if (material)
+    {
+        ss << material->GetId();
+    }
+
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
     std::shared_ptr<Mesh> ptr = app->GetMeshCache()->Get(id);
@@ -671,6 +696,11 @@ IcoSphereMesh::Create(std::shared_ptr<Material> material,
     std::stringstream ss;
     ss << "IcoSphereMesh[" << subdivisions << ","
                            << radius << "]";
+
+    if (material)
+    {
+        ss << material->GetId();
+    }
 
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());
@@ -717,6 +747,11 @@ ConeMesh::Create(std::shared_ptr<Material> material,
     ss << "ConeMesh[" << points << ","
                       << radius << ","
                       << height << "]";
+
+    if (material)
+    {
+        ss << material->GetId();
+    }
 
     App * app = App::GetInst();
     AssetId id = app->GetMeshIndex()->GetId(ss.str());

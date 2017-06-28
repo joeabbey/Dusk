@@ -45,6 +45,23 @@ std::unique_ptr<Model> Model::Parse(nlohmann::json & data)
     return model;
 }
 
+std::unique_ptr<Model> Model::Clone()
+{
+    std::unique_ptr<Model> model(new Model(_shader));
+
+    model->SetBaseTransform(_baseTransform);
+    model->SetPosition(GetPosition());
+    model->SetRotation(GetRotation());
+    model->SetScale(GetScale());
+
+    for (auto& mesh : _meshes)
+    {
+        model->AddMesh(mesh);
+    }
+
+    return model;
+}
+
 void Model::AddMesh(std::shared_ptr<Mesh> mesh)
 {
     _meshes.push_back(mesh);

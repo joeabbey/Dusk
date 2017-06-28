@@ -17,6 +17,7 @@ public:
     virtual ~Camera() = default;
 
     static std::unique_ptr<Camera> Parse(nlohmann::json & data);
+    std::unique_ptr<Camera> Clone();
 
     void SetBaseTransform(const glm::mat4& baseTransform);
 
@@ -32,6 +33,7 @@ public:
 
     void SetClip(const glm::vec2& clip);
     void SetClip(float znear, float zfar) { SetClip(glm::vec2(znear, zfar)); };
+    glm::vec2 GetClip() const { return _clip; }
 
     void SetPosition(const glm::vec3& pos);
     glm::vec3 GetPosition() const { return _position; }

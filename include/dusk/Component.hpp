@@ -19,19 +19,26 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Component);
 
-    Component(Actor * parent);
+    Component(bool isTemplate = false);
     virtual ~Component();
 
-    static std::unique_ptr<Component> Parse(nlohmann::json & data, Actor * actor);
+    static std::unique_ptr<Component> Parse(nlohmann::json & data, bool isTemplate = false);
 
-    Actor * GetActor() const { return _parent; };
+    virtual std::unique_ptr<Component> Clone();
+
+    inline bool IsTemplate() const { return _isTemplate; }
+
+    virtual void SetActor(Actor * actor);
+    Actor * GetActor() const { return _actor; };
 
     static void InitScripting();
     static int Script_GetActor(lua_State * L);
 
 protected:
 
-    Actor * _parent;
+    Actor * _actor;
+
+    bool _isTemplate;
 
 }; // class Component
 
@@ -39,11 +46,15 @@ class ModelComponent : public Component
 {
 public:
 
-    ModelComponent(Actor * parent, std::unique_ptr<Model> model);
+    ModelComponent(std::unique_ptr<Model> model, bool isTemplate = false);
     virtual ~ModelComponent();
 
-    virtual void Update(const Event& event);
-    virtual void Render(const Event& event);
+    virtual std::unique_ptr<Component> Clone() override;
+
+    virtual void SetActor(Actor * actor) override;
+
+    virtual void OnUpdate(const Event& event);
+    virtual void OnRender(const Event& event);
 
     inline Model * GetModel() const { return _model.get(); };
 
@@ -57,11 +68,14 @@ class CameraComponent : public Component
 {
 public:
 
-    CameraComponent(Actor * parent, std::unique_ptr<Camera> camera);
+    CameraComponent(std::unique_ptr<Camera> camera, bool isTemplate = false);
     virtual ~CameraComponent();
 
-    void Update(const Event& event);
-    void Render(const Event& event);
+    virtual std::unique_ptr<Component> Clone() override;
+
+    virtual void SetActor(Actor * actor) override;
+
+    void OnUpdate(const Event& event);
 
     inline Camera * GetCamera() const { return _camera.get(); };
 
@@ -75,8 +89,12 @@ class ScriptComponent : public Component
 {
 public:
 
-    ScriptComponent(Actor * parent, const std::string& filename);
+    ScriptComponent(const std::string& filename, bool isTemplate = false);
     virtual ~ScriptComponent() = default;
+
+    virtual std::unique_ptr<Component> Clone() override;
+
+    virtual void SetActor(Actor * actor) override;
 
 protected:
 

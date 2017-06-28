@@ -24,23 +24,28 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Actor);
 
-    Actor(Scene * parent);
+    Actor(bool isTemplate = false);
     virtual ~Actor();
 
-    static std::unique_ptr<Actor> Parse(nlohmann::json & data, Scene * parent);
+    static std::unique_ptr<Actor> Parse(nlohmann::json & data);
 
-    Scene * GetScene() const { return _parent; };
+    virtual std::unique_ptr<Actor> Clone();
+
+    void SetScene(Scene * scene);
+    Scene * GetScene() const { return _scene; };
+
+    inline bool IsTemplate() const { return _isTemplate; }
 
     void SetBaseTransform(const glm::mat4& baseTransform);
 
     void SetPosition(const glm::vec3& pos);
-    glm::vec3 GetPosition() const { return _position; }
+    inline glm::vec3 GetPosition() const { return _position; }
 
     void SetRotation(const glm::vec3& rot);
-    glm::vec3 GetRotation() const { return _rotation; }
+    inline glm::vec3 GetRotation() const { return _rotation; }
 
     void SetScale(const glm::vec3& scale);
-    glm::vec3 GetScale() const { return _scale; }
+    inline glm::vec3 GetScale() const { return _scale; }
 
     glm::mat4 GetTransform();
 
@@ -60,9 +65,9 @@ public:
 
 private:
 
-    Scene * _parent;
+    Scene * _scene;
 
-    std::string _name;
+    bool _isTemplate;
 
     glm::mat4 _baseTransform;
     glm::mat4 _transform;

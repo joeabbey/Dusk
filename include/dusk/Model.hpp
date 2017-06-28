@@ -27,6 +27,7 @@ public:
     virtual ~Model();
 
     static std::unique_ptr<Model> Parse(nlohmann::json & data);
+    std::unique_ptr<Model> Clone();
 
     void AddMesh(std::shared_ptr<Mesh> mesh);
 

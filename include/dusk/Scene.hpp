@@ -35,7 +35,11 @@ public:
     void RunScript(const std::string& filename) { _scriptHost.RunFile(filename); }
 
     void AddActor(std::unique_ptr<Actor> actor);
+    void AddActorTemplate(const std::string& id, std::unique_ptr<Actor> actor);
+
     void AddCamera(std::unique_ptr<Camera> camera);
+
+    Actor * GetActorTemplate(const std::string& id);
 
     void SetCurrentCamera(Camera * camera) { _currentCamera = camera; }
     Camera * GetCurrentCamera() const { return _currentCamera; };
@@ -57,6 +61,8 @@ private:
 
     std::vector<std::unique_ptr<Camera>> _cameras;
     std::vector<std::unique_ptr<Actor>> _actors;
+
+    std::unordered_map<std::string, std::unique_ptr<Actor>> _actorTemplates;
 
 }; // class Scene
 

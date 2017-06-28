@@ -97,6 +97,8 @@ Material::Create(glm::vec4 ambient,
                       << specularMap << ","
                       << bumpMap << "]";
 
+    DuskLogInfo("%s", ss.str().c_str());
+
     App * app = App::GetInst();
     AssetId id = app->GetMaterialIndex()->GetId(ss.str());
     std::shared_ptr<Material> ptr = app->GetMaterialCache()->Get(id);
@@ -197,6 +199,20 @@ void Material::Bind(Shader * shader)
     }
 
     glActiveTexture(0);
+}
+
+std::string Material::GetId()
+{
+    std::stringstream ss;
+    ss << "Material[" << _ambient.r << "," << _ambient.g << "," << _ambient.b << "," << _ambient.a << ","
+                      << _diffuse.r << "," << _diffuse.g << "," << _diffuse.b << "," << _diffuse.a << ","
+                      << _specular.r << "," << _specular.g << "," << _specular.b << "," << _specular.a << ","
+                      << _shininess << "," << _dissolve << ","
+                      << _ambientMap << ","
+                      << _diffuseMap << ","
+                      << _specularMap << ","
+                      << _bumpMap << "]";
+    return ss.str();
 }
 
 } // namespace dusk

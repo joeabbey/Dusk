@@ -67,13 +67,18 @@ SoundPlayer::SoundPlayer()
 {
     alGenSources(1, &_alSource);
 
-    alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
-    alSource3f(_alSource, AL_POSITION, 0.0f, 0.0f, 0.0f);
+    SetPosition(glm::vec3(0));
 }
 
 SoundPlayer::~SoundPlayer()
 {
     alDeleteSources(1, &_alSource);
+}
+
+void SoundPlayer::SetListenerPosition(glm::vec3 pos)
+{
+    _ListenerPosition = pos;
+    alListener3f(AL_POSITION, _ListenerPosition.x, _ListenerPosition.y, _ListenerPosition.z);
 }
 
 void SoundPlayer::Play(Sound * sound)
@@ -88,6 +93,12 @@ ALint SoundPlayer::GetState()
     ALint state;
     alGetSourcei(_alSource, AL_SOURCE_STATE, &state);
     return state;
+}
+
+void SoundPlayer::SetPosition(glm::vec3 pos)
+{
+    _position = pos;
+    alSource3f(_alSource, AL_POSITION, _position.x, _position.y, _position.z);
 }
 
 } // namespace dusk

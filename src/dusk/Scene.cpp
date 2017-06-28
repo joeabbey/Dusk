@@ -44,7 +44,15 @@ std::unique_ptr<Scene> Scene::Parse(nlohmann::json & data)
 
 	for (auto& actor : data["Actors"])
 	{
-        scene->AddActor(Actor::Parse(actor, scene));
+        std::unique_ptr<Actor> ptr = Actor::Parse(actor);
+        if (ptr->IsTemplate())
+        {
+            scene->AddActorTemplate(actor["ID"], std::move(ptr));
+        }
+        else
+        {
+            scene->AddActor(std::move(ptr));
+        }
 	}
 
 	for (auto& script : data["Scripts"])
@@ -61,12 +69,29 @@ Scene::~Scene()
 
 void Scene::AddActor(std::unique_ptr<Actor> actor)
 {
+    actor->SetScene(this);
     _actors.push_back(std::move(actor));
+}
+
+void Scene::AddActorTemplate(const std::string& id, std::unique_ptr<Actor> actor)
+{
+    actor->SetScene(this);
+    _actorTemplates.emplace(id, std::move(actor));
 }
 
 void Scene::AddCamera(std::unique_ptr<Camera> camera)
 {
     _cameras.push_back(std::move(camera));
+}
+
+Actor * Scene::GetActorTemplate(const std::string& id)
+{
+    if (_actorTemplates.find(id) == _actorTemplates.end())
+    {
+        return nullptr;
+    }
+
+    return _actorTemplates[id].get();
 }
 
 void Scene::Start()

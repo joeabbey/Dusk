@@ -33,10 +33,19 @@ public:
     SoundPlayer();
     virtual ~SoundPlayer();
 
+    static void SetListenerPosition(glm::vec3 pos);
+
     void Play(Sound * sound);
     ALint GetState();
 
+    void SetPosition(glm::vec3 pos);
+    glm::vec3 GetPosition() const { return _position; }
+
 protected:
+
+    static glm::vec3 _ListenerPosition;
+
+    glm::vec3 _position;
 
     ALuint _alSource;
 

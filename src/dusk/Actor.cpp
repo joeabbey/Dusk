@@ -5,21 +5,26 @@
 
 namespace dusk {
 
-Actor::Actor(Scene * parent)
-    : _parent(parent)
+Actor::Actor(bool isTempalte /*= false*/)
+    : _scene(nullptr)
+    , _isTemplate(isTempalte)
     , _baseTransform(1)
     , _transform(1)
     , _position(0)
     , _rotation(0)
     , _scale(1)
 {
-    GetScene()->AddEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
-    GetScene()->AddEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
 }
 
-std::unique_ptr<Actor> Actor::Parse(nlohmann::json & data, Scene * parent)
+std::unique_ptr<Actor> Actor::Parse(nlohmann::json & data)
 {
-    Actor * actor = new Actor(parent);
+    bool isTemplate = false;
+    if (data.find("Template") != data.end())
+    {
+        isTemplate = data["Template"];
+    }
+
+    Actor * actor = new Actor(isTemplate);
 
 	if (data.find("Position") != data.end())
 	{
@@ -44,16 +49,54 @@ std::unique_ptr<Actor> Actor::Parse(nlohmann::json & data, Scene * parent)
 
 	for (auto& component : data["Components"])
 	{
-        actor->AddComponent(Component::Parse(component, actor));
+        actor->AddComponent(Component::Parse(component, isTemplate));
 	}
 
     return std::unique_ptr<Actor>(actor);
 }
 
+std::unique_ptr<Actor> Actor::Clone()
+{
+    std::unique_ptr<Actor> actor(new Actor());
+
+    actor->SetPosition(GetPosition());
+    actor->SetRotation(GetRotation());
+    actor->SetScale(GetScale());
+
+    for (auto& componenet : _components)
+    {
+        actor->AddComponent(componenet->Clone());
+    }
+
+    actor->SetScene(GetScene());
+
+    return actor;
+}
+
 Actor::~Actor()
 {
-    GetScene()->RemoveEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
-    GetScene()->RemoveEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+    if (GetScene() && !IsTemplate())
+    {
+        GetScene()->RemoveEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
+        GetScene()->RemoveEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+    }
+}
+
+void Actor::SetScene(Scene * scene)
+{
+    if (GetScene() && !IsTemplate())
+    {
+        GetScene()->RemoveEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
+        GetScene()->RemoveEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+    }
+
+    _scene = scene;
+
+    if (!IsTemplate())
+    {
+        GetScene()->AddEventListener((EventID)Scene::Events::UPDATE, this, &Actor::Update);
+        GetScene()->AddEventListener((EventID)Scene::Events::RENDER, this, &Actor::Render);
+    }
 }
 
 void Actor::SetBaseTransform(const glm::mat4& baseTransform)
@@ -90,6 +133,7 @@ glm::mat4 Actor::GetTransform()
 
 void Actor::AddComponent(std::unique_ptr<Component> comp)
 {
+    comp->SetActor(this);
     _components.push_back(std::move(comp));
 }
 

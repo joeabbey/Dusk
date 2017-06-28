@@ -69,6 +69,17 @@ std::unique_ptr<Camera> Camera::Parse(nlohmann::json & data)
 	return camera;
 }
 
+std::unique_ptr<Camera> Camera::Clone()
+{
+    std::unique_ptr<Camera> camera(new Camera(GetFOV(), GetUp(), GetClip()));
+
+    camera->SetBaseTransform(_baseTransform);
+    camera->SetPosition(GetPosition());
+    camera->SetForward(GetForward());
+
+    return camera;
+}
+
 void Camera::SetBaseTransform(const glm::mat4& baseTransform)
 {
     _baseTransform = baseTransform;
