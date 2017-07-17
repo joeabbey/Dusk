@@ -85,12 +85,19 @@ void App::CreateWindow()
     glEnable(GL_MULTISAMPLE);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
+    // TODO: Move
+    _shaders.emplace("_default_text", std::unique_ptr<Shader>(new Shader({
+        { GL_VERTEX_SHADER,   "assets/shaders/default/text.vs.glsl" },
+        { GL_FRAGMENT_SHADER, "assets/shaders/default/text.fs.glsl"}
+    })));
+    _defaultFont = std::shared_ptr<Font>(new Font("assets/fonts/default.ttf", 36));
 
     DuskBenchEnd("App::CreateWindow()");
 }

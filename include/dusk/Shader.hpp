@@ -23,7 +23,7 @@ public:
 
     static std::unique_ptr<Shader> Parse(nlohmann::json & data);
 
-    Shader(const std::vector<std::string>& data, const std::vector<FileInfo>& files);
+    Shader(const std::vector<FileInfo>& files);
     virtual ~Shader();
 
     void Bind();

@@ -5,6 +5,7 @@
 #include <dusk/EventDispatcher.hpp>
 #include <dusk/Scene.hpp>
 #include <dusk/Asset.hpp>
+#include <dusk/Font.hpp>
 
 #include <string>
 #include <stack>
@@ -43,6 +44,9 @@ public:
 
     void Run();
 
+    Shader * GetDefaultTextShader() { return _shaders["_default_text"].get(); }
+    std::shared_ptr<Font> GetDefaultFont() { return _defaultFont; }
+
     // TODO: Make private
     unsigned int WindowWidth  = 1024;
     unsigned int WindowHeight = 768;
@@ -78,6 +82,8 @@ private:
     void DestroyWindow();
 
     const float TARGET_FPS = 60.0f;
+
+    std::shared_ptr<Font> _defaultFont;
 
     std::unique_ptr<AssetCache<Texture>> _textureCache;
     std::unique_ptr<AssetIndex<Texture>> _textureIndex;

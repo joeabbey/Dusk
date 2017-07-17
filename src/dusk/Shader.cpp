@@ -57,22 +57,21 @@ std::unique_ptr<Shader> Shader::Parse(nlohmann::json & data)
 		});
 	}
 
-    return std::unique_ptr<Shader>(new Shader(data["BindData"], files));
+    std::unique_ptr<Shader> ptr(new Shader(files));
+
+    for (const std::string& bindData : data["BindData"])
+    {
+        ptr->BindData(bindData);
+    }
+
+    return ptr;
 }
 
-Shader::Shader(const std::vector<std::string>& bindData, const std::vector<FileInfo>& files)
+Shader::Shader(const std::vector<FileInfo>& files)
     : _files(files)
     , _glProgram(0)
 {
     LoadProgram();
-
-    for (const auto& data : bindData)
-    {
-        auto tmp = _DataRecords.find(data);
-        if (tmp == _DataRecords.end()) continue;
-
-        BindData(data);
-    }
 }
 
 Shader::~Shader()

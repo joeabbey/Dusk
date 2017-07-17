@@ -103,10 +103,16 @@ SET(Dusk_LINK_LIBRARIES_RELEASE
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include
                     ${CMAKE_BINARY_DIR}/include)
 
-# Allow imgui to #include "imgui.h"
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/imgui)
-# Disable imconfig.h
-ADD_DEFINITIONS(-DIMGUI_DISABLE_INCLUDE_IMCONFIG_H)
+# Allow imgui to #include "imgui.h" and stb sources
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/imgui
+                    ${CMAKE_SOURCE_DIR}/include/stb)
+
+# Disable imconfig.h, stb implementation
+ADD_DEFINITIONS(
+    -DIMGUI_DISABLE_INCLUDE_IMCONFIG_H
+    -DIMGUI_DISABLE_STB_RECT_PACK_IMPLEMENTATION
+    -DIMGUI_DISABLE_STB_TRUETYPE_IMPLEMENTATION
+)
 
 SET(Dusk_OUT Dusk)
 
@@ -116,29 +122,30 @@ SET(Dusk_CONFIG    ${CMAKE_BINARY_DIR}/include/dusk/Config.hpp)
 FILE(GLOB_RECURSE Dusk_ASSETS RELATIVE ${CMAKE_SOURCE_DIR} "assets/*")
 
 SET(Dusk_INCLUDES
-    include/dusk/Dusk.hpp
-    include/dusk/Log.hpp
-    include/dusk/Platform.hpp
-    include/dusk/Benchmark.hpp
-    include/dusk/Util.hpp
-    include/dusk/ScriptHost.hpp
+    include/dusk/Actor.hpp
+    include/dusk/App.hpp
     include/dusk/Asset.hpp
-    include/dusk/Timer.hpp
+    include/dusk/Benchmark.hpp
+    include/dusk/Camera.hpp
+    include/dusk/Component.hpp
+    include/dusk/Dusk.hpp
     include/dusk/Event.hpp
     include/dusk/EventCallbacks.hpp
     include/dusk/EventDispatcher.hpp
-    include/dusk/App.hpp
-    include/dusk/UI.hpp
-    include/dusk/Scene.hpp
-    include/dusk/Camera.hpp
-    include/dusk/Actor.hpp
-    include/dusk/Component.hpp
-    include/dusk/Shader.hpp
-    include/dusk/Texture.hpp
+    include/dusk/Font.hpp
+    include/dusk/Log.hpp
+    include/dusk/Material.hpp
     include/dusk/Mesh.hpp
     include/dusk/Model.hpp
-    include/dusk/Material.hpp
+    include/dusk/Platform.hpp
+    include/dusk/Scene.hpp
+    include/dusk/ScriptHost.hpp
+    include/dusk/Shader.hpp
     include/dusk/Sound.hpp
+    include/dusk/Texture.hpp
+    include/dusk/Timer.hpp
+    include/dusk/UI.hpp
+    include/dusk/Util.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -154,25 +161,25 @@ SET(Dusk_INCLUDES
 )
 
 SET(Dusk_SOURCES
-
+    src/dusk/Actor.cpp
+    src/dusk/App.cpp
+    src/dusk/Camera.cpp
+    src/dusk/Component.cpp
     src/dusk/Dusk.cpp
-    src/dusk/Util.cpp
-    src/dusk/ScriptHost.cpp
     src/dusk/Event.cpp
     src/dusk/EventCallbacks.cpp
     src/dusk/EventDispatcher.cpp
-    src/dusk/App.cpp
-    src/dusk/UI.cpp
-    src/dusk/Scene.cpp
-    src/dusk/Camera.cpp
-    src/dusk/Actor.cpp
-    src/dusk/Component.cpp
-    src/dusk/Shader.cpp
-    src/dusk/Texture.cpp
+    src/dusk/Font.cpp
+    src/dusk/Material.cpp
     src/dusk/Mesh.cpp
     src/dusk/Model.cpp
-    src/dusk/Material.cpp
+    src/dusk/Scene.cpp
+    src/dusk/ScriptHost.cpp
+    src/dusk/Shader.cpp
     src/dusk/Sound.cpp
+    src/dusk/Texture.cpp
+    src/dusk/UI.cpp
+    src/dusk/Util.cpp
 
     # imgui
     src/imgui/imgui.cpp
