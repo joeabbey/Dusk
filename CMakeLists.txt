@@ -26,15 +26,15 @@ IF(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 
     INCLUDE(CheckCXXCompilerFlag)
 
-    CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+    CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
 
-    IF(COMPILER_SUPPORTS_CXX11)
-        SET(CMAKE_CXX_FLAGS "-std=c++11")
-    ELSEIF(COMPILER_SUPPORTS_CXX0X)
-        SET(CMAKE_CXX_FLAGS "-std=c++0x")
+    IF(COMPILER_SUPPORTS_CXX14)
+        SET(CMAKE_CXX_FLAGS "-std=c++14")
+    ELSEIF(COMPILER_SUPPORTS_CXX1U)
+        SET(CMAKE_CXX_FLAGS "-std=c++1y")
     ELSE()
-        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++11 support")
+        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++14 support")
     ENDIF()
 
     ADD_DEFINITIONS(-D_XOPEN_SOURCE=700)
@@ -67,6 +67,7 @@ INCLUDE_DIRECTORIES(BEFORE SYSTEM
     ${OPENAL_INCLUDE_DIRS}
     ${OGG_INCLUDE_DIRS}
     ${VORBIS_INCLUDE_DIRS}
+    ${THEORA_INCLUDE_DIRS}
 )
 
 SET(Dusk_LINK_LIBRARIES
@@ -78,6 +79,7 @@ SET(Dusk_LINK_LIBRARIES
     ${OPENAL_LIBRARIES}
     ${OGG_LIBRARIES}
     ${VORBIS_LIBRARIES}
+    ${THEORA_LIBRARIES}
 )
 SET(Dusk_LINK_LIBRARIES_DEBUG
     ${LUA_LIBRARIES_DEBUG}
@@ -87,6 +89,7 @@ SET(Dusk_LINK_LIBRARIES_DEBUG
     ${OPENAL_LIBRARIES_DEBUG}
     ${OGG_LIBRARIES_DEBUG}
     ${VORBIS_LIBRARIES_DEBUG}
+    ${THEORA_LIBRARIES_DEBUG}
 )
 SET(Dusk_LINK_LIBRARIES_RELEASE
     ${LUA_LIBRARIES_RELEASE}
@@ -96,6 +99,7 @@ SET(Dusk_LINK_LIBRARIES_RELEASE
     ${OPENAL_LIBRARIES_RELEASE}
     ${OGG_LIBRARIES_RELEASE}
     ${VORBIS_LIBRARIES_RELEASE}
+    ${THEORA_LIBRARIES_RELEASE}
 )
 
 ### Dusk library
@@ -146,6 +150,7 @@ SET(Dusk_INCLUDES
     include/dusk/Timer.hpp
     include/dusk/UI.hpp
     include/dusk/Util.hpp
+    include/dusk/Video.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -180,6 +185,7 @@ SET(Dusk_SOURCES
     src/dusk/Texture.cpp
     src/dusk/UI.cpp
     src/dusk/Util.cpp
+    src/dusk/Video.cpp
 
     # imgui
     src/imgui/imgui.cpp
@@ -199,6 +205,12 @@ ADD_LIBRARY(${Dusk_OUT}
     ${Dusk_SOURCES}
 )
 ADD_DEPENDENCIES(${Dusk_OUT} depend)
+
+SET_TARGET_PROPERTIES(
+    ${Dusk_OUT} PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+)
 
 # Configuration-independant libraries
 TARGET_LINK_LIBRARIES(
@@ -262,6 +274,21 @@ SET_TARGET_PROPERTIES(
     copy-includes
     PROPERTIES FOLDER "automation"
 )
+
+FIND_PROGRAM(
+    CLANG_TIDY
+    NAMES "clang-tidy"
+)
+
+IF(NOT CLANG_TIDY)
+    MESSAGE(STATUS "clang-tidy not found")
+ELSE()
+    MESSAGE(STATUS "clang-tidy found: ${CLANG_TIDY}")
+    SET_PROPERTY(
+        TARGET ${Dusk_OUT}
+        PROPERTY CXX_CLANG_TIDY ${CLANG_TIDY} -checks=*,-clang-analyzer-alpha.*
+    )
+ENDIF()
 
 ### Example projects
 

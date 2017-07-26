@@ -26,12 +26,12 @@ protected:
 
 }; // class Sound
 
-class SoundPlayer
+class AudioChannel
 {
 public:
 
-    SoundPlayer();
-    virtual ~SoundPlayer();
+    AudioChannel();
+    virtual ~AudioChannel();
 
     static void SetListenerPosition(glm::vec3 pos);
 
@@ -49,7 +49,7 @@ protected:
 
     ALuint _alSource;
 
-}; // class SoundPlayer
+}; // class AudioChannel
 
 } // namespace dusk
 

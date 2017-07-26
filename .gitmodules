@@ -38,3 +38,10 @@
 	path = depend/libogg
 	url = https://github.com/xiph/ogg
 	branch = tags/v1.3.2
+[submodule "depend/libtheora"]
+	path = depend/libtheora
+	url = https://github.com/xiph/theora
+[submodule "depend/sol2"]
+	path = depend/sol2
+	url = https://github.com/ThePhD/sol2.git
+	branch = tags/v2.18.0

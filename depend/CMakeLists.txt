@@ -363,6 +363,77 @@ ELSE()
 ENDIF()
 ADD_DEPENDENCIES(depend vorbis)
 
+### Theora
+MESSAGE("Adding dependency: theora")
+
+SET(THEORA_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}/depend/libtheora/include"
+    PARENT_SCOPE
+)
+
+IF (MSVC)
+    MESSAGE(STATUS "Using theora_static.sln")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        SET(THEORA_LIBRARIES_DEBUG
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/x64/Debug/libtheora_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/x64/Debug/libtheorafile_static.lib")
+        SET(THEORA_LIBRARIES_RELEASE
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/x64/Release/libtheora_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/x64/Release/libtheorafile_static.lib")
+        SET(THEORA_PLATFORM "x64")
+    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+        SET(THEORA_LIBRARIES_DEBUG
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/Win32/Debug/libtheora_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/Win32/Debug/libtheorafile_static.lib")
+        SET(THEORA_LIBRARIES_RELEASE
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/Win32/Release/libtheora_static.lib"
+            "${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/Win32/Release/libtheorafile_static.lib")
+        SET(THEORA_PLATFORM "Win32")
+    endif()
+    SET(THEORA_LIBRARIES_DEBUG "${THEORA_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(THEORA_LIBRARIES_RELEASE "${THEORA_LIBRARIES_RELEASE}" PARENT_SCOPE)
+
+    FILE(REMOVE_RECURSE
+        ${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/UpgradeLog.htm
+        ${CMAKE_SOURCE_DIR}/depend/libtheora/win32/VS2010/Backup
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${THEORA_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/theora_static.sln
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/theora_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Debug /p:Platform=${THEORA_PLATFORM}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libtheora
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${THEORA_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_VS_DEVENV_COMMAND} /Upgrade win32/VS2010/theora_static.sln;
+        COMMAND ${CMAKE_VS_MSBUILD_COMMAND} win32/VS2010/theora_static.sln /t:Build /p:WarningLevel=0 /p:Configuration=Release /p:Platform=${THEORA_PLATFORM}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libtheora
+    )
+    ADD_CUSTOM_TARGET(theora DEPENDS ${THEORA_LIBRARIES_DEBUG} ${THEORA_LIBRARIES_RELEASE})
+ELSE()
+    MESSAGE(STATUS "Using autogen.sh")
+    SET(THEORA_LIBRARIES "${CMAKE_SOURCE_DIR}/depend/libtheora/lib/.libs/libtheora.so")
+    SET(THEORA_LIBRARIES "${THEORA_LIBRARIES}" PARENT_SCOPE)
+
+    SET(THEORA_AUTOCONF_STAMP "${CMAKE_SOURCE_DIR}/depend/libtheora/stamp-h1")
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${THEORA_AUTOCONF_STAMP}
+        COMMAND ${CMAKE_COMMAND} -E env
+                CPPFLAGS="-I${CMAKE_SOURCE_DIR}/depend/libogg/include"
+                LDFLAGS="-L${CMAKE_SOURCE_DIR}/depend/libogg/src/.libs"
+                ./autogen.sh
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libtheora
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${THEORA_LIBRARIES}
+        MAIN_DEPENDENCY ${THEORA_AUTOCONF_STAMP}
+        COMMAND make
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/depend/libtheora
+    )
+    ADD_CUSTOM_TARGET(theora DEPENDS ogg ${THEORA_LIBRARIES})
+ENDIF()
+ADD_DEPENDENCIES(depend theora)
+
 ### FlatBuffers
 MESSAGE("Adding dependency: flatbuffers")
 

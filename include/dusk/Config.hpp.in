@@ -34,6 +34,9 @@
 // Lua
 #include <lua.hpp>
 
+// SOL
+#include <sol/sol.hpp>
+
 // nlohmann json
 #include <json.hpp>
 
