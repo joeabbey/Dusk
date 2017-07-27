@@ -45,3 +45,6 @@
 	path = depend/sol2
 	url = https://github.com/ThePhD/sol2.git
 	branch = tags/v2.18.0
+[submodule "depend/gsl"]
+	path = depend/gsl
+	url = https://github.com/Microsoft/GSL.git

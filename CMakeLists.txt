@@ -63,6 +63,7 @@ INCLUDE_DIRECTORIES(BEFORE SYSTEM
     ${GLFW_INCLUDE_DIRS}
     ${GLM_INCLUDE_DIRS}
     ${JSON_INCLUDE_DIRS}
+    ${GSL_INCLUDE_DIRS}
     ${LUA_INCLUDE_DIRS}
     ${OPENAL_INCLUDE_DIRS}
     ${OGG_INCLUDE_DIRS}
@@ -274,21 +275,6 @@ SET_TARGET_PROPERTIES(
     copy-includes
     PROPERTIES FOLDER "automation"
 )
-
-FIND_PROGRAM(
-    CLANG_TIDY
-    NAMES "clang-tidy"
-)
-
-IF(NOT CLANG_TIDY)
-    MESSAGE(STATUS "clang-tidy not found")
-ELSE()
-    MESSAGE(STATUS "clang-tidy found: ${CLANG_TIDY}")
-    SET_PROPERTY(
-        TARGET ${Dusk_OUT}
-        PROPERTY CXX_CLANG_TIDY ${CLANG_TIDY} -checks=*,-clang-analyzer-alpha.*
-    )
-ENDIF()
 
 ### Example projects
 

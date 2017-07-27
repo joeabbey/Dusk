@@ -4,7 +4,7 @@ ADD_CUSTOM_TARGET(depend)
 ### glm
 MESSAGE("Adding dependency: glm")
 
-SET(GLM_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/glm" PARENT_SCOPE)
+SET(GLM_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/depend/glm" PARENT_SCOPE)
 
 ADD_CUSTOM_TARGET(glm)
 ADD_DEPENDENCIES(depend glm)
@@ -12,10 +12,18 @@ ADD_DEPENDENCIES(depend glm)
 ### nlohmann_json
 MESSAGE("Adding dependency: json")
 
-SET(JSON_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/json/src" PARENT_SCOPE)
+SET(JSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/depend/json/src" PARENT_SCOPE)
 
 ADD_CUSTOM_TARGET(json)
 ADD_DEPENDENCIES(depend json)
+
+### glm
+MESSAGE("Adding dependency: gsl")
+
+SET(GSL_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/depend/gsl/include" PARENT_SCOPE)
+
+ADD_CUSTOM_TARGET(gsl)
+ADD_DEPENDENCIES(depend gsl)
 
 ### lua
 MESSAGE("Adding dependency: lua")
@@ -363,6 +371,8 @@ ELSE()
 ENDIF()
 ADD_DEPENDENCIES(depend vorbis)
 
+#[[
+
 ### Theora
 MESSAGE("Adding dependency: theora")
 
@@ -433,6 +443,8 @@ ELSE()
     ADD_CUSTOM_TARGET(theora DEPENDS ogg ${THEORA_LIBRARIES})
 ENDIF()
 ADD_DEPENDENCIES(depend theora)
+
+]]
 
 ### FlatBuffers
 MESSAGE("Adding dependency: flatbuffers")
