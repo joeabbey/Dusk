@@ -31,16 +31,16 @@ IF(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 
     IF(COMPILER_SUPPORTS_CXX14)
         SET(CMAKE_CXX_FLAGS "-std=c++14")
-    ELSEIF(COMPILER_SUPPORTS_CXX1U)
+    ELSEIF(COMPILER_SUPPORTS_CXX1Y)
         SET(CMAKE_CXX_FLAGS "-std=c++1y")
     ELSE()
-        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++14 support")
+        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++17 support")
     ENDIF()
 
     ADD_DEFINITIONS(-D_XOPEN_SOURCE=700)
     ADD_COMPILE_OPTIONS(-Wall -Wextra -pedantic -Wno-unused-parameter
         -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-braces
-        -Wno-gnu-statement-expression -Wno-keyword-macro)
+        -Wno-gnu-statement-expression -Wno-keyword-macro -Wno-unused-function)
 
 # VisualStudio
 ELSEIF(MSVC)
@@ -127,31 +127,32 @@ SET(Dusk_CONFIG    ${CMAKE_BINARY_DIR}/include/dusk/Config.hpp)
 FILE(GLOB_RECURSE Dusk_ASSETS RELATIVE ${CMAKE_SOURCE_DIR} "assets/*")
 
 SET(Dusk_INCLUDES
-    include/dusk/Actor.hpp
+    #include/dusk/Actor.hpp
     include/dusk/App.hpp
-    include/dusk/Asset.hpp
+    #include/dusk/Asset.hpp
     include/dusk/Benchmark.hpp
-    include/dusk/Camera.hpp
-    include/dusk/Component.hpp
+    #include/dusk/Camera.hpp
+    #include/dusk/Component.hpp
     include/dusk/Dusk.hpp
-    include/dusk/Event.hpp
-    include/dusk/EventCallbacks.hpp
-    include/dusk/EventDispatcher.hpp
-    include/dusk/Font.hpp
+    #include/dusk/Event.hpp
+    #include/dusk/EventCallbacks.hpp
+    #include/dusk/EventDispatcher.hpp
+    #include/dusk/Font.hpp
     include/dusk/Log.hpp
-    include/dusk/Material.hpp
-    include/dusk/Mesh.hpp
-    include/dusk/Model.hpp
-    include/dusk/Platform.hpp
-    include/dusk/Scene.hpp
-    include/dusk/ScriptHost.hpp
+    #include/dusk/Material.hpp
+    #include/dusk/Mesh.hpp
+    #include/dusk/Model.hpp
+    #include/dusk/Platform.hpp
+    #include/dusk/Scene.hpp
+    #include/dusk/ScriptHost.hpp
     include/dusk/Shader.hpp
-    include/dusk/Sound.hpp
-    include/dusk/Texture.hpp
-    include/dusk/Timer.hpp
-    include/dusk/UI.hpp
+    include/dusk/Shader.inc.hpp
+    #include/dusk/Sound.hpp
+    #include/dusk/Texture.hpp
+    #include/dusk/Timer.hpp
+    #include/dusk/UI.hpp
     include/dusk/Util.hpp
-    include/dusk/Video.hpp
+    #include/dusk/Video.hpp
 
     # imgui
     include/imgui/imgui.h
@@ -167,26 +168,26 @@ SET(Dusk_INCLUDES
 )
 
 SET(Dusk_SOURCES
-    src/dusk/Actor.cpp
+    #src/dusk/Actor.cpp
     src/dusk/App.cpp
-    src/dusk/Camera.cpp
-    src/dusk/Component.cpp
+    #src/dusk/Camera.cpp
+    #src/dusk/Component.cpp
     src/dusk/Dusk.cpp
-    src/dusk/Event.cpp
-    src/dusk/EventCallbacks.cpp
-    src/dusk/EventDispatcher.cpp
-    src/dusk/Font.cpp
-    src/dusk/Material.cpp
-    src/dusk/Mesh.cpp
-    src/dusk/Model.cpp
-    src/dusk/Scene.cpp
-    src/dusk/ScriptHost.cpp
+    #src/dusk/Event.cpp
+    #src/dusk/EventCallbacks.cpp
+    #src/dusk/EventDispatcher.cpp
+    #src/dusk/Font.cpp
+    #src/dusk/Material.cpp
+    #src/dusk/Mesh.cpp
+    #src/dusk/Model.cpp
+    #src/dusk/Scene.cpp
+    #src/dusk/ScriptHost.cpp
     src/dusk/Shader.cpp
-    src/dusk/Sound.cpp
-    src/dusk/Texture.cpp
-    src/dusk/UI.cpp
+    #src/dusk/Sound.cpp
+    #src/dusk/Texture.cpp
+    #src/dusk/UI.cpp
     src/dusk/Util.cpp
-    src/dusk/Video.cpp
+    #src/dusk/Video.cpp
 
     # imgui
     src/imgui/imgui.cpp

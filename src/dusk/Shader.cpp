@@ -8,372 +8,453 @@
 
 namespace dusk {
 
-std::unordered_map<std::string, Shader::ShaderData> Shader::_DataRecords;
-int Shader::_MaxDataIndex = 0;
+std::queue<GLuint> ShaderProgram::_AvailableUniformBufferBindings;
+std::unordered_map<std::string, ShaderProgram::UniformBufferRecord> ShaderProgram::_UniformBuffers;
 
-std::unique_ptr<Shader> Shader::Parse(nlohmann::json & data)
+bool Shader::LoadFromFile(const std::string& filename)
 {
-    std::vector<FileInfo> files;
+    GLuint type = GL_INVALID_ENUM;
+    std::ifstream file(filename);
+    std::string code((std::istreambuf_iterator<char>(file)),
+                     std::istreambuf_iterator<char>());
+    file.close();
 
-	for (auto& file : data["Files"])
-	{
-		GLenum shaderType = GL_INVALID_ENUM;
-
-		const std::string& type = file["Type"];
-		if ("Vertex" == type)
-		{
-			shaderType = GL_VERTEX_SHADER;
-		}
-		else if ("Fragment" == type)
-		{
-			shaderType = GL_FRAGMENT_SHADER;
-		}
-		else if ("Geometry" == type)
-		{
-			shaderType = GL_GEOMETRY_SHADER;
-		}
-		// Compute Shader, GL 4.3+
-		/*
-		else if ("Compute" == type)
-		{
-		shaderType = GL_COMPUTE_SHADER;
-		}
-		*/
-		// Tessellation Shaders, GL 4.0+
-		/*
-		else if ("TessControl" == type)
-		{
-		shaderType = GL_TESS_CONTROL_SHADER;
-		}
-		else if ("TessEvaluation" == type)
-		{
-		shaderType = GL_TESS_EVALUATION_SHADER;
-		}
-		*/
-
-		files.push_back({
-			shaderType,
-			file["File"],
-		});
-	}
-
-    std::unique_ptr<Shader> ptr(new Shader(files));
-
-    for (const std::string& bindData : data["BindData"])
+    if (filename.find(".vs.glsl") != std::string::npos)
     {
-        ptr->BindData(bindData);
+        type = GL_VERTEX_SHADER;
     }
-
-    return ptr;
-}
-
-Shader::Shader(const std::vector<FileInfo>& files)
-    : _files(files)
-    , _glProgram(0)
-{
-    LoadProgram();
-}
-
-Shader::~Shader()
-{
-    glDeleteProgram(_glProgram);
-    _glProgram = 0;
-}
-
-bool Shader::LoadProgram()
-{
-    std::vector<GLuint> shaderIds;
-    GLint programLinked = GL_FALSE;
-
-    if (_files.empty())
+    else if (filename.find(".fs.glsl") != std::string::npos)
     {
-        DuskLogWarn("Shader has no files");
+        type = GL_FRAGMENT_SHADER;
+    }
+    else if (filename.find(".gs.glsl") != std::string::npos)
+    {
+        type = GL_GEOMETRY_SHADER;
+    }
+    // Requires OpenGL 4.0+
+    /*
+    else if (filename.find(".tcs.glsl") != std::string::npos)
+    {
+        type = GL_TESS_CONTROL_SHADER;
+    }
+    else if (filename.find(".tes.glsl") != std::string::npos)
+    {
+        type = GL_TESS_EVALUATION_SHADER;
+    }
+    */
+    // Requires OpenGL 4.3+
+    /*
+    else if (filename.find(".cs.glsl") != std::string::npos)
+    {
+        type = GL_COMPUTE_SHADER;
+    }
+    */
+    else
+    {
+        DuskLogError("Unable to infer shader type for '%s'", filename.c_str());
         return false;
     }
 
-    _glProgram = glCreateProgram();
-
-    if (0 == _glProgram)
-    {
-        DuskLogError("Failed to create shader program");
-        goto error;
-    }
-
-    for (FileInfo& info : _files)
-    {
-        shaderIds.push_back(LoadShader(info.filename, info.type));
-        if (0 == shaderIds.back())
-        {
-            DuskLogError("Failed to load shader program '%s'", info.filename.c_str());
-            goto error;
-        }
-        glAttachShader(_glProgram, shaderIds.back());
-    }
-
-    glLinkProgram(_glProgram);
-
-    glGetProgramiv(_glProgram, GL_LINK_STATUS, &programLinked);
-    if (!programLinked)
-    {
-        DuskLogError("Failed to link shader program");
-        PrintShaderProgramLog(_glProgram);
-        goto error;
-    }
-
-    for (GLuint id : shaderIds)
-    {
-        glDetachShader(_glProgram, id);
-        glDeleteShader(id);
-    }
-
-    return true;
-
-error:
-
-    for (GLuint id : shaderIds)
-    {
-        glDetachShader(_glProgram, id);
-        glDeleteShader(id);
-    }
-
-    glDeleteShader(_glProgram);
-    _glProgram = 0;
-
-    return false;
+    DuskLogInfo("Loading %s shader from '%s'", GetShaderTypeString(type).c_str(), filename.c_str());
+    std::string processedCode = PreProcess(type, code, GetDirname(filename));
+    return Compile(type, processedCode);
 }
 
-void Shader::Bind()
+bool Shader::LoadFromString(GLuint type, const std::string& code)
 {
-    glUseProgram(_glProgram);
+    DuskLogInfo("Loading %s shader from string", GetShaderTypeString(type).c_str());
+    std::string processedCode = PreProcess(type, code);
+    return Compile(type, processedCode);
 }
 
-GLint Shader::GetUniformLocation(const std::string& name)
+std::string Shader::GetShaderTypeString(GLuint type)
 {
-    return glGetUniformLocation(_glProgram, name.c_str());
+    switch (type)
+    {
+    case GL_VERTEX_SHADER:
+        return "Vertex";
+
+    case GL_FRAGMENT_SHADER:
+        return "Fragment";
+
+    case GL_GEOMETRY_SHADER:
+        return "Geometry";
+
+    // Requires OpenGL 4.0+
+    /*
+    case GL_TESS_CONTROL_SHADER:
+        return "Tessellation Control";
+
+    case GL_TESS_EVALUATION_SHADER:
+        return "Tessellation Evaluation";
+    */
+
+    // Requires OpenGL 4.3+
+    /*
+    case GL_COMPUTE_SHADER:
+        return "Compute";
+    */
+
+    default:
+        break;
+    }
+
+    return "Unknown";
 }
 
-GLuint Shader::LoadShader(const std::string& filename, GLuint type)
+std::string Shader::PreProcess(GLuint type, const std::string& code, const std::string& basedir /* = "" */)
 {
-    GLuint shader = 0;
-    std::string buffer;
-    GLint shaderCompiled = GL_FALSE;
-    const char * bufferPtr;
-
-    DuskLogInfo("Loading shader file '%s'", filename.c_str());
-
-    shader = glCreateShader(type);
-    if (0 == shader)
-    {
-        DuskLogError("Failed to create shader");
-        goto error;
-    }
-
-    if (GL_INVALID_ENUM == shader)
-    {
-        DuskLogError("Invalid shader type %d", type);
-        goto error;
-    }
-
-    if (!LoadFile(filename, buffer))
-    {
-        DuskLogError("Failed to open shader file '%s'", filename.c_str());
-        goto error;
-    }
-    bufferPtr = buffer.c_str();
-
-    glShaderSource(shader, 1, (const GLchar **)&bufferPtr, nullptr);
-    glCompileShader(shader);
-
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &shaderCompiled);
-    if (!shaderCompiled)
-    {
-        DuskLogError("Failed to compile shader '%s'", filename.c_str());
-        PrintShader(buffer);
-        PrintShaderLog(shader);
-        goto error;
-    }
-
-    return shader;
-
-error:
-
-    glDeleteShader(shader);
-
-    return 0;
-}
-
-bool Shader::LoadFile(const std::string& filename, std::string& buffer)
-{
-    bool retval = true;
-    std::string dirname = GetDirname(filename);
-    std::ifstream file(filename);
+    std::istringstream iss(code);
+    std::string processedCode;
     std::string line;
-    size_t size = 0;
 
-    if (!file.is_open())
-    {
-        retval = false;
-        goto error;
-    }
-
-    file.seekg(0, file.end);
-    size = file.tellg();
-    file.seekg(0, file.beg);
-
-    buffer.reserve(buffer.size() + size);
-
-    while (std::getline(file, line))
+    while (std::getline(iss, line))
     {
         if (line[0] == '#')
         {
             if (0 == line.compare(0, strlen("#include"), "#include"))
             {
-                std::string incFilename = dirname + "/" + line.substr(strlen("#include") + 1);
-                if (filename == incFilename)
-                {
-                    DuskLogError("A shader cannot include itself");
-                    goto error;
-                }
+                std::string incFilename = (basedir.empty() ? "" : basedir + "/") + line.substr(strlen("#include") + 1);
 
-                DuskLogInfo("Loading shader include '%s'", incFilename.c_str());
-                if (!LoadFile(incFilename, buffer))
-                {
-                    DuskLogError("Failed to load include '%s'", incFilename.c_str());
-                    goto error;
-                }
+                std::ifstream incFile(incFilename);
+                std::string incCode((std::istreambuf_iterator<char>(incFile)),
+                                     std::istreambuf_iterator<char>());
+                incFile.close();
+
+                processedCode += PreProcess(type, incCode, GetDirname(incFilename));
 
                 continue;
             }
         }
 
-        buffer += line;
-        buffer += '\n';
+        // TODO: Support more preprocessing
+
+        processedCode += line;
+        processedCode += "\n";
     }
 
-error:
-
-    file.close();
-    return retval;
+    return processedCode;
 }
 
-void Shader::PrintShader(const std::string& shader)
+bool Shader::Compile(GLuint type, const std::string& code)
 {
-    std::istringstream iss(shader);
+    GLint compiled = GL_FALSE;
+    const char * bufferPtr = code.c_str();
+
+    if (type == GL_INVALID_ENUM)
+    {
+        DuskLogError("Invalid shader type");
+        return false;
+    }
+
+    if (_glId > 0)
+    {
+        glDeleteShader(_glId);
+    }
+
+    _glId = glCreateShader(type);
+
+    if (0 == _glId)
+    {
+        DuskLogError("Failed to create shader");
+        return false;
+    }
+
+    glShaderSource(_glId, 1, (const GLchar **)&bufferPtr, nullptr);
+    glCompileShader(_glId);
+
+    glGetShaderiv(_glId, GL_COMPILE_STATUS, &compiled);
+    if (!compiled)
+    {
+        DuskLogError("Failed to compile shader");
+        PrintCode(code);
+        PrintLog();
+        return false;
+    }
+
+    return true;
+}
+
+void Shader::PrintLog()
+{
+    // TODO: Convert to std::array
+
+    std::string shaderLog;
+    GLint logSize, retSize;
+
+    if (!glIsShader(_glId))
+    {
+        DuskLogError("Cannot print shader log, %d is not a shader", _glId);
+        return;
+    }
+
+    glGetShaderiv(_glId, GL_INFO_LOG_LENGTH, &logSize);
+
+    shaderLog.resize(logSize);
+    glGetShaderInfoLog(_glId, logSize, &retSize, &shaderLog[0]);
+
+    DuskLogInfo("Log for shader %d:\n%s", _glId, shaderLog.c_str());
+}
+
+void Shader::PrintCode(const std::string& code)
+{
+    std::istringstream iss(code);
 
     unsigned int lineNum = 1;
     std::string line;
     while (std::getline(iss, line))
     {
+        if (lineNum < 10) printf(" ");
+
         printf("%d: %s\n", lineNum++, line.c_str());
     }
 }
 
-void Shader::PrintShaderLog(GLuint shader)
+ShaderProgram::ShaderProgram(const std::vector<std::string>& filenames)
 {
-    std::string shaderLog;
-    GLint logSize, retSize;
-
-    if (!glIsShader(shader))
+    for (auto& filename : filenames)
     {
-        DuskLogError("Cannot print shader log, %d is not a shader", shader);
+        Attach(Shader(filename));
+    }
+    Link();
+}
+
+ShaderProgram::~ShaderProgram()
+{
+    if (_glId > 0) glDeleteProgram(_glId);
+}
+
+void ShaderProgram::InitializeUniformBuffers()
+{
+    int maxBindings;
+    glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &maxBindings);
+    DuskLogInfo("Max UBO Bindings %d", maxBindings);
+
+    for (int i = 0; i < maxBindings; ++i)
+    {
+        _AvailableUniformBufferBindings.push(static_cast<GLuint>(i));
+    }
+
+    int tmp;
+    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &tmp);
+    DuskLogInfo("Max UBO Size %d", tmp);
+
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &tmp);
+    DuskLogInfo("Max Vertex UBOs %d", tmp);
+
+    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &tmp);
+    DuskLogInfo("Max Fragment UBOs %d", tmp);
+
+    glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &tmp);
+    DuskLogInfo("Max Geometry UBOs %d", tmp);
+}
+
+void ShaderProgram::Attach(Shader&& shader)
+{
+    if (0 == _glId)
+    {
+        _glId = glCreateProgram();
+    }
+
+    glAttachShader(_glId, shader.GetGLId());
+    _shaders.push_back(std::move(shader));
+}
+
+bool ShaderProgram::Link()
+{
+    GLint linked = GL_FALSE;
+
+    if (IsLinked()) return true;
+
+    if (0 == _glId || _shaders.empty())
+    {
+        DuskLogError("Cannot link an empty shader program");
+        return false;
+    }
+
+    glLinkProgram(_glId);
+
+    glGetProgramiv(_glId, GL_LINK_STATUS, &linked);
+    if (!linked)
+    {
+        DuskLogError("Failed to link shader program");
+        PrintLog();
+        return false;
+    }
+
+    for (auto& shader : _shaders)
+    {
+        glDetachShader(_glId, shader.GetGLId());
+    }
+    _shaders.clear();
+
+    CacheUniforms();
+    //CacheAttributes();
+
+    _linked = true;
+    return true;
+}
+
+void ShaderProgram::Bind()
+{
+    glUseProgram(_glId);
+}
+
+void ShaderProgram::SetUniformBufferData(const std::string& name, GLvoid * data)
+{
+    if (_UniformBuffers.find(name) == _UniformBuffers.end())
+    {
+        DuskLogWarn("Attempt to set data to uknown UBO");
         return;
     }
 
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
+    UniformBufferRecord& record = _UniformBuffers[name];
 
-    shaderLog.resize(logSize);
-    glGetShaderInfoLog(shader, logSize, &retSize, &shaderLog[0]);
+    glBindBuffer(GL_UNIFORM_BUFFER, record.GLID);
 
-    DuskLogInfo("Log for shader %d:\n%s", shader, shaderLog.c_str());
+    GLvoid* ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+    memcpy(ptr, data, record.Size);
+
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
-void Shader::PrintShaderProgramLog(GLuint program)
+GLint ShaderProgram::GetAttribute(const std::string& name) const
 {
+    if (_attributes.find(name) == _attributes.end()) return 0;
+    return _attributes.at(name);
+}
+
+void ShaderProgram::CacheUniforms()
+{
+    GLint tmpSize; // size of the variable
+    GLenum tmpType; // type of the variable (float, vec3 or mat4, etc)
+
+    GLchar buffer[256]; // variable name in GLSL
+    GLsizei length; // name length
+
+    GLint count;
+    glGetProgramiv(_glId, GL_ACTIVE_UNIFORMS, &count);
+    for (GLint i = 0; i < count; ++i)
+    {
+        glGetActiveUniform(_glId, (GLuint)i, sizeof(buffer), &length, &tmpSize, &tmpType, buffer);
+        _uniforms.emplace(buffer, UniformRecord{
+            glGetUniformLocation(_glId, buffer),
+            tmpSize,
+            tmpType
+        });
+    }
+
+    const int STRIDE = 16;
+
+    std::string name;
+    UniformRecord uniform;
+    std::unordered_map<std::string, size_t> uboSizes;
+    for (auto pair : _uniforms)
+    {
+        std::tie(name, uniform) = pair;
+
+        if (name.find('.') == std::string::npos) continue;
+
+        std::string uboName = name.substr(0, name.find('.'));
+        if (uboSizes.find(uboName) == uboSizes.end())
+        {
+            uboSizes.emplace(uboName, 0);
+        }
+
+        size_t uniformSize = uniform.Size * GetGLTypeSize(uniform.Type);
+        size_t allowedSize = STRIDE - (uboSizes[uboName] % STRIDE);
+
+        if (uniformSize > allowedSize && allowedSize < STRIDE)
+        {
+            uboSizes[uboName] += allowedSize; // Pad to stride
+        }
+
+        uboSizes[uboName] += uniformSize;
+    }
+
+    size_t size;
+    for (auto pair : uboSizes)
+    {
+        std::tie(name, size) = pair;
+
+        if (size % STRIDE > 0)
+        {
+            size += STRIDE - (size % STRIDE);
+        }
+
+        if (_UniformBuffers.find(name) == _UniformBuffers.end())
+        {
+            if (_AvailableUniformBufferBindings.empty())
+            {
+                DuskLogError("Reached UBO binding limit");
+                continue;
+            }
+
+            std::vector<uint8_t> dummy(size, 0);
+
+            GLuint uboId = 0;
+            glGenBuffers(1, &uboId);
+            if (0 == uboId)
+            {
+                DuskLogError("Failed to create UBO");
+                continue;
+            }
+
+            glBindBuffer(GL_UNIFORM_BUFFER, uboId);
+            glBufferData(GL_UNIFORM_BUFFER, size, dummy.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+            glBindBufferBase(GL_UNIFORM_BUFFER, _AvailableUniformBufferBindings.front(), uboId);
+
+            _UniformBuffers.emplace(name, UniformBufferRecord{
+                uboId,
+                _AvailableUniformBufferBindings.front(),
+                size,
+            });
+            _AvailableUniformBufferBindings.pop();
+        }
+
+        GLuint blockIndex = glGetUniformBlockIndex(_glId, name.c_str());
+        glUniformBlockBinding(_glId, blockIndex, _UniformBuffers[name].Binding);
+    }
+}
+
+void ShaderProgram::CacheAttributes()
+{
+    GLint size;
+    GLenum type;
+
+    GLchar name[256];
+    GLsizei length;
+
+    GLint count;
+    glGetProgramiv(_glId, GL_ACTIVE_ATTRIBUTES, &count);
+    for (GLint i = 0; i < count; ++i)
+    {
+        glGetActiveAttrib(_glId, (GLuint)i, sizeof(name), &length, &size, &type, name);
+        _attributes.emplace(name, glGetAttribLocation(_glId, name));
+    }
+}
+
+void ShaderProgram::PrintLog()
+{
+    // TODO: Convert to std::array
+
     std::string programLog;
     GLint logSize, retSize;
 
-    if (!glIsProgram(program))
+    if (!glIsProgram(_glId))
     {
-        DuskLogError("Cannot print shader program log, %d is not a shader program", program);
+        DuskLogError("Cannot print shader program log, %d is not a shader program", _glId);
         return;
     }
 
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
+    glGetProgramiv(_glId, GL_INFO_LOG_LENGTH, &logSize);
 
     programLog.resize(logSize);
-    glGetProgramInfoLog(program, logSize, &retSize, &programLog[0]);
+    glGetProgramInfoLog(_glId, logSize, &retSize, &programLog[0]);
 
-    DuskLogInfo("Log for shader program %d:\n%s", program, programLog.c_str());
-}
-
-void Shader::BindData(const std::string& name)
-{
-    if (std::find(_boundData.begin(), _boundData.end(), name) != _boundData.end())
-    {
-        return;
-    }
-
-    const auto& it = _DataRecords.find(name);
-
-    if (it != _DataRecords.end())
-    {
-        _boundData.push_back(name);
-
-        ShaderData& record = it->second;
-
-        glUseProgram(_glProgram);
-        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-
-        GLuint dataIndex = glGetUniformBlockIndex(_glProgram, name.c_str());
-        if (GL_INVALID_INDEX == dataIndex)
-        {
-            DuskLogWarn("Could not bind Shader Data %s, does not exist in shader", name.c_str());
-            glUseProgram(0);
-            return;
-        }
-        glUniformBlockBinding(_glProgram, dataIndex, record.index);
-        glBindBufferBase(GL_UNIFORM_BUFFER, record.index, record.glUBO);
-
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        glUseProgram(0);
-
-        DuskLogInfo("Binding shader %u to data %s", _glProgram, name.c_str());
-    }
-    else
-    {
-        DuskLogError("Failed to bind shader to data %s, does not exist", name.c_str());
-    }
-}
-
-void Shader::UpdateData(const std::string& name, void * data, size_t size)
-{
-    const auto& it = _DataRecords.find(name);
-
-    if (it == _DataRecords.end())
-    {
-        _DataRecords.emplace(name, ShaderData());
-        ShaderData& record = _DataRecords[name];
-        record.size = size;
-        record.index = _MaxDataIndex;
-
-        ++_MaxDataIndex;
-
-        glGenBuffers(1, &record.glUBO);
-        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-        glBufferData(GL_UNIFORM_BUFFER, record.size, data, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-        DuskLogInfo("Added Shader Data %s at index %d", name.c_str(), record.index);
-    }
-    else
-    {
-        ShaderData& record = it->second;
-
-        glBindBuffer(GL_UNIFORM_BUFFER, record.glUBO);
-        GLvoid * dataPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-        memcpy(dataPtr, data, record.size);
-        glUnmapBuffer(GL_UNIFORM_BUFFER);
-    }
+    DuskLogInfo("Log for shader program %d:\n%s", _glId, programLog.c_str());
 }
 
 } // namespace dusk

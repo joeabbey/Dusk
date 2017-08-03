@@ -4,7 +4,7 @@
 #include <dusk/Config.hpp>
 #include <dusk/Platform.hpp>
 #include <dusk/Util.hpp>
-#include <dusk/UI.hpp>
+//#include <dusk/UI.hpp>
 
 #include <cstdarg> // for va_list
 #include <cassert> // for NDEBUG
@@ -65,7 +65,7 @@ namespace dusk {
             break;
         }
 
-        UI::Log(imColor, buffer);
+        //UI::Log(imColor, buffer);
 
         #ifndef DUSK_OS_WINDOWS
             printf("\033[%dm\033[%dm", fgColor, bgColor);

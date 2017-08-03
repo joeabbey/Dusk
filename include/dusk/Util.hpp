@@ -7,6 +7,8 @@
 
 namespace dusk {
 
+size_t GetGLTypeSize(GLenum type);
+
 void CleanSlashes(std::string& path);
 
 std::string GetDirname(std::string path);

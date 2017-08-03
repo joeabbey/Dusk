@@ -2,26 +2,63 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
+#include <dusk/Shader.hpp>
 #include <fstream>
 #include <memory>
+#include <thread>
 
 namespace dusk {
 
-App * App::_Inst = nullptr;
+std::function<void(int, int, int, int)> App::_KeyFunc;
+std::function<void(int, int, int)>      App::_MouseButtonFunc;
+std::function<void(double, double)>     App::_MouseMoveFunc;
+std::function<void(double, double)>     App::_ScrollFunc;
+std::function<void(unsigned int)>       App::_CharFunc;
+std::function<void(int, const char **)> App::_DropFunc;
 
 App::App(int argc, char** argv)
-    : _textureCache(new AssetCache<Texture>())
-    , _textureIndex(new AssetIndex<Texture>())
-    , _meshCache(new AssetCache<Mesh>())
-    , _meshIndex(new AssetIndex<Mesh>())
-    , _materialCache(new AssetCache<Material>())
-    , _materialIndex(new AssetIndex<Material>())
 {
-    App::InitScripting();
-
     DuskLogInfo("Starting Application");
 
-    _Inst = this;
+    _KeyFunc = [=](int key, int scancode, int action, int mods) {
+
+        if (GLFW_PRESS == action)
+        {
+            OnKeyPress.Call(key, mods);
+        }
+        else if (GLFW_RELEASE == action)
+        {
+            OnKeyRelease.Call(key, mods);
+        }
+    };
+
+    _MouseButtonFunc = [=](int button, int action, int mods) {
+        if (GLFW_PRESS == action)
+        {
+            OnMousePress.Call(button, mods);
+        }
+        else if (GLFW_RELEASE == action)
+        {
+            OnMouseRelease.Call(button, mods);
+        }
+    };
+
+    _MouseMoveFunc = [=](double x, double y) {
+        static glm::vec2 last = { x, y };
+        glm::vec2 cur = { x, y };
+        OnMouseMove.Call(cur, cur - last);
+        last = cur;
+    };
+
+    _ScrollFunc = [=](double xoffset, double yoffset) {
+        OnMouseScroll.Call(glm::vec2(xoffset, yoffset));
+    };
+
+    _DropFunc = [=](int count, const char ** filenames) {
+        std::vector<std::string> filenameList;
+        for (int i = 0; i < count; ++i) filenameList.push_back(std::string(filenames[i]));
+        OnFileDrop.Call(filenameList);
+    };
 
     CreateWindow();
 }
@@ -31,6 +68,156 @@ App::~App()
     DuskLogInfo("Stopping Application");
 
     DestroyWindow();
+}
+
+void App::Start()
+{
+    using namespace std::chrono;
+    typedef duration<double, std::milli> double_ms;
+
+    glfwShowWindow(_glfwWindow);
+
+    OnStart.Call();
+
+    UpdateContext updateCtx;
+    RenderContext renderCtx;
+
+    unsigned long frames = 0;
+
+    double_ms frameDelay = 1000ms / _targetFps;
+    double_ms fpsDelay = 250ms; // Update FPS 4 times per second
+
+    double_ms frameElap = 0ms;
+    double_ms fpsElap = 0ms;
+
+    auto timeOffset = high_resolution_clock::now();
+
+    updateCtx.TargetFPS = _targetFps;
+
+    _running = true;
+    while (_running && !glfwWindowShouldClose(_glfwWindow))
+    {
+        auto elapsedTime = duration_cast<double_ms>(high_resolution_clock::now() - timeOffset);
+        timeOffset = high_resolution_clock::now();
+
+        glfwPollEvents();
+
+        updateCtx.DeltaTime = duration_cast<double_ms>(elapsedTime / frameDelay.count()).count();
+        updateCtx.ElapsedTime = elapsedTime;
+        updateCtx.TotalTime += elapsedTime;
+        OnUpdate.Call(updateCtx);
+
+        frameElap += elapsedTime;
+        if (frameDelay <= frameElap)
+        {
+            frameElap = 0ms;
+            ++frames;
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            OnRender.Call(renderCtx);
+
+            glfwSwapBuffers(_glfwWindow);
+        }
+
+        fpsElap += elapsedTime;
+        if (fpsDelay <= fpsElap)
+        {
+            updateCtx.CurrentFPS = (frames / fpsElap.count()) * 1000.0;
+
+            frames = 0;
+            fpsElap = 0ms;
+        }
+    }
+
+    OnStop.Call();
+
+    glfwHideWindow(_glfwWindow);
+}
+
+void App::Stop()
+{
+    _running = false;
+}
+
+void App::Serialize(nlohmann::json& data)
+{
+    data["Size"] = { _windowSize.x, _windowSize.y };
+    data["Title"] = _windowTitle;
+}
+
+void App::Deserialize(nlohmann::json& data)
+{
+    if (data.find("Size") != data.end())
+    {
+        _windowSize.x = data["Size"][0];
+        _windowSize.x = data["Size"][0];
+    }
+
+	if (data.find("Title") != data.end())
+	{
+		_windowTitle = data["Title"].get<std::string>();
+	}
+}
+
+bool App::LoadConfig(const std::string& filename)
+{
+    DuskBenchStart();
+
+    std::ifstream file(filename);
+    nlohmann::json data;
+
+    DuskLogInfo("Loading config file '%s'", filename.c_str());
+
+    if (!file.is_open())
+    {
+        DuskLogError("Failed to open config file '%s'", filename.c_str());
+        return false;
+    }
+
+	data << file;
+    Deserialize(data);
+
+    file.close();
+
+    DuskBenchEnd("App::LoadConfig()");
+    return true;
+}
+
+bool App::SaveConfig(const std::string& filename)
+{
+    DuskBenchStart();
+
+    std::ofstream file(filename);
+    nlohmann::json data;
+
+    DuskLogInfo("Saving config file '%s'", filename.c_str());
+
+    if (!file.is_open())
+    {
+        DuskLogError("Failed to open config file '%s'", filename.c_str());
+        return false;
+    }
+
+    Serialize(data);
+    file << data;
+
+    file.close();
+
+    DuskBenchEnd("App::SaveConfig()");
+    return true;
+}
+
+void App::SetWindowSize(const glm::ivec2& size)
+{
+    _windowSize = size;
+    glfwSetWindowSize(_glfwWindow, _windowSize.x, _windowSize.y);
+}
+
+void App::SetWindowTitle(const std::string& title)
+{
+    _windowTitle = title;
+    glfwSetWindowTitle(_glfwWindow, _windowTitle.c_str());
 }
 
 void App::CreateWindow()
@@ -52,11 +239,13 @@ void App::CreateWindow()
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 #endif
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_SAMPLES, 16);
     glfwWindowHint(GLFW_VISIBLE, false);
-    _glfwWindow = glfwCreateWindow(WindowWidth, WindowHeight, WindowTitle.c_str(), NULL, NULL);
+
+    _glfwWindow = glfwCreateWindow(_windowSize.x, _windowSize.y, _windowTitle.c_str(), NULL, NULL);
     if (!_glfwWindow)
     {
         DuskLogError("Failed to create GLFW window");
@@ -75,12 +264,16 @@ void App::CreateWindow()
     glGetIntegerv(GL_SAMPLES, &samples);
     DuskLogInfo("Running %dx AA", samples);
 
+    ShaderProgram::InitializeUniformBuffers();
+
     ImGui_ImplGlfwGL3_Init(_glfwWindow, false);
 
-    glfwSetMouseButtonCallback(_glfwWindow, &App::GLFW_MouseButtonCallback);
-    glfwSetScrollCallback(_glfwWindow, &App::GLFW_ScrollCallback);
     glfwSetKeyCallback(_glfwWindow, &App::GLFW_KeyCallback);
+    glfwSetMouseButtonCallback(_glfwWindow, &App::GLFW_MouseButtonCallback);
+    glfwSetCursorPosCallback(_glfwWindow, &App::GLFW_MouseMoveCallback);
+    glfwSetScrollCallback(_glfwWindow, &App::GLFW_ScrollCallback);
     glfwSetCharCallback(_glfwWindow, &App::GLFW_CharCallback);
+    glfwSetDropCallback(_glfwWindow, &App::GLFW_DropCallback);
 
     glEnable(GL_MULTISAMPLE);
 
@@ -93,11 +286,11 @@ void App::CreateWindow()
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
     // TODO: Move
-    _shaders.emplace("_default_text", std::unique_ptr<Shader>(new Shader({
-        { GL_VERTEX_SHADER,   "assets/shaders/default/text.vs.glsl" },
-        { GL_FRAGMENT_SHADER, "assets/shaders/default/text.fs.glsl"}
-    })));
-    _defaultFont = std::shared_ptr<Font>(new Font("assets/fonts/default.ttf", 36));
+    //_shaders.emplace("_default_text", std::unique_ptr<Shader>(new Shader({
+    //    { GL_VERTEX_SHADER,   "assets/shaders/default/text.vs.glsl" },
+    //    { GL_FRAGMENT_SHADER, "assets/shaders/default/text.fs.glsl"}
+    //})));
+    //_defaultFont = std::shared_ptr<Font>(new Font("assets/fonts/default.ttf", 36));
 
     DuskBenchEnd("App::CreateWindow()");
 }
@@ -115,221 +308,27 @@ void App::DestroyWindow()
     alcCloseDevice(_alDevice);
 }
 
-bool App::ParseWindow(nlohmann::json& data)
-{
-	if (data.find("Width") != data.end())
-	{
-		WindowWidth = data["Width"];
-	}
-
-	if (data.find("Height") != data.end())
-	{
-		WindowHeight = data["Height"];
-	}
-
-	if (data.find("Title") != data.end())
-	{
-		WindowTitle = data["Title"].get<std::string>();
-	}
-
-	if (_glfwWindow)
-	{
-		glfwSetWindowSize(_glfwWindow, WindowWidth, WindowHeight);
-		glfwSetWindowTitle(_glfwWindow, WindowTitle.c_str());
-	}
-
-	return true;
-}
-
-void App::LoadConfig(const std::string& filename)
-{
-    DuskBenchStart();
-
-    std::ifstream file(filename);
-    nlohmann::json data;
-
-    DuskLogInfo("Loading config file '%s'", filename.c_str());
-
-    if (!file.is_open())
-    {
-        DuskLogError("Failed to open config file '%s'", filename.c_str());
-        return;
-    }
-
-	data << file;
-
-	if (data.find("Window") != data.end())
-	{
-		ParseWindow(data["Window"]);
-	}
-
-    for (auto& shader : data["Shaders"])
-    {
-        _shaders[shader["ID"]] = Shader::Parse(shader);
-    }
-
-    if (data.find("DefaultScene") != data.end())
-    {
-        std::string sceneFilename = data["DefaultScene"].get<std::string>();
-        DuskLogInfo("Loading scene config file '%s'", sceneFilename.c_str());
-
-        std::ifstream sceneFile(sceneFilename);
-        nlohmann::json scene;
-
-        if (!sceneFile.is_open())
-        {
-            DuskLogError("Failed to open scene file '%s'", sceneFilename.c_str());
-            return;
-        }
-
-        scene << sceneFile;
-        _scene.reset(nullptr);
-        _scene = Scene::Parse(scene);
-
-        sceneFile.close();
-    }
-
-    file.close();
-
-    DuskBenchEnd("App::LoadConfig()");
-}
-
-void App::Run()
-{
-    glfwShowWindow(_glfwWindow);
-
-    DispatchEvent(Event((EventID)App::Events::START));
-
-    double frame_delay = 1.0;   // MS until next frame
-    double frame_elap  = 0.0;   // MS since last frame
-    double fps_delay   = 250.0; // MS until next FPS update
-    double fps_elap    = 0.0;   // MS since last FPS update
-    double elapsed;
-
-    unsigned long frames = 0;
-
-    UpdateEventData updateEventData;
-
-    updateEventData.SetTargetFPS(TARGET_FPS);
-    frame_delay = (1000.0 / TARGET_FPS) / 1000.0;
-
-    if (_scene)
-    {
-        _scene->Start();
-    }
-
-    double timeOffset = glfwGetTime();
-    while (!glfwWindowShouldClose(_glfwWindow))
-    {
-        // TODO: Cleanup
-        elapsed = glfwGetTime() - timeOffset;
-        timeOffset = glfwGetTime();
-
-        glfwPollEvents();
-
-        updateEventData.Update(elapsed);
-        DispatchEvent(Event((EventID)Events::UPDATE, updateEventData));
-
-        frame_elap += elapsed;
-        if (frame_delay <= frame_elap)
-        {
-            frame_elap = 0.0;
-            ++frames;
-
-            ImGui_ImplGlfwGL3_NewFrame();
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            DispatchEvent(Event((EventID)Events::RENDER));
-
-            UI::Render();
-
-            glfwSwapBuffers(_glfwWindow);
-        }
-
-        fps_elap += elapsed;
-        if (fps_delay <= fps_elap)
-        {
-            float fps = (float)((frames / fps_elap) * 1000.0f);
-            updateEventData.SetCurrentFPS(fps);
-
-            frames = 0;
-            fps_elap = 0.0;
-        }
-    }
-
-    DispatchEvent(Event((EventID)App::Events::STOP));
-
-    if (!_scene)
-    {
-        _scene->Stop();
-    }
-
-    glfwHideWindow(_glfwWindow);
-}
-
-void App::InitScripting()
-{
-    ScriptHost::AddFunction("dusk_App_GetInst", &App::Script_GetInst);
-    ScriptHost::AddFunction("dusk_App_LoadConfig", &App::Script_LoadConfig);
-    ScriptHost::AddFunction("dusk_App_GetScene", &App::Script_GetScene);
-
-    IEventDispatcher::InitScripting();
-
-    Scene::InitScripting();
-    Actor::InitScripting();
-    Component::InitScripting();
-}
-
-int App::Script_GetInst(lua_State * L)
-{
-    lua_pushinteger(L, (ptrdiff_t)App::GetInst());
-
-    return 1;
-}
-
-int App::Script_LoadConfig(lua_State * L)
-{
-    App * app = (App *)lua_tointeger(L, 1);
-
-    app->LoadConfig(std::string(lua_tostring(L, 2)));
-
-    return 0;
-}
-
-int App::Script_GetScene(lua_State * L)
-{
-    App * app = (App *)lua_tointeger(L, 1);
-
-    lua_pushinteger(L, (ptrdiff_t)app->GetScene());
-
-    return 1;
-}
-
 void App::GLFW_ErrorCallback(int code, const char * message)
 {
     DuskLogError("GLFW: %d, %s", code, message);
 }
 
+void App::GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
+    _KeyFunc(key, scancode, action, mods);
+}
+
 void App::GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
+    _MouseButtonFunc(button, action, mods);
 }
 
 void App::GLFW_ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
     ImGui_ImplGlfwGL3_ScrollCallback(window, xoffset, yoffset);
-}
-
-void App::GLFW_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-
-    if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
-        UI::ConsoleShown ^= 1;
-
-    ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
+    _ScrollFunc(xoffset, yoffset);
 }
 
 void App::GLFW_CharCallback(GLFWwindow* window, unsigned int c)
@@ -337,34 +336,14 @@ void App::GLFW_CharCallback(GLFWwindow* window, unsigned int c)
     ImGui_ImplGlfwGL3_CharCallback(window, c);
 }
 
-int UpdateEventData::PushToLua(lua_State * L) const
+void App::GLFW_MouseMoveCallback(GLFWwindow* window, double x, double y)
 {
-    lua_newtable(L);
-
-    lua_pushstring(L, "Delta");
-    lua_pushnumber(L, _delta);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "ElapsedTime");
-    lua_pushnumber(L, _elapsed_time);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "TotalTime");
-    lua_pushnumber(L, _total_time);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "CurrentFPS");
-    lua_pushnumber(L, _current_fps);
-    lua_settable(L, -3);
-
-    return 1;
+    _MouseMoveFunc(x, y);
 }
 
-void UpdateEventData::Update(double elapsed)
+void App::GLFW_DropCallback(GLFWwindow* window, int count, const char ** filenames)
 {
-    _elapsed_time = elapsed;
-    _total_time += elapsed;
-    _delta = (float)(elapsed / (1000.0f / _target_fps));
+    _DropFunc(count, filenames);
 }
 
 } // namespace dusk

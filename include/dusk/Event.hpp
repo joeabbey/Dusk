@@ -3,56 +3,129 @@
 
 #include <dusk/Config.hpp>
 
+#include <memory>
+#include <vector>
+#include <functional>
+
 namespace dusk {
 
-class IEventDispatcher;
-
-typedef unsigned int EventID;
-
-class EventData
-{
-public:
-
-    static const EventData Empty;
-
-    EventData() = default;
-    EventData(const EventData&) = default;
-    virtual ~EventData() = default;
-    EventData& operator=(const EventData&) = default;
-
-    virtual int PushToLua(lua_State * L) const;
-
-}; // class EventData
-
+template <class ... Params>
 class Event
 {
 public:
 
     DISALLOW_COPY_AND_ASSIGN(Event);
 
-    Event(const EventID& eventId, const EventData& data = EventData::Empty)
-        : _id(eventId)
-        , _data(data)
-        , _target(nullptr)
-    { }
+    Event() = default;
+    virtual ~Event() = default;
 
-    int PushDataToLua(lua_State * L) const { return _data.PushToLua(L); }
+    unsigned int GetNextId()
+    {
+        return ++_nextId;
+    }
 
-    inline EventID GetID() const { return _id; }
+    unsigned int AddStatic(std::function<void(Params ...)> func)
+    {
+        unsigned int id = GetNextId();
+        _callbacks.push_back(std::make_unique<StaticCallback>(id, func));
+        return id;
+    }
 
-    inline void SetTarget(IEventDispatcher * target) { _target = target; }
-    inline IEventDispatcher * GetTarget() const { return _target; }
+    template <class Object>
+    unsigned int AddMember(Object * object, std::function<void(Object *, Params ...)> func)
+    {
+        unsigned int id = GetNextId();
+        _callbacks.push_back(std::make_unique<MemberCallback<Object>>(id, object, func));
+        return id;
+    }
 
-    inline const EventData& GetData() const { return _data; }
+    void Call(Params ... args)
+    {
+        for (auto& callback : _callbacks)
+        {
+            if (callback->alive)
+                callback->Call(args...);
+        }
 
-    template <typename T>
-    inline const T * GetDataAs() const { return dynamic_cast<const T *>(&_data); }
+        for (unsigned int i = 0; i < _callbacks.size(); ++i)
+        {
+            if (!_callbacks[i]->alive)
+            {
+                _callbacks.erase(_callbacks.begin() + i);
+                --i;
+            }
+        }
+    }
+
+    void RemoveAllListeners()
+    {
+        for (auto& callback : _callbacks)
+        {
+            callback->alive = false;
+        }
+    }
+
+    void RemoveListener(unsigned int id)
+    {
+        for (auto& callback : _callbacks)
+        {
+            if (callback->id == id)
+            {
+                callback->alive = false;
+            }
+        }
+    }
 
 private:
 
-    EventID _id;
-    const EventData& _data;
-    IEventDispatcher * _target;
+    struct Callback
+    {
+        bool alive;
+        unsigned int id;
+
+        Callback(unsigned int id)
+            : alive(true)
+            , id(id)
+        { }
+
+        virtual void Call(Params ... args) = 0;
+    };
+
+    struct StaticCallback : public Callback
+    {
+        std::function<void(Params ...)> callback;
+
+        StaticCallback(unsigned int id, std::function<void(Params ...)> func)
+            : Callback(id)
+            , callback(func)
+        { }
+
+        void Call(Params ... args) override
+        {
+            callback(args...);
+        }
+    };
+
+    template <class Object>
+    struct MemberCallback : public Callback
+    {
+        Object * object;
+        std::function<void(Object *, Params ...)> callback;
+
+        MemberCallback(unsigned int id, Object * object, std::function<void(Object *, Params ...)> func)
+            : object(object)
+            , callback(func)
+        { }
+
+        void Call(Params ... args) override
+        {
+            callback(object, args...);
+        }
+    };
+
+    unsigned int _nextId = 0;
+
+    std::vector<std::unique_ptr<Callback>> _callbacks;
 
 }; // class Event
 

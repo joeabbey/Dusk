@@ -5,68 +5,131 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <unordered_map>
 #include <memory>
 
 namespace dusk {
 
+class ShaderProgram;
+
 class Shader
 {
+    friend class ShaderProgram;
+
 public:
 
     DISALLOW_COPY_AND_ASSIGN(Shader);
 
-    struct FileInfo {
-        GLuint type;
-        std::string filename;
-    };
+    Shader() = default;
+    Shader(const std::string& filename)
+    {
+        LoadFromFile(filename);
+    }
 
-    static std::unique_ptr<Shader> Parse(nlohmann::json & data);
+    Shader(GLuint type, const std::string& code)
+    {
+        LoadFromString(type, code);
+    }
 
-    Shader(const std::vector<FileInfo>& files);
-    virtual ~Shader();
+    Shader(Shader&& rhs)
+    {
+        _glId = rhs._glId;
+        rhs._glId = 0;
+    }
 
-    void Bind();
+    virtual ~Shader()
+    {
+        if (_glId > 0) glDeleteShader(_glId);
+    }
 
-    GLuint GetGLProgram() const { return _glProgram; }
-
-    GLint GetUniformLocation(const std::string& name);
-
-    void BindData(const std::string& name);
-
-    static void AddData(const std::string& name, void * data, size_t size)
-        { UpdateData(name, data, size); }
-
-    static void UpdateData(const std::string& name, void * data, size_t size);
+    bool LoadFromFile(const std::string& filename);
+    bool LoadFromString(GLuint type, const std::string& code);
 
 private:
 
+    std::string GetShaderTypeString(GLuint type);
 
-    struct ShaderData
+    std::string PreProcess(GLuint type, const std::string& code, const std::string& basedir = "");
+
+    bool Compile(GLuint type, const std::string& code);
+
+    void PrintLog();
+    void PrintCode(const std::string& code);
+
+    // TODO: Add compiled
+
+    GLuint GetGLId() const { return _glId; };
+
+    GLuint _glId = 0;
+
+};
+
+class ShaderProgram
+{
+public:
+
+    /// Class Boilerplate
+
+    DISALLOW_COPY_AND_ASSIGN(ShaderProgram);
+
+    ShaderProgram() = default;
+    ShaderProgram(const std::vector<std::string>& filenames);
+    virtual ~ShaderProgram();
+
+    void Serialize(nlohmann::json& data);
+    void Deserialize(nlohmann::json& data);
+
+    // Methods
+
+    static void InitializeUniformBuffers();
+
+    void Attach(Shader&& shader);
+
+    bool Link();
+
+    void Bind();
+
+    void SetUniformBufferData(const std::string& name, GLvoid * data);
+
+    bool IsLinked() const { return _linked; }
+
+    GLint GetAttribute(const std::string& name) const;
+
+    #include "Shader.inc.hpp"
+
+private:
+
+    struct UniformRecord
     {
-        GLuint glUBO;
-        size_t size;
-        int index;
+        GLint  Location;
+        GLint  Size;
+        GLenum Type;
     };
 
-    static std::unordered_map<std::string, ShaderData> _DataRecords;
-    static int _MaxDataIndex;
+    struct UniformBufferRecord
+    {
+        GLuint GLID;
+        GLuint Binding;
+        size_t Size;
+    };
 
-    std::vector<FileInfo> _files;
+    void CacheUniforms();
+    void CacheAttributes();
 
-    std::vector<std::string> _boundData;
-    GLuint _glProgram;
+    void PrintLog();
 
-    bool LoadProgram();
-    GLuint LoadShader(const std::string& filename, GLuint type);
+    bool _linked = false;
+    GLuint _glId = 0;
 
-    static bool LoadFile(const std::string& filename, std::string& buffer);
+    std::vector<Shader> _shaders;
+    std::unordered_map<std::string, UniformRecord> _uniforms;
+    std::unordered_map<std::string, GLuint> _attributes;
 
-    static void PrintShader(const std::string& shader);
-    static void PrintShaderLog(GLuint shader);
-    static void PrintShaderProgramLog(GLuint program);
+    static std::queue<GLuint> _AvailableUniformBufferBindings;
+    static std::unordered_map<std::string, UniformBufferRecord> _UniformBuffers;
 
-}; // class Shader
+};
 
 } // namespace dusk
 

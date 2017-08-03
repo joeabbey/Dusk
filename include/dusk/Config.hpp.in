@@ -31,6 +31,9 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/norm.hpp>
 
+// GSL
+#include <gsl/gsl>
+
 // Lua
 #include <lua.hpp>
 
