@@ -45,6 +45,15 @@ size_t GetGLTypeSize(GLenum type)
     //case GL_DOUBLE_MAT4x2:      return sizeof(glm::dmat4x2);
     //case GL_DOUBLE_MAT4x3:      return sizeof(glm::dmat4x3);
 
+    case GL_RED:                return 1;
+    case GL_RG:                 return 2;
+    case GL_RGB:                return 3;
+    case GL_BGR:                return 3;
+    case GL_RGBA:               return 4;
+    case GL_BGRA:               return 4;
+    case GL_DEPTH_COMPONENT:    return 1;
+    case GL_DEPTH_STENCIL:      return 2;
+
     // TODO: Finish
     }
 

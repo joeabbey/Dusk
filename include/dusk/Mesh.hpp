@@ -11,18 +11,9 @@
 
 namespace dusk {
 
-class Mesh
-    : public std::enable_shared_from_this<Mesh>
-    , public IEventDispatcher
+class Mesh : public std::enable_shared_from_this<Mesh>
 {
 public:
-
-    enum AttrID : GLuint
-    {
-        VERTS = 0,
-        NORMS = 1,
-        TXCDS = 2,
-    };
 
     DISALLOW_COPY_AND_ASSIGN(Mesh);
 

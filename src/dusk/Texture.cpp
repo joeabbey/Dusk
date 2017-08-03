@@ -2,40 +2,51 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
-#include <dusk/App.hpp>
-#include <dusk/Asset.hpp>
 
 namespace dusk {
 
-std::shared_ptr<Texture> Texture::Create(const std::string& filename)
+bool Texture::LoadFromFile(const std::string& filename)
 {
-    App * app = App::GetInst();
-    AssetId id = app->GetTextureIndex()->GetId(filename);
-    std::shared_ptr<Texture> ptr = app->GetTextureCache()->Get(id);
-    if (!ptr)
-    {
-        ptr.reset(new Texture(filename));
-        app->GetTextureCache()->Add(id, ptr);
-    }
-    return ptr;
-}
-
-Texture::Texture(const std::string& filename)
-    : _filename(filename)
-    , _glID(0)
-{
-    DuskLogInfo("Loading image '%s'", _filename.c_str());
+    DuskLogLoad("Loading texture from '%s'", filename.c_str());
 
     // OpenGL is weird
     stbi_set_flip_vertically_on_load(true);
 
     int width, height, comp;
-    unsigned char * image = stbi_load(_filename.c_str(), &width, &height, &comp, STBI_rgb_alpha);
+    unsigned char * texture = stbi_load(filename.c_str(), &width, &height, &comp, STBI_rgb_alpha);
 
-    if (!image)
+    if (!texture)
     {
-        DuskLogError("Loading image failed '%s'", _filename.c_str());
-        goto error;
+        DuskLogError("Failed to load texture '%s'", filename.c_str());
+        return false;
+    }
+
+    std::vector<uint8_t> data(texture, texture + (width * height * GetGLTypeSize(GL_RGBA)));
+    stbi_image_free(texture);
+
+    return LoadGL(glm::uvec2(width, height), data, GL_RGBA);
+}
+
+bool Texture::LoadFromMemory(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type /*= GL_RGBA*/)
+{
+    DuskLogLoad("Loading texture from memory");
+    return LoadGL(size, data, type);
+}
+
+bool Texture::LoadGL(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type)
+{
+    if (_glID > 0)
+    {
+        glDeleteTextures(1, &_glID);
+        _glID = 0;
+    }
+
+    _loaded = false;
+
+    if (data.size() < (size.x * size.y * GetGLTypeSize(type)))
+    {
+        DuskLogError("Image size mismatch, buffer to small");
+        return false;
     }
 
     glGenTextures(1, &_glID);
@@ -43,41 +54,30 @@ Texture::Texture(const std::string& filename)
     if (0 == _glID)
     {
         DuskLogError("Failed to create GL Texture");
-        goto error;
+        return false;
     }
 
     glBindTexture(GL_TEXTURE_2D, _glID);
-    DuskLogInfo("Binding image '%s' to ID %u", _filename.c_str(), _glID);
+    DuskLogVerbose("Binding texture to ID %u", _glID);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+    // Sharper
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+    // Smoother
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, type, GL_UNSIGNED_BYTE, data.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    stbi_image_free(image);
-    image = nullptr;
-
     glBindTexture(GL_TEXTURE_2D, 0);
-    return;
 
-error:
-
-    stbi_image_free(image);
-    image = nullptr;
-
-    glDeleteTextures(1, &_glID);
-    _glID = 0;
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-Texture::~Texture()
-{
-    glDeleteTextures(1, &_glID);
+    _loaded = true;
+    return true;
 }
 
 void Texture::Bind()

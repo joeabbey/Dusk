@@ -3,35 +3,55 @@
 
 #include <dusk/Config.hpp>
 
-#include <dusk/EventDispatcher.hpp>
+#include <dusk/Event.hpp>
 #include <string>
-#include <memory>
+#include <vector>
 
 namespace dusk {
 
 class Texture
-    : public std::enable_shared_from_this<Texture>
-    , public IEventDispatcher
 {
 public:
 
     DISALLOW_COPY_AND_ASSIGN(Texture);
 
-    static std::shared_ptr<Texture> Create(const std::string& filename);
-    ~Texture();
+    Texture() = default;
+    Texture(const std::string& filename)
+    {
+        LoadFromFile(filename);
+    }
 
-    bool Load();
-    void Free();
+    Texture(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type = GL_RGBA)
+    {
+        LoadFromMemory(size, data, type);
+    }
+
+    Texture(Texture&& rhs)
+    {
+        _glID = rhs._glID;
+        rhs._glID = 0;
+    }
+
+    virtual ~Texture()
+    {
+        if (_glID > 0) glDeleteTextures(1, &_glID);
+    }
+
+    bool LoadFromFile(const std::string& filename);
+
+    bool LoadFromMemory(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type = GL_RGBA);
 
     void Bind();
 
+    bool IsLoaded() const { return _loaded; }
+
 private:
 
-    Texture(const std::string& filename);
+    bool LoadGL(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type);
 
-    std::string _filename;
+    bool _loaded = false;
 
-    GLuint _glID;
+    GLuint _glID = 0;
 
 }; // class Texture
 

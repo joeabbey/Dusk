@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <climits>
 
 namespace dusk {
 
@@ -55,14 +56,14 @@ bool Shader::LoadFromFile(const std::string& filename)
         return false;
     }
 
-    DuskLogInfo("Loading %s shader from '%s'", GetShaderTypeString(type).c_str(), filename.c_str());
+    DuskLogLoad("Loading %s shader from '%s'", GetShaderTypeString(type).c_str(), filename.c_str());
     std::string processedCode = PreProcess(type, code, GetDirname(filename));
     return Compile(type, processedCode);
 }
 
 bool Shader::LoadFromString(GLuint type, const std::string& code)
 {
-    DuskLogInfo("Loading %s shader from string", GetShaderTypeString(type).c_str());
+    DuskLogLoad("Loading %s shader from string", GetShaderTypeString(type).c_str());
     std::string processedCode = PreProcess(type, code);
     return Compile(type, processedCode);
 }
@@ -141,6 +142,8 @@ bool Shader::Compile(GLuint type, const std::string& code)
     GLint compiled = GL_FALSE;
     const char * bufferPtr = code.c_str();
 
+    _compiled = false;
+
     if (type == GL_INVALID_ENUM)
     {
         DuskLogError("Invalid shader type");
@@ -172,14 +175,13 @@ bool Shader::Compile(GLuint type, const std::string& code)
         return false;
     }
 
+    _compiled = true;
     return true;
 }
 
 void Shader::PrintLog()
 {
-    // TODO: Convert to std::array
-
-    std::string shaderLog;
+    std::vector<char> shaderLog;
     GLint logSize, retSize;
 
     if (!glIsShader(_glId))
@@ -191,9 +193,9 @@ void Shader::PrintLog()
     glGetShaderiv(_glId, GL_INFO_LOG_LENGTH, &logSize);
 
     shaderLog.resize(logSize);
-    glGetShaderInfoLog(_glId, logSize, &retSize, &shaderLog[0]);
+    glGetShaderInfoLog(_glId, logSize, &retSize, shaderLog.data());
 
-    DuskLogInfo("Log for shader %d:\n%s", _glId, shaderLog.c_str());
+    DuskLogInfo("Log for shader %d:\n%s", _glId, shaderLog.data());
 }
 
 void Shader::PrintCode(const std::string& code)
@@ -228,7 +230,7 @@ void ShaderProgram::InitializeUniformBuffers()
 {
     int maxBindings;
     glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &maxBindings);
-    DuskLogInfo("Max UBO Bindings %d", maxBindings);
+    DuskLogVerbose("Max UBO Bindings %d", maxBindings);
 
     for (int i = 0; i < maxBindings; ++i)
     {
@@ -237,16 +239,16 @@ void ShaderProgram::InitializeUniformBuffers()
 
     int tmp;
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &tmp);
-    DuskLogInfo("Max UBO Size %d", tmp);
+    DuskLogVerbose("Max UBO Size %d", tmp);
 
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &tmp);
-    DuskLogInfo("Max Vertex UBOs %d", tmp);
+    DuskLogVerbose("Max Vertex UBOs %d", tmp);
 
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &tmp);
-    DuskLogInfo("Max Fragment UBOs %d", tmp);
+    DuskLogVerbose("Max Fragment UBOs %d", tmp);
 
     glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &tmp);
-    DuskLogInfo("Max Geometry UBOs %d", tmp);
+    DuskLogVerbose("Max Geometry UBOs %d", tmp);
 }
 
 void ShaderProgram::Attach(Shader&& shader)
@@ -289,7 +291,7 @@ bool ShaderProgram::Link()
     _shaders.clear();
 
     CacheUniforms();
-    //CacheAttributes();
+    CacheAttributes();
 
     _linked = true;
     return true;
@@ -320,8 +322,18 @@ void ShaderProgram::SetUniformBufferData(const std::string& name, GLvoid * data)
 
 GLint ShaderProgram::GetAttribute(const std::string& name) const
 {
-    if (_attributes.find(name) == _attributes.end()) return 0;
+    if (_attributes.find(name) == _attributes.end()) return INT_MAX;
     return _attributes.at(name);
+}
+
+bool ShaderProgram::HasAttribute(const std::string& name) const
+{
+    return (_attributes.find(name) != _attributes.end());
+}
+
+bool ShaderProgram::HasUniform(const std::string& name) const
+{
+    return (_uniforms.find(name) != _uniforms.end());
 }
 
 void ShaderProgram::CacheUniforms()
@@ -406,6 +418,7 @@ void ShaderProgram::CacheUniforms()
 
             glBindBufferBase(GL_UNIFORM_BUFFER, _AvailableUniformBufferBindings.front(), uboId);
 
+            DuskLogVerbose("Binding UBO %s to %u", name.c_str(), _AvailableUniformBufferBindings.front());
             _UniformBuffers.emplace(name, UniformBufferRecord{
                 uboId,
                 _AvailableUniformBufferBindings.front(),

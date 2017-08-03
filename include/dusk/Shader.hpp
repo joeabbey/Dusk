@@ -22,6 +22,7 @@ public:
     DISALLOW_COPY_AND_ASSIGN(Shader);
 
     Shader() = default;
+
     Shader(const std::string& filename)
     {
         LoadFromFile(filename);
@@ -46,6 +47,8 @@ public:
     bool LoadFromFile(const std::string& filename);
     bool LoadFromString(GLuint type, const std::string& code);
 
+    bool IsCompiled() const { return _compiled; }
+
 private:
 
     std::string GetShaderTypeString(GLuint type);
@@ -57,9 +60,9 @@ private:
     void PrintLog();
     void PrintCode(const std::string& code);
 
-    // TODO: Add compiled
-
     GLuint GetGLId() const { return _glId; };
+
+    bool _compiled = false;
 
     GLuint _glId = 0;
 
@@ -84,17 +87,20 @@ public:
 
     static void InitializeUniformBuffers();
 
+    static void SetUniformBufferData(const std::string& name, GLvoid * data);
+
     void Attach(Shader&& shader);
 
     bool Link();
 
     void Bind();
 
-    void SetUniformBufferData(const std::string& name, GLvoid * data);
-
     bool IsLinked() const { return _linked; }
 
     GLint GetAttribute(const std::string& name) const;
+    bool HasAttribute(const std::string& name) const;
+
+    bool HasUniform(const std::string& name) const;
 
     #include "Shader.inc.hpp"
 

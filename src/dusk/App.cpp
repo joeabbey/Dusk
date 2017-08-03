@@ -167,7 +167,7 @@ bool App::LoadConfig(const std::string& filename)
     std::ifstream file(filename);
     nlohmann::json data;
 
-    DuskLogInfo("Loading config file '%s'", filename.c_str());
+    DuskLogLoad("Loading config file '%s'", filename.c_str());
 
     if (!file.is_open())
     {
@@ -191,7 +191,7 @@ bool App::SaveConfig(const std::string& filename)
     std::ofstream file(filename);
     nlohmann::json data;
 
-    DuskLogInfo("Saving config file '%s'", filename.c_str());
+    DuskLogLoad("Saving config file '%s'", filename.c_str());
 
     if (!file.is_open())
     {
@@ -262,7 +262,7 @@ void App::CreateWindow()
 
     int samples;
     glGetIntegerv(GL_SAMPLES, &samples);
-    DuskLogInfo("Running %dx AA", samples);
+    DuskLogVerbose("Running %dx AA", samples);
 
     ShaderProgram::InitializeUniformBuffers();
 

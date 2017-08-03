@@ -22,6 +22,7 @@ namespace dusk {
         LOG_ERROR,
         LOG_PERF,
         LOG_VERBOSE,
+        LOG_LOAD,
     };
 
     static inline void Log(LogLevel level, const char * format, ...)
@@ -60,6 +61,10 @@ namespace dusk {
             fgColor = 35; // Magenta
             break;
         case LOG_VERBOSE:
+            imColor = ImColor(128, 128, 128);
+            fgColor = 37; // Grey
+            break;
+        case LOG_LOAD:
             imColor = ImColor(0, 255, 0);
             fgColor = 32; // Green
             break;
@@ -96,6 +101,9 @@ namespace dusk {
 
 #define DuskLogPerf(M, ...) \
     do { dusk::Log(dusk::LogLevel::LOG_PERF, "[PERF](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+
+#define DuskLogLoad(M, ...) \
+    do { dusk::Log(dusk::LogLevel::LOG_LOAD, "[LOAD](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
 // clang-format on
 
