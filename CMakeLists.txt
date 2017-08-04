@@ -131,7 +131,7 @@ SET(Dusk_INCLUDES
     include/dusk/App.hpp
     #include/dusk/Asset.hpp
     include/dusk/Benchmark.hpp
-    #include/dusk/Camera.hpp
+    include/dusk/Camera.hpp
     #include/dusk/Component.hpp
     include/dusk/Dusk.hpp
     #include/dusk/Event.hpp
@@ -170,7 +170,7 @@ SET(Dusk_INCLUDES
 SET(Dusk_SOURCES
     #src/dusk/Actor.cpp
     src/dusk/App.cpp
-    #src/dusk/Camera.cpp
+    src/dusk/Camera.cpp
     #src/dusk/Component.cpp
     src/dusk/Dusk.cpp
     #src/dusk/Event.cpp

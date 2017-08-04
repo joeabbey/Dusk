@@ -17,67 +17,56 @@ Camera::Camera(float fov /*= 45.0f*/, glm::vec3 up /*= glm::vec3(0, 1, 0)*/, glm
     , _position(0)
     , _forward(1)
     , _up(up)
-    , _friction(0.9f)
-    , _velocity(0)
 {
-    // TODO: Something?
-    int width, height;
-    glfwGetFramebufferSize(App::GetInst()->GetGLFWWindow(), &width, &height);
-    SetAspect((float)width, (float)height);
 }
 
-std::unique_ptr<Camera> Camera::Parse(nlohmann::json & data)
+void Camera::Serialize(nlohmann::json& data)
 {
-	std::unique_ptr<Camera> camera(new Camera());
+    data["Position"] = { _position.x, _position.y, _position.z };
+    data["Forward"] = { _forward.x, _forward.y, _forward.z };
+    data["Up"] = { _up.x, _up.y, _up.z };
+    data["FOV"] = _fov;
+    data["Aspect"] = _aspect;
+    data["Clip"] = { _clip.x, _clip.y };
+}
 
+void Camera::Deserialize(nlohmann::json& data)
+{
 	if (data.find("Position") != data.end())
 	{
-		camera->SetPosition({
+		SetPosition({
 			data["Position"][0], data["Position"][1], data["Position"][2]
 		});
 	}
 
 	if (data.find("Forward") != data.end())
 	{
-		camera->SetForward({
+		SetForward({
 			data["Forward"][0], data["Forward"][1], data["Forward"][2]
 		});
 	}
 
 	if (data.find("Up") != data.end())
 	{
-		camera->SetUp({
+		SetUp({
 			data["Up"][0], data["Up"][1], data["Up"][2]
 		});
 	}
 
 	if (data.find("FOV") != data.end())
 	{
-		camera->SetFOV(data["FOV"]);
+		SetFOV(data["FOV"]);
 	}
 
 	if (data.find("Aspect") != data.end())
 	{
-		camera->SetAspect(data["Aspect"]);
+		SetAspect(data["Aspect"]);
 	}
 
 	if (data.find("Clip") != data.end())
 	{
-		camera->SetClip(data["Clip"][0], data["Clip"][1]);
+		SetClip(data["Clip"][0], data["Clip"][1]);
 	}
-
-	return camera;
-}
-
-std::unique_ptr<Camera> Camera::Clone()
-{
-    std::unique_ptr<Camera> camera(new Camera(GetFOV(), GetUp(), GetClip()));
-
-    camera->SetBaseTransform(_baseTransform);
-    camera->SetPosition(GetPosition());
-    camera->SetForward(GetForward());
-
-    return camera;
 }
 
 void Camera::SetBaseTransform(const glm::mat4& baseTransform)
@@ -140,33 +129,6 @@ void Camera::SetUp(const glm::vec3& up)
 {
     _up = up;
     _projectionInvalid = true;
-}
-
-void Camera::AddVelocity(const glm::vec3& vel)
-{
-    _velocity += vel;
-}
-
-void Camera::Update()
-{
-    if (_velocity == glm::vec3(0))
-    {
-        return;
-    }
-
-    _position += _velocity;
-    _viewInvalid = true;
-
-    _velocity *= _friction;
-
-    if (_velocity.x < _zeroClamp && _velocity.x > -_zeroClamp)
-        _velocity.x = 0.0f;
-
-    if (_velocity.y < _zeroClamp && _velocity.y > -_zeroClamp)
-        _velocity.y = 0.0f;
-
-    if (_velocity.z < _zeroClamp && _velocity.z > -_zeroClamp)
-        _velocity.z = 0.0f;
 }
 
 } // namespace dusk

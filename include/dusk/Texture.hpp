@@ -13,6 +13,8 @@ class Texture
 {
 public:
 
+    /// Class Boilerplate
+
     DISALLOW_COPY_AND_ASSIGN(Texture);
 
     Texture() = default;
@@ -36,6 +38,8 @@ public:
     {
         if (_glID > 0) glDeleteTextures(1, &_glID);
     }
+
+    /// Methods
 
     bool LoadFromFile(const std::string& filename);
 

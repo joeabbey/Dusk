@@ -58,6 +58,8 @@ public:
     std::string GetWindowTitle() const { return _windowTitle; }
     void SetWindowTitle(const std::string& title);
 
+    std::vector<glm::ivec2> GetAvailableWindowSizes();
+
     /// Events
 
     Event<> OnStart;
@@ -105,6 +107,8 @@ private:
     static void GLFW_ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
     static void GLFW_CharCallback(GLFWwindow* window, unsigned int c);
     static void GLFW_DropCallback(GLFWwindow* window, int count, const char ** filenames);
+    static void GLFW_WindowSizeCallback(GLFWwindow* window, int width, int height);
+    static void GLFW_FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 
     static std::function<void(int, int, int, int)> _KeyFunc;
     static std::function<void(int, int, int)>      _MouseButtonFunc;
@@ -112,6 +116,7 @@ private:
     static std::function<void(double, double)>     _ScrollFunc;
     static std::function<void(unsigned int)>       _CharFunc;
     static std::function<void(int, const char **)> _DropFunc;
+    static std::function<void(int, int)>           _WindowSizeFunc;
 
 }; // class App
 

@@ -83,11 +83,13 @@ public:
     void Serialize(nlohmann::json& data);
     void Deserialize(nlohmann::json& data);
 
-    // Methods
+    /// Static Methods
 
     static void InitializeUniformBuffers();
 
     static void SetUniformBufferData(const std::string& name, GLvoid * data);
+
+    // Methods
 
     void Attach(Shader&& shader);
 

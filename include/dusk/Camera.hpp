@@ -11,13 +11,17 @@ class Camera
 {
 public:
 
+    /// Class Boilerplate
+
     DISALLOW_COPY_AND_ASSIGN(Camera);
 
     Camera(float fov = 45.0f, glm::vec3 up = glm::vec3(0, 1, 0), glm::vec2 clip = glm::vec2(0.1f, 1000.0f));
     virtual ~Camera() = default;
 
-    static std::unique_ptr<Camera> Parse(nlohmann::json & data);
-    std::unique_ptr<Camera> Clone();
+    void Serialize(nlohmann::json& data);
+    void Deserialize(nlohmann::json& data);
+
+    /// Methods
 
     void SetBaseTransform(const glm::mat4& baseTransform);
 
@@ -44,10 +48,6 @@ public:
     void SetUp(const glm::vec3& up);
     glm::vec3 GetUp() const { return _up; }
 
-    void AddVelocity(const glm::vec3& vel);
-
-    void Update();
-
 private:
 
     glm::mat4 _baseTransform;
@@ -65,11 +65,6 @@ private:
     glm::vec3 _position;
     glm::vec3 _forward;
     glm::vec3 _up;
-
-    float     _friction;
-    glm::vec3 _velocity;
-
-    const float _zeroClamp = 0.0001f;
 
 }; // class Camera
 

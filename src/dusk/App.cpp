@@ -15,12 +15,13 @@ std::function<void(double, double)>     App::_MouseMoveFunc;
 std::function<void(double, double)>     App::_ScrollFunc;
 std::function<void(unsigned int)>       App::_CharFunc;
 std::function<void(int, const char **)> App::_DropFunc;
+std::function<void(int, int)>           App::_WindowSizeFunc;
 
 App::App(int argc, char** argv)
 {
     DuskLogInfo("Starting Application");
 
-    _KeyFunc = [=](int key, int scancode, int action, int mods) {
+    _KeyFunc = [this](int key, int scancode, int action, int mods) {
 
         if (GLFW_PRESS == action)
         {
@@ -32,7 +33,7 @@ App::App(int argc, char** argv)
         }
     };
 
-    _MouseButtonFunc = [=](int button, int action, int mods) {
+    _MouseButtonFunc = [this](int button, int action, int mods) {
         if (GLFW_PRESS == action)
         {
             OnMousePress.Call(button, mods);
@@ -43,21 +44,25 @@ App::App(int argc, char** argv)
         }
     };
 
-    _MouseMoveFunc = [=](double x, double y) {
+    _MouseMoveFunc = [this](double x, double y) {
         static glm::vec2 last = { x, y };
         glm::vec2 cur = { x, y };
         OnMouseMove.Call(cur, cur - last);
         last = cur;
     };
 
-    _ScrollFunc = [=](double xoffset, double yoffset) {
+    _ScrollFunc = [this](double xoffset, double yoffset) {
         OnMouseScroll.Call(glm::vec2(xoffset, yoffset));
     };
 
-    _DropFunc = [=](int count, const char ** filenames) {
+    _DropFunc = [this](int count, const char ** filenames) {
         std::vector<std::string> filenameList;
         for (int i = 0; i < count; ++i) filenameList.push_back(std::string(filenames[i]));
         OnFileDrop.Call(filenameList);
+    };
+
+    _WindowSizeFunc = [=](int width, int height) {
+        OnWindowResize.Call(glm::ivec2(width, height));
     };
 
     CreateWindow();
@@ -220,6 +225,24 @@ void App::SetWindowTitle(const std::string& title)
     glfwSetWindowTitle(_glfwWindow, _windowTitle.c_str());
 }
 
+std::vector<glm::ivec2> App::GetAvailableWindowSizes()
+{
+    std::vector<glm::ivec2> sizes;
+
+    int count;
+    const GLFWvidmode* modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+    for (int i = 0; i < count; ++i)
+    {
+        glm::ivec2 size = { modes[i].width, modes[i].height };
+        if (std::find(sizes.begin(), sizes.end(), size) == sizes.end())
+        {
+            sizes.push_back(size);
+        }
+    }
+
+    return sizes;
+}
+
 void App::CreateWindow()
 {
     DuskBenchStart();
@@ -244,6 +267,10 @@ void App::CreateWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_SAMPLES, 16);
     glfwWindowHint(GLFW_VISIBLE, false);
+
+    const std::vector<glm::ivec2>& windowSizes = GetAvailableWindowSizes();
+
+    _windowSize = windowSizes.back();
 
     _glfwWindow = glfwCreateWindow(_windowSize.x, _windowSize.y, _windowTitle.c_str(), NULL, NULL);
     if (!_glfwWindow)
@@ -274,6 +301,8 @@ void App::CreateWindow()
     glfwSetScrollCallback(_glfwWindow, &App::GLFW_ScrollCallback);
     glfwSetCharCallback(_glfwWindow, &App::GLFW_CharCallback);
     glfwSetDropCallback(_glfwWindow, &App::GLFW_DropCallback);
+    glfwSetFramebufferSizeCallback(_glfwWindow, &App::GLFW_FramebufferSizeCallback);
+    glfwSetWindowSizeCallback(_glfwWindow, &App::GLFW_WindowSizeCallback);
 
     glEnable(GL_MULTISAMPLE);
 
@@ -344,6 +373,17 @@ void App::GLFW_MouseMoveCallback(GLFWwindow* window, double x, double y)
 void App::GLFW_DropCallback(GLFWwindow* window, int count, const char ** filenames)
 {
     _DropFunc(count, filenames);
+}
+
+void App::GLFW_WindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+    _WindowSizeFunc(width, height);
+}
+
+void App::GLFW_FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    DuskLogVerbose("Framebuffer Resized %d x %d", width, height);
+    glViewport(0, 0, width, height);
 }
 
 } // namespace dusk
