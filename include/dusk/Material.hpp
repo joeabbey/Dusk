@@ -22,13 +22,10 @@ struct MaterialData
 };
 
 class Material
-    : public std::enable_shared_from_this<Material>
 {
 public:
 
-    DISALLOW_COPY_AND_ASSIGN(Material);
-
-    enum TextureID : GLuint
+    enum TextureID
     {
         AMBIENT  = 0,
         DIFFUSE  = 1,
@@ -44,37 +41,30 @@ public:
         BUMP_MAP_FLAG     = 8,
     };
 
-    static std::shared_ptr<Material> Parse(nlohmann::json & data);
+    struct Data
+    {
+        glm::vec4 Ambient = glm::vec4(0);
+        glm::vec4 Diffuse = glm::vec4(0);
+        glm::vec4 Specular = glm::vec4(0);
 
-    static std::shared_ptr<Material>
-    Create(glm::vec4 ambient,
-           glm::vec4 diffuse,
-           glm::vec4 specular,
-           float shininess,
-           float dissolve,
-           const std::string& ambientMap,
-           const std::string& diffuseMap,
-           const std::string& specularMap,
-           const std::string& bumpMap);
+        float Shininess = 1.0f;
+        float Dissolve = 0.0f;
 
-    ~Material();
+        std::string AmbientMap = "";
+        std::string DiffuseMap = "";
+        std::string SpecularMap = "";
+        std::string BumpMap = "";
+    };
 
-    void Bind(Shader * shader);
+    DISALLOW_COPY_AND_ASSIGN(Material);
 
-    // TODO: Fix
-    std::string GetId();
+    Material(const Data& data);
+
+    virtual ~Material() = default;
+
+    void Bind(ShaderProgram * sp);
 
 private:
-
-    Material(glm::vec4 ambient,
-             glm::vec4 diffuse,
-             glm::vec4 specular,
-             float shininess,
-             float dissolve,
-             const std::string& ambientMap,
-             const std::string& diffuseMap,
-             const std::string& specularMap,
-             const std::string& bumpMap);
 
     MaterialData _shaderData;
 

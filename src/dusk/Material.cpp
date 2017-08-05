@@ -7,145 +7,32 @@
 
 namespace dusk {
 
-std::shared_ptr<Material>
-Material::Parse(nlohmann::json & data)
-{
-    glm::vec4 ambient  = glm::vec4(0, 0, 0, 1.0f);
-    glm::vec4 diffuse  = glm::vec4(0, 0, 0, 1.0f);
-    glm::vec4 specular = glm::vec4(0, 0, 0, 1.0f);
-    float shininess = 0.0f;
-    float dissolve = 0.0f;
-    std::string ambientMap;
-    std::string diffuseMap;
-    std::string specularMap;
-    std::string bumpMap;
-
-    if (data.find("Ambient") != data.end())
-    {
-        ambient.x = data["Ambient"][0];
-        ambient.y = data["Ambient"][1];
-        ambient.z = data["Ambient"][2];
-    }
-
-    if (data.find("Diffuse") != data.end())
-    {
-        diffuse.x = data["Diffuse"][0];
-        diffuse.y = data["Diffuse"][1];
-        diffuse.z = data["Diffuse"][2];
-    }
-
-    if (data.find("Specular") != data.end())
-    {
-        specular.x = data["Specular"][0];
-        specular.y = data["Specular"][1];
-        specular.z = data["Specular"][2];
-    }
-
-    if (data.find("Shininess") != data.end())
-    {
-        shininess = data["Shininess"];
-    }
-
-    if (data.find("Dissolve") != data.end())
-    {
-        dissolve = data["Dissolve"];
-    }
-
-    if (data.find("AmbientMap") != data.end())
-    {
-        ambientMap = data["AmbientMap"];
-    }
-
-    if (data.find("DiffuseMap") != data.end())
-    {
-        diffuseMap = data["DiffuseMap"];
-    }
-
-    if (data.find("SpecularMap") != data.end())
-    {
-        specularMap = data["SpecularMap"];
-    }
-
-    if (data.find("BumpMap") != data.end())
-    {
-        bumpMap = data["BumpMap"];
-    }
-
-    return Material::Create(ambient, diffuse, specular,
-                            shininess, dissolve,
-                            ambientMap, diffuseMap, specularMap, bumpMap);
-}
-
-std::shared_ptr<Material>
-Material::Create(glm::vec4 ambient,
-                 glm::vec4 diffuse,
-                 glm::vec4 specular,
-                 float shininess,
-                 float dissolve,
-                 const std::string& ambientMap,
-                 const std::string& diffuseMap,
-                 const std::string& specularMap,
-                 const std::string& bumpMap)
-{
-    std::stringstream ss;
-    ss << "Material[" << ambient.r << "," << ambient.g << "," << ambient.b << "," << ambient.a << ","
-                      << diffuse.r << "," << diffuse.g << "," << diffuse.b << "," << diffuse.a << ","
-                      << specular.r << "," << specular.g << "," << specular.b << "," << specular.a << ","
-                      << shininess << "," << dissolve << ","
-                      << ambientMap << ","
-                      << diffuseMap << ","
-                      << specularMap << ","
-                      << bumpMap << "]";
-
-    DuskLogInfo("%s", ss.str().c_str());
-
-    App * app = App::GetInst();
-    AssetId id = app->GetMaterialIndex()->GetId(ss.str());
-    std::shared_ptr<Material> ptr = app->GetMaterialCache()->Get(id);
-    if (!ptr)
-    {
-        ptr.reset(new Material(ambient, diffuse, specular,
-                               shininess, dissolve,
-                               ambientMap, diffuseMap, specularMap, bumpMap));
-        app->GetMaterialCache()->Add(id, ptr);
-    }
-    return ptr;
-}
-
-Material::Material(glm::vec4 ambient,
-                   glm::vec4 diffuse,
-                   glm::vec4 specular,
-                   float shininess,
-                   float dissolve,
-                   const std::string& ambientMap,
-                   const std::string& diffuseMap,
-                   const std::string& specularMap,
-                   const std::string& bumpMap)
-    : _ambient(ambient)
-    , _diffuse(diffuse)
-    , _specular(specular)
-    , _shininess(shininess)
-    , _dissolve(dissolve)
+Material::Material(const Data& data)
+    : _ambient(data.Ambient)
+    , _diffuse(data.Diffuse)
+    , _specular(data.Specular)
+    , _shininess(data.Shininess)
+    , _dissolve(data.Dissolve)
     , _ambientMap(nullptr)
     , _diffuseMap(nullptr)
     , _specularMap(nullptr)
     , _bumpMap(nullptr)
 {
-    if (!ambientMap.empty())
+    if (!data.AmbientMap.empty())
     {
-        _ambientMap = Texture::Create(ambientMap);
+        _ambientMap.reset(new Texture(data.AmbientMap));
     }
-    if (!diffuseMap.empty())
+    if (!data.DiffuseMap.empty())
     {
-        _diffuseMap = Texture::Create(diffuseMap);
+        _diffuseMap.reset(new Texture(data.DiffuseMap));
     }
-    if (!specularMap.empty())
+    if (!data.SpecularMap.empty())
     {
-        _specularMap = Texture::Create(specularMap);
+        _specularMap.reset(new Texture(data.SpecularMap));
     }
-    if (!bumpMap.empty())
+    if (!data.BumpMap.empty())
     {
-        _bumpMap = Texture::Create(bumpMap);
+        _bumpMap.reset(new Texture(data.BumpMap));
     }
 
     _shaderData.Ambient  = _ambient;
@@ -156,63 +43,45 @@ Material::Material(glm::vec4 ambient,
     _shaderData.Dissolve  = _dissolve;
 
     _shaderData.MapFlags = 0;
-    _shaderData.MapFlags |= (ambientMap.empty()  ? 0 : AMBIENT_MAP_FLAG);
-    _shaderData.MapFlags |= (diffuseMap.empty()  ? 0 : DIFFUSE_MAP_FLAG);
-    _shaderData.MapFlags |= (specularMap.empty() ? 0 : SPECULAR_MAP_FLAG);
-    _shaderData.MapFlags |= (bumpMap.empty()     ? 0 : BUMP_MAP_FLAG);
+    _shaderData.MapFlags |= (_ambientMap && _ambientMap->IsLoaded()   ? AMBIENT_MAP_FLAG : 0);
+    _shaderData.MapFlags |= (_diffuseMap && _diffuseMap->IsLoaded()   ? DIFFUSE_MAP_FLAG : 0);
+    _shaderData.MapFlags |= (_specularMap && _specularMap->IsLoaded() ? SPECULAR_MAP_FLAG : 0);
+    _shaderData.MapFlags |= (_bumpMap && _bumpMap->IsLoaded()         ? BUMP_MAP_FLAG : 0);
 }
 
-Material::~Material()
+void Material::Bind(ShaderProgram * sp)
 {
-}
+    ShaderProgram::SetUniformBufferData("DuskMaterialData", &_shaderData);
 
-void Material::Bind(Shader * shader)
-{
-    Shader::UpdateData("DuskMaterialData", &_shaderData, sizeof(_shaderData));
-
-    if (_ambientMap)
+    if (_ambientMap && _ambientMap->IsLoaded())
     {
-        glUniform1i(shader->GetUniformLocation("_AmbientMap"), Material::TextureID::AMBIENT);
-        glActiveTexture(GL_TEXTURE0 + Material::TextureID::AMBIENT);
+        sp->SetUniform("_AmbientMap", TextureID::AMBIENT);
+        glActiveTexture(GL_TEXTURE0 + TextureID::AMBIENT);
         _ambientMap->Bind();
     }
 
-    if (_diffuseMap)
+    if (_diffuseMap && _diffuseMap->IsLoaded())
     {
-        glUniform1i(shader->GetUniformLocation("_DiffuseMap"), Material::TextureID::DIFFUSE);
-        glActiveTexture(GL_TEXTURE0 + Material::TextureID::DIFFUSE);
+        sp->SetUniform("_DiffuseMap", TextureID::DIFFUSE);
+        glActiveTexture(GL_TEXTURE0 + TextureID::DIFFUSE);
         _diffuseMap->Bind();
     }
 
-    if (_specularMap)
+    if (_specularMap && _specularMap->IsLoaded())
     {
-        glUniform1i(shader->GetUniformLocation("_SpecularMap"), Material::TextureID::SPECULAR);
-        glActiveTexture(GL_TEXTURE0 + Material::TextureID::SPECULAR);
+        sp->SetUniform("_SpecularMap", TextureID::SPECULAR);
+        glActiveTexture(GL_TEXTURE0 + TextureID::SPECULAR);
         _specularMap->Bind();
     }
 
-    if (_bumpMap)
+    if (_bumpMap && _bumpMap->IsLoaded())
     {
-        glUniform1i(shader->GetUniformLocation("_BumpMap"), Material::TextureID::BUMP);
-        glActiveTexture(GL_TEXTURE0 + Material::TextureID::BUMP);
+        sp->SetUniform("_BumpMap", TextureID::BUMP);
+        glActiveTexture(GL_TEXTURE0 + TextureID::BUMP);
         _bumpMap->Bind();
     }
 
     glActiveTexture(0);
-}
-
-std::string Material::GetId()
-{
-    std::stringstream ss;
-    ss << "Material[" << _ambient.r << "," << _ambient.g << "," << _ambient.b << "," << _ambient.a << ","
-                      << _diffuse.r << "," << _diffuse.g << "," << _diffuse.b << "," << _diffuse.a << ","
-                      << _specular.r << "," << _specular.g << "," << _specular.b << "," << _specular.a << ","
-                      << _shininess << "," << _dissolve << ","
-                      << _ambientMap << ","
-                      << _diffuseMap << ","
-                      << _specularMap << ","
-                      << _bumpMap << "]";
-    return ss.str();
 }
 
 } // namespace dusk

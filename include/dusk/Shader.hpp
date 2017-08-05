@@ -99,9 +99,10 @@ public:
 
     bool IsLinked() const { return _linked; }
 
-    GLint GetAttribute(const std::string& name) const;
+    GLint GetAttributeLocation(const std::string& name) const;
     bool HasAttribute(const std::string& name) const;
 
+    GLint GetUniformLocation(const std::string& name) const;
     bool HasUniform(const std::string& name) const;
 
     #include "Shader.inc.hpp"

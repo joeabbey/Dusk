@@ -23,15 +23,15 @@ public:
         LoadFromFile(filename);
     }
 
-    Texture(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type = GL_RGBA)
+    Texture(const glm::uvec2& size, const std::vector<uint8_t>& pixels, GLenum type = GL_RGBA)
     {
-        LoadFromMemory(size, data, type);
+        LoadFromData(size, pixels, type);
     }
 
     Texture(Texture&& rhs)
     {
-        _glID = rhs._glID;
-        rhs._glID = 0;
+        std::swap(_loaded, rhs._loaded);
+        std::swap(_glID, rhs._glID);
     }
 
     virtual ~Texture()
@@ -43,7 +43,7 @@ public:
 
     bool LoadFromFile(const std::string& filename);
 
-    bool LoadFromMemory(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type = GL_RGBA);
+    bool LoadFromData(const glm::uvec2& size, const std::vector<uint8_t>& pixels, GLenum type = GL_RGBA);
 
     void Bind();
 
@@ -51,7 +51,7 @@ public:
 
 private:
 
-    bool LoadGL(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type);
+    bool FinishLoad(const glm::uvec2& size, const std::vector<uint8_t>& pixels, GLenum type);
 
     bool _loaded = false;
 

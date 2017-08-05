@@ -7,6 +7,7 @@ namespace dusk {
 
 bool Texture::LoadFromFile(const std::string& filename)
 {
+    DuskBenchStart();
     DuskLogLoad("Loading texture from '%s'", filename.c_str());
 
     // OpenGL is weird
@@ -24,16 +25,22 @@ bool Texture::LoadFromFile(const std::string& filename)
     std::vector<uint8_t> data(texture, texture + (width * height * GetGLTypeSize(GL_RGBA)));
     stbi_image_free(texture);
 
-    return LoadGL(glm::uvec2(width, height), data, GL_RGBA);
+    bool success = FinishLoad(glm::uvec2(width, height), data, GL_RGBA);
+    DuskBenchEnd("Texture::LoadFromFile");
+    return success;
 }
 
-bool Texture::LoadFromMemory(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type /*= GL_RGBA*/)
+bool Texture::LoadFromData(const glm::uvec2& size, const std::vector<uint8_t>& pixels, GLenum type /*= GL_RGBA*/)
 {
-    DuskLogLoad("Loading texture from memory");
-    return LoadGL(size, data, type);
+    DuskBenchStart();
+    DuskLogLoad("Loading texture from data");
+
+    bool success = FinishLoad(size, pixels, type);
+    DuskBenchEnd("Texture::LoadFromFile");
+    return success;
 }
 
-bool Texture::LoadGL(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type)
+bool Texture::FinishLoad(const glm::uvec2& size, const std::vector<uint8_t>& data, GLenum type)
 {
     if (_glID > 0)
     {

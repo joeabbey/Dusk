@@ -3,6 +3,7 @@
 
 #include <dusk/Config.hpp>
 #include <dusk/Event.hpp>
+#include <dusk/Shader.hpp>
 
 #include <string>
 #include <memory>
@@ -27,7 +28,8 @@ struct UpdateContext
 
 struct RenderContext
 {
-
+    int CurrentPass;
+    ShaderProgram * CurrentShader;
 };
 
 class App
@@ -65,8 +67,8 @@ public:
     Event<> OnStart;
     Event<> OnStop;
 
-    Event<UpdateContext> OnUpdate;
-    Event<RenderContext> OnRender;
+    Event<const UpdateContext&> OnUpdate;
+    Event<RenderContext&> OnRender;
 
     Event<Key, Flags> OnKeyPress;
     Event<Key, Flags> OnKeyRelease;

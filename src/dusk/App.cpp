@@ -120,6 +120,9 @@ void App::Start()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            renderCtx.CurrentPass = 0;
+            renderCtx.CurrentShader = nullptr;
+
             OnRender.Call(renderCtx);
 
             glfwSwapBuffers(_glfwWindow);
@@ -129,6 +132,10 @@ void App::Start()
         if (fpsDelay <= fpsElap)
         {
             updateCtx.CurrentFPS = (frames / fpsElap.count()) * 1000.0;
+
+            static char buffer[128];
+            sprintf(buffer, "Dusk - %0.2f", updateCtx.CurrentFPS);
+            SetWindowTitle(buffer);
 
             frames = 0;
             fpsElap = 0ms;

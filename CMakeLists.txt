@@ -19,6 +19,12 @@ INCLUDE(GetGitRevisionDescription)
 GET_GIT_HEAD_REVISION(GIT_REFSPEC DUSK_REVISION)
 STRING(SUBSTRING "${DUSK_REVISION}" 0 12 DUSK_REVISION)
 
+# Options
+OPTION(VERBOSE_LOGGING "Build Dusk with Verbose Logging enabled" OFF)
+IF(VERBOSE_LOGGING)
+    ADD_DEFINITIONS(-DDUSK_VERBOSE_LOGGING)
+ENDIF()
+
 ### Compiler-specific flags
 
 # GCC or Clang
@@ -139,8 +145,8 @@ SET(Dusk_INCLUDES
     #include/dusk/EventDispatcher.hpp
     #include/dusk/Font.hpp
     include/dusk/Log.hpp
-    #include/dusk/Material.hpp
-    #include/dusk/Mesh.hpp
+    include/dusk/Material.hpp
+    include/dusk/Mesh.hpp
     #include/dusk/Model.hpp
     #include/dusk/Platform.hpp
     #include/dusk/Scene.hpp
@@ -177,8 +183,8 @@ SET(Dusk_SOURCES
     #src/dusk/EventCallbacks.cpp
     #src/dusk/EventDispatcher.cpp
     #src/dusk/Font.cpp
-    #src/dusk/Material.cpp
-    #src/dusk/Mesh.cpp
+    src/dusk/Material.cpp
+    src/dusk/Mesh.cpp
     #src/dusk/Model.cpp
     #src/dusk/Scene.cpp
     #src/dusk/ScriptHost.cpp

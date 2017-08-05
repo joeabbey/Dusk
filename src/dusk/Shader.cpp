@@ -5,7 +5,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <climits>
 
 namespace dusk {
 
@@ -320,10 +319,16 @@ void ShaderProgram::SetUniformBufferData(const std::string& name, GLvoid * data)
     glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
-GLint ShaderProgram::GetAttribute(const std::string& name) const
+GLint ShaderProgram::GetAttributeLocation(const std::string& name) const
 {
-    if (_attributes.find(name) == _attributes.end()) return INT_MAX;
+    if (_attributes.find(name) == _attributes.end()) return std::numeric_limits<GLint>::max();
     return _attributes.at(name);
+}
+
+GLint ShaderProgram::GetUniformLocation(const std::string& name) const
+{
+    if (_uniforms.find(name) == _uniforms.end()) return 0;
+    return _uniforms.at(name).Location;
 }
 
 bool ShaderProgram::HasAttribute(const std::string& name) const

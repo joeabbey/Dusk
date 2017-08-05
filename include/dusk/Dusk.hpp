@@ -7,11 +7,11 @@
 #include <dusk/Camera.hpp>
 #include <dusk/Shader.hpp>
 #include <dusk/Texture.hpp>
+#include <dusk/Mesh.hpp>
 #include <dusk/Util.hpp>
 //#include <dusk/Platform.hpp>
 //#include <dusk/Timer.hpp>
 //#include <dusk/UI.hpp>
-//#include <dusk/Mesh.hpp>
 //#include <dusk/Model.hpp>
 //#include <dusk/Sound.hpp>
 //#include <dusk/Actor.hpp>
