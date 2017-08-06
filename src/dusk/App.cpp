@@ -25,44 +25,44 @@ App::App(int argc, char** argv)
 
         if (GLFW_PRESS == action)
         {
-            OnKeyPress.Call(key, mods);
+            EvtKeyPress.Call(key, mods);
         }
         else if (GLFW_RELEASE == action)
         {
-            OnKeyRelease.Call(key, mods);
+            EvtKeyRelease.Call(key, mods);
         }
     };
 
     _MouseButtonFunc = [this](int button, int action, int mods) {
         if (GLFW_PRESS == action)
         {
-            OnMousePress.Call(button, mods);
+            EvtMousePress.Call(button, mods);
         }
         else if (GLFW_RELEASE == action)
         {
-            OnMouseRelease.Call(button, mods);
+            EvtMouseRelease.Call(button, mods);
         }
     };
 
     _MouseMoveFunc = [this](double x, double y) {
         static glm::vec2 last = { x, y };
         glm::vec2 cur = { x, y };
-        OnMouseMove.Call(cur, cur - last);
+        EvtMouseMove.Call(cur, cur - last);
         last = cur;
     };
 
     _ScrollFunc = [this](double xoffset, double yoffset) {
-        OnMouseScroll.Call(glm::vec2(xoffset, yoffset));
+        EvtMouseScroll.Call(glm::vec2(xoffset, yoffset));
     };
 
     _DropFunc = [this](int count, const char ** filenames) {
         std::vector<std::string> filenameList;
         for (int i = 0; i < count; ++i) filenameList.push_back(std::string(filenames[i]));
-        OnFileDrop.Call(filenameList);
+        EvtFileDrop.Call(filenameList);
     };
 
     _WindowSizeFunc = [=](int width, int height) {
-        OnWindowResize.Call(glm::ivec2(width, height));
+        EvtWindowResize.Call(glm::ivec2(width, height));
     };
 
     CreateWindow();
@@ -82,7 +82,7 @@ void App::Start()
 
     glfwShowWindow(_glfwWindow);
 
-    OnStart.Call();
+    EvtStart.Call();
 
     UpdateContext updateCtx;
     RenderContext renderCtx;
@@ -110,7 +110,7 @@ void App::Start()
         updateCtx.DeltaTime = duration_cast<double_ms>(elapsedTime / frameDelay.count()).count();
         updateCtx.ElapsedTime = elapsedTime;
         updateCtx.TotalTime += elapsedTime;
-        OnUpdate.Call(updateCtx);
+        EvtUpdate.Call(updateCtx);
 
         frameElap += elapsedTime;
         if (frameDelay <= frameElap)
@@ -123,7 +123,7 @@ void App::Start()
             renderCtx.CurrentPass = 0;
             renderCtx.CurrentShader = nullptr;
 
-            OnRender.Call(renderCtx);
+            EvtRender.Call(renderCtx);
 
             glfwSwapBuffers(_glfwWindow);
         }
@@ -142,7 +142,7 @@ void App::Start()
         }
     }
 
-    OnStop.Call();
+    EvtStop.Call();
 
     glfwHideWindow(_glfwWindow);
 }

@@ -4,6 +4,7 @@
 #include <dusk/Config.hpp>
 #include <dusk/Event.hpp>
 #include <dusk/Shader.hpp>
+#include <dusk/Camera.hpp>
 
 #include <string>
 #include <memory>
@@ -29,7 +30,10 @@ struct UpdateContext
 struct RenderContext
 {
     int CurrentPass;
-    ShaderProgram * CurrentShader;
+
+    ShaderProgram * CurrentShader = nullptr;
+
+    Camera * CurrentCamera = nullptr;
 };
 
 class App
@@ -64,23 +68,23 @@ public:
 
     /// Events
 
-    Event<> OnStart;
-    Event<> OnStop;
+    Event<> EvtStart;
+    Event<> EvtStop;
 
-    Event<const UpdateContext&> OnUpdate;
-    Event<RenderContext&> OnRender;
+    Event<const UpdateContext&> EvtUpdate;
+    Event<RenderContext&> EvtRender;
 
-    Event<Key, Flags> OnKeyPress;
-    Event<Key, Flags> OnKeyRelease;
+    Event<Key, Flags> EvtKeyPress;
+    Event<Key, Flags> EvtKeyRelease;
 
-    Event<Button, Flags> OnMousePress;
-    Event<Button, Flags> OnMouseRelease;
-    Event<glm::vec2, glm::vec2> OnMouseMove;
-    Event<glm::vec2> OnMouseScroll;
+    Event<Button, Flags> EvtMousePress;
+    Event<Button, Flags> EvtMouseRelease;
+    Event<glm::vec2, glm::vec2> EvtMouseMove;
+    Event<glm::vec2> EvtMouseScroll;
 
-    Event<glm::ivec2> OnWindowResize;
+    Event<glm::ivec2> EvtWindowResize;
 
-    Event<std::vector<std::string>> OnFileDrop;
+    Event<std::vector<std::string>> EvtFileDrop;
 
     // Assets
 

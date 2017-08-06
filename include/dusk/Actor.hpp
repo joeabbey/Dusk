@@ -3,33 +3,21 @@
 
 #include <dusk/Config.hpp>
 
-#include <dusk/EventDispatcher.hpp>
-#include <dusk/Component.hpp>
+#include <dusk/ActorComponent.hpp>
 #include <memory>
 
 namespace dusk {
 
 class Scene;
 
-class Actor : public IEventDispatcher
+class Actor
 {
 public:
 
-    enum class Events : EventID
-    {
-        _PREFIX = 200,
-        UPDATE,
-        RENDER,
-    };
-
     DISALLOW_COPY_AND_ASSIGN(Actor);
 
-    Actor(bool isTemplate = false);
-    virtual ~Actor();
-
-    static std::unique_ptr<Actor> Parse(nlohmann::json & data);
-
-    virtual std::unique_ptr<Actor> Clone();
+    Actor();
+    virtual ~Actor() = default;
 
     void SetScene(Scene * scene);
     Scene * GetScene() const { return _scene; };
@@ -49,25 +37,20 @@ public:
 
     glm::mat4 GetTransform();
 
-    void AddComponent(std::unique_ptr<Component> comp);
+    void AddComponent(std::unique_ptr<ActorComponent> comp);
 
-    virtual void Update(const Event& event);
-    virtual void Render(const Event& event);
+    void Update(const UpdateContext& ctx);
+    void Render(RenderContext& ctx);
 
-    static void InitScripting();
+    // OnStart ?
+    // OnStop ?
 
-    static int Script_GetPosition(lua_State * L);
-    static int Script_SetPosition(lua_State * L);
-    static int Script_GetRotation(lua_State * L);
-    static int Script_SetRotation(lua_State * L);
-    static int Script_GetScale(lua_State * L);
-    static int Script_SetScale(lua_State * L);
+    Event<const UpdateContext&> EvtUpdate;
+    Event<RenderContext&> EvtRender;
 
 private:
 
     Scene * _scene;
-
-    bool _isTemplate;
 
     glm::mat4 _baseTransform;
     glm::mat4 _transform;
@@ -75,7 +58,7 @@ private:
     glm::vec3 _rotation;
     glm::vec3 _scale;
 
-    std::vector<std::unique_ptr<Component>> _components;
+    std::vector<std::unique_ptr<ActorComponent>> _components;
 
 }; // class Actor
 

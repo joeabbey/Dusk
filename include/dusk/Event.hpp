@@ -123,7 +123,8 @@ private:
         }
     };
 
-    unsigned int _nextId = 0;
+    // Reserve 0 as invalid id
+    unsigned int _nextId = 1;
 
     std::vector<std::unique_ptr<Callback>> _callbacks;
 

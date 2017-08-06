@@ -16,109 +16,49 @@ Component::~Component()
 {
 }
 
-std::unique_ptr<Component> Component::Parse(nlohmann::json & data, bool isTemplate /*= false*/)
-{
-    std::unique_ptr<Component> component;
-
-	const std::string& type = data["Type"];
-	if ("Model" == type)
-	{
-		component.reset(new ModelComponent(Model::Parse(data), isTemplate));
-	}
-	else if ("Camera" == type)
-	{
-		component.reset(new CameraComponent(Camera::Parse(data), isTemplate));
-	}
-	else if ("Script" == type)
-	{
-		component.reset(new ScriptComponent(data["File"].get<std::string>(), isTemplate));
-	}
-
-	return component;
-}
-
-std::unique_ptr<Component> Component::Clone()
-{
-    Component * component = new Component();
-
-    component->SetActor(GetActor());
-
-    return std::unique_ptr<Component>(component);
-}
-
 void Component::SetActor(Actor * actor)
 {
     _actor = actor;
 }
 
-void Component::InitScripting()
-{
-    ScriptHost::AddFunction("dusk_Component_GetActor", &Component::Script_GetActor);
-
-    //ModelComponent::InitScripting();
-    //CameraComponent::InitScripting();
-    //ScriptComponent::InitScripting();
-}
-
-int Component::Script_GetActor(lua_State * L)
-{
-    Component * componenet = (Component *)lua_tointeger(L, 1);
-
-    lua_pushinteger(L, (ptrdiff_t)componenet->GetActor());
-
-    return 1;
-}
-
-ModelComponent::ModelComponent(std::unique_ptr<Model> model, bool isTempalte /*= false*/)
-    : Component(isTempalte)
+ModelComponent::ModelComponent(std::unique_ptr<Model> model)
+    : Component()
     , _model(std::move(model))
 {
 }
 
 ModelComponent::~ModelComponent()
 {
-    if (GetActor() && !IsTemplate())
+    if (GetActor())
     {
-        GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &ModelComponent::OnUpdate);
-        GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &ModelComponent::OnRender);
+        GetActor()->EvtUpdate.RemoveListener(updateBindId);
+        GetActor()->EvtRender.RemoveListener(renderBindId);
     }
-}
-
-std::unique_ptr<Component> ModelComponent::Clone()
-{
-    ModelComponent * component = new ModelComponent(GetModel()->Clone());
-
-    component->SetActor(GetActor());
-
-    return std::unique_ptr<Component>(component);
 }
 
 void ModelComponent::SetActor(Actor * actor)
 {
-    if (GetActor() && !IsTemplate())
+    if (GetActor())
     {
-        GetActor()->RemoveEventListener((EventID)Actor::Events::UPDATE, this, &ModelComponent::OnUpdate);
-        GetActor()->RemoveEventListener((EventID)Actor::Events::RENDER, this, &ModelComponent::OnRender);
+        GetActor()->EvtUpdate.RemoveListener(updateBindId);
+        GetActor()->EvtRender.RemoveListener(renderBindId);
     }
 
     Component::SetActor(actor);
 
-    if (!IsTemplate())
-    {
-        GetActor()->AddEventListener((EventID)Actor::Events::UPDATE, this, &ModelComponent::OnUpdate);
-        GetActor()->AddEventListener((EventID)Actor::Events::RENDER, this, &ModelComponent::OnRender);
-    }
+    updateBindId = GetActor()->EvtUpdate.AddMember(this, &ModelComponent::OnUpdate);
+    renderBindId = GetActor()->EvtRender.AddMember(this, &ModelComponent::OnRender);
 }
 
-void ModelComponent::OnUpdate(const Event& event)
+void ModelComponent::OnUpdate(const UpdateContext& ctx)
 {
     _model->SetBaseTransform(GetActor()->GetTransform());
-    _model->Update();
+    _model->Update(ctx);
 }
 
-void ModelComponent::OnRender(const Event& event)
+void ModelComponent::OnRender(RenderContext& ctx)
 {
-    _model->Render();
+    _model->Render(ctx);
 }
 
 CameraComponent::CameraComponent(std::unique_ptr<Camera> camera, bool isTempalte /*= false*/)

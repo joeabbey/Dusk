@@ -5,77 +5,61 @@
 
 #include <dusk/Model.hpp>
 #include <dusk/Camera.hpp>
-#include <dusk/ScriptHost.hpp>
-#include <dusk/Event.hpp>
 #include <memory>
 
 namespace dusk {
 
 class Actor;
 
-class Component
+class ActorComponent
 {
 public:
 
     DISALLOW_COPY_AND_ASSIGN(Component);
 
-    Component(bool isTemplate = false);
+    Component();
     virtual ~Component();
-
-    static std::unique_ptr<Component> Parse(nlohmann::json & data, bool isTemplate = false);
-
-    virtual std::unique_ptr<Component> Clone();
-
-    inline bool IsTemplate() const { return _isTemplate; }
 
     virtual void SetActor(Actor * actor);
     Actor * GetActor() const { return _actor; };
-
-    static void InitScripting();
-    static int Script_GetActor(lua_State * L);
 
 protected:
 
     Actor * _actor;
 
-    bool _isTemplate;
-
 }; // class Component
 
-class ModelComponent : public Component
+class ModelComponent : public ActorComponent
 {
 public:
 
-    ModelComponent(std::unique_ptr<Model> model, bool isTemplate = false);
+    ModelComponent(std::unique_ptr<Model> model);
     virtual ~ModelComponent();
-
-    virtual std::unique_ptr<Component> Clone() override;
 
     virtual void SetActor(Actor * actor) override;
 
-    virtual void OnUpdate(const Event& event);
-    virtual void OnRender(const Event& event);
+    virtual void OnUpdate(const UpdateContext& event);
+    virtual void OnRender(RenderContext& event);
 
     inline Model * GetModel() const { return _model.get(); };
 
 protected:
 
+    unsigned int updateBindId = 0;
+    unsigned int renderBindId = 0;
+
     std::unique_ptr<Model> _model;
 
 }; // class ModelComponent
 
-class CameraComponent : public Component
+class CameraComponent : public ActorComponent
 {
 public:
 
-    CameraComponent(std::unique_ptr<Camera> camera, bool isTemplate = false);
+    CameraComponent(std::unique_ptr<Camera> camera);
     virtual ~CameraComponent();
 
-    virtual std::unique_ptr<Component> Clone() override;
-
     virtual void SetActor(Actor * actor) override;
-
-    void OnUpdate(const Event& event);
 
     inline Camera * GetCamera() const { return _camera.get(); };
 
@@ -85,24 +69,24 @@ protected:
 
 }; // class CameraComponent
 
-class ScriptComponent : public Component
-{
-public:
-
-    ScriptComponent(const std::string& filename, bool isTemplate = false);
-    virtual ~ScriptComponent() = default;
-
-    virtual std::unique_ptr<Component> Clone() override;
-
-    virtual void SetActor(Actor * actor) override;
-
-protected:
-
-    ScriptHost _scriptHost;
-
-    std::string _filename;
-
-}; // class ScriptComponent
+//class ScriptComponent : public ActorComponent
+//{
+//public:
+//
+//    ScriptComponent(const std::string& filename, bool isTemplate = false);
+//    virtual ~ScriptComponent() = default;
+//
+//    virtual std::unique_ptr<Component> Clone() override;
+//
+//    virtual void SetActor(Actor * actor) override;
+//
+//protected:
+//
+//    ScriptHost _scriptHost;
+//
+//    std::string _filename;
+//
+//}; // class ScriptComponent
 
 } // namespace dusk
 

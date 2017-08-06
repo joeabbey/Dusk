@@ -7,59 +7,13 @@
 
 namespace dusk {
 
-Model::Model(Shader * shader)
-    : _shader(shader)
-    , _baseTransform(1)
+Model::Model()
+    : _baseTransform(1)
     , _transform(1)
     , _position(0)
     , _rotation(0)
     , _scale(1)
 {
-    memset(&_shaderData, 0, sizeof(_shaderData));
-    Shader::AddData("DuskTransformData", &_shaderData, sizeof(_shaderData));
-    _shader->BindData("DuskTransformData");
-
-    // TODO: Move
-    MaterialData tmpData;
-    Shader::AddData("DuskMaterialData", &tmpData, sizeof(tmpData));
-    _shader->BindData("DuskMaterialData");
-}
-
-Model::~Model()
-{
-
-}
-
-std::unique_ptr<Model> Model::Parse(nlohmann::json & data)
-{
-    App * app = App::GetInst();
-    Shader * shader = app->GetShader(data["Shader"]);
-
-    std::unique_ptr<Model> model(new Model(shader));
-
-    for (auto& mesh : data["Meshes"])
-    {
-        model->AddMesh(Mesh::Parse(mesh));
-    }
-
-    return model;
-}
-
-std::unique_ptr<Model> Model::Clone()
-{
-    std::unique_ptr<Model> model(new Model(_shader));
-
-    model->SetBaseTransform(_baseTransform);
-    model->SetPosition(GetPosition());
-    model->SetRotation(GetRotation());
-    model->SetScale(GetScale());
-
-    for (auto& mesh : _meshes)
-    {
-        model->AddMesh(mesh);
-    }
-
-    return model;
 }
 
 void Model::AddMesh(std::shared_ptr<Mesh> mesh)
@@ -99,26 +53,27 @@ void Model::SetScale(const glm::vec3& scale)
     _scale = scale;
 }
 
-void Model::Update()
+void Model::Update(const UpdateContext& ctx)
 {
     // TODO: Move camera somewhere else
-    Camera * camera = App::GetInst()->GetScene()->GetCurrentCamera();
+    //Camera * camera = App::GetInst()->GetScene()->GetCurrentCamera();
 
-    _shaderData.model = GetTransform();
-    _shaderData.view = camera->GetView();
-    _shaderData.proj = camera->GetProjection();
-    _shaderData.mvp = _shaderData.proj * _shaderData.view * _shaderData.model;
+    _shaderData.Model = GetTransform();
 }
 
-void Model::Render()
+void Model::Render(RenderContext& ctx)
 {
-    _shader->Bind();
+    if (!ctx.CurrentShader || !ctx.CurrentCamera) return;
 
-    Shader::UpdateData("DuskTransformData", &_shaderData, sizeof(_shaderData));
+    _shaderData.View = ctx.CurrentCamera->GetView();
+    _shaderData.Proj = ctx.CurrentCamera->GetProjection();
+    _shaderData.MVP = _shaderData.Proj * _shaderData.View * _shaderData.Model;
+
+    ShaderProgram::SetUniformBufferData("DuskTransformData", &_shaderData);
 
     for (auto& mesh : _meshes)
     {
-        mesh->Render(_shader);
+        mesh->Render(ctx);
     }
 }
 

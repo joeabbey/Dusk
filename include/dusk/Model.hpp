@@ -11,10 +11,10 @@ namespace dusk
 
 struct TransformData
 {
-    alignas(64) glm::mat4 model = glm::mat4(1);
-    alignas(64) glm::mat4 view  = glm::mat4(1);
-    alignas(64) glm::mat4 proj  = glm::mat4(1);
-    alignas(64) glm::mat4 mvp   = glm::mat4(1);
+    alignas(64) glm::mat4 Model = glm::mat4(1);
+    alignas(64) glm::mat4 View  = glm::mat4(1);
+    alignas(64) glm::mat4 Proj  = glm::mat4(1);
+    alignas(64) glm::mat4 MVP   = glm::mat4(1);
 };
 
 class Model
@@ -23,12 +23,9 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Model);
 
-    Model(Shader * shader);
-    virtual ~Model();
-
-    static std::unique_ptr<Model> Parse(nlohmann::json & data);
-    std::unique_ptr<Model> Clone();
-
+    Model();
+    virtual ~Model() = default;
+    
     void AddMesh(std::shared_ptr<Mesh> mesh);
 
     void SetBaseTransform(const glm::mat4& baseTransform);
@@ -44,23 +41,10 @@ public:
 
     glm::mat4 GetTransform();
 
-    virtual void Update();
-    virtual void Render();
-
-    /*
-    static void InitScripting();
-
-    static int Script_GetPosition(lua_State * L);
-    static int Script_SetPosition(lua_State * L);
-    static int Script_GetRotation(lua_State * L);
-    static int Script_SetRotation(lua_State * L);
-    static int Script_GetScale(lua_State * L);
-    static int Script_SetScale(lua_State * L);
-    */
+    virtual void Update(const UpdateContext& ctx);
+    virtual void Render(RenderContext& ctx);
 
 private:
-
-    Shader * _shader;
 
     TransformData _shaderData;
 
