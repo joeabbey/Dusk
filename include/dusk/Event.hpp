@@ -20,6 +20,7 @@ public:
     static void LuaSetup(sol::state& lua, const std::string& name)
     {
         lua.new_usertype<Event<Params ...>>(name,
+            "new", sol::no_constructor,
             "AddListener", [](Event<Params ...> * event,
                               std::function<void(Params ...)> func,
                               sol::this_state state) -> unsigned int {

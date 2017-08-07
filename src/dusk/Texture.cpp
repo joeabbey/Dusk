@@ -5,6 +5,16 @@
 
 namespace dusk {
 
+void Texture::LuaSetup(sol::state& lua)
+{
+    lua.new_usertype<Texture>("Texture",
+        "new", sol::constructors<Texture(), Texture(const std::string& filename)>(),
+        "LoadFromFile", &Texture::LoadFromFile,
+        "IsLoaded", &Texture::IsLoaded,
+        "Bind", &Texture::Bind
+    );
+}
+
 bool Texture::LoadFromFile(const std::string& filename)
 {
     DuskBenchStart();

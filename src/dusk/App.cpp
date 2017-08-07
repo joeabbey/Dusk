@@ -2,6 +2,9 @@
 
 #include <dusk/Log.hpp>
 #include <dusk/Benchmark.hpp>
+#include <dusk/Mesh.hpp>
+#include <dusk/Model.hpp>
+#include <dusk/Texture.hpp>
 #include <dusk/Shader.hpp>
 #include <fstream>
 #include <memory>
@@ -22,6 +25,7 @@ void App::LuaSetup(sol::state& lua)
     DuskBenchStart();
 
     lua.new_usertype<App>("App",
+        "new", sol::no_constructor,
         "Start", &App::Start,
         "Stop", &App::Stop,
         "LoadConfig", &App::LoadConfig,
@@ -47,6 +51,7 @@ void App::LuaSetup(sol::state& lua)
     );
 
     lua.new_usertype<UpdateContext>("UpdateContext",
+        "new", sol::no_constructor,
         "TargetFPS", &UpdateContext::TargetFPS,
         "CurrentFPS", &UpdateContext::CurrentFPS,
         "DeltaTime", &UpdateContext::DeltaTime,
@@ -54,6 +59,7 @@ void App::LuaSetup(sol::state& lua)
         "TotalTime", &UpdateContext::TotalTime
     );
     lua.new_usertype<RenderContext>("RenderContext",
+        "new", sol::no_constructor,
         "CurrentPass", &RenderContext::CurrentPass,
         "CurrentShader", &RenderContext::CurrentShader,
         "CurrentCamera", &RenderContext::CurrentCamera
@@ -77,6 +83,12 @@ void App::LuaSetup(sol::state& lua)
     Event<glm::vec2>::LuaSetup(lua, "Event<glm::vec2>");
     Event<glm::ivec2>::LuaSetup(lua, "Event<glm::ivec2>");
     Event<std::vector<std::string>>::LuaSetup(lua, "Event<std::vector<std::string>>");
+
+    Mesh::LuaSetup(lua);
+    Model::LuaSetup(lua);
+    Texture::LuaSetup(lua);
+    Shader::LuaSetup(lua);
+    ShaderProgram::LuaSetup(lua);
 
     DuskBenchEnd("App::LuaSetup");
 }

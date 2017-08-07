@@ -7,6 +7,23 @@
 
 namespace dusk {
 
+void Model::LuaSetup(sol::state& lua)
+{
+    lua.new_usertype<Model>("Model",
+        "AddMesh", &Model::AddMesh,
+        "SetBaseTransform", &Model::SetBaseTransform,
+        "GetPosition", &Model::GetPosition,
+        "SetPosition", &Model::SetPosition,
+        "GetRotation", &Model::GetRotation,
+        "SetRotation", &Model::SetRotation,
+        "GetScale", &Model::GetScale,
+        "SetScale", &Model::SetScale,
+        "GetTransform", &Model::GetTransform,
+        "Update", &Model::Update,
+        "Render", &Model::Render
+    );
+}
+
 Model::Model()
     : _baseTransform(1)
     , _transform(1)

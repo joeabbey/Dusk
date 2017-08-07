@@ -11,6 +11,15 @@ namespace dusk {
 std::queue<GLuint> ShaderProgram::_AvailableUniformBufferBindings;
 std::unordered_map<std::string, ShaderProgram::UniformBufferRecord> ShaderProgram::_UniformBuffers;
 
+void Shader::LuaSetup(sol::state& lua)
+{
+    lua.new_usertype<Shader>("Shader",
+        "new", sol::constructors<Shader(), Shader(const std::string& filename)>(),
+        "LoadFromFile", &Shader::LoadFromFile,
+        "IsCompiled", &Shader::IsCompiled
+    );
+}
+
 bool Shader::LoadFromFile(const std::string& filename)
 {
     GLuint type = GL_INVALID_ENUM;
@@ -209,6 +218,24 @@ void Shader::PrintCode(const std::string& code)
 
         printf("%d: %s\n", lineNum++, line.c_str());
     }
+}
+
+void ShaderProgram::LuaSetup(sol::state& lua)
+{
+    lua.new_usertype<ShaderProgram>("ShaderProgram",
+        "new", sol::constructors<ShaderProgram(), ShaderProgram(const std::vector<std::string>& filenames)>(),
+        "Attach", [](ShaderProgram * sp, Shader& shader) {
+            sp->Attach(std::move(shader));
+        },
+        "Link", &ShaderProgram::Link,
+        "Bind", &ShaderProgram::Bind,
+        "IsLinked", &ShaderProgram::IsLinked,
+        "GetAttributeLocation", &ShaderProgram::GetAttributeLocation,
+        "HasAttribute", &ShaderProgram::HasAttribute,
+        "GetUniformLocation", &ShaderProgram::GetUniformLocation,
+        "HasUniform", &ShaderProgram::HasUniform
+        // TODO: SetUniform
+    );
 }
 
 ShaderProgram::ShaderProgram(const std::vector<std::string>& filenames)

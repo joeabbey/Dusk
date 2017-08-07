@@ -32,6 +32,8 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Mesh);
 
+    static void LuaSetup(sol::state& lua);
+
     Mesh() = default;
 
     Mesh(Mesh&& rhs)

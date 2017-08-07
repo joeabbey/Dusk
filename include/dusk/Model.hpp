@@ -23,9 +23,11 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Model);
 
+    static void LuaSetup(sol::state& lua);
+
     Model();
     virtual ~Model() = default;
-    
+
     void AddMesh(std::shared_ptr<Mesh> mesh);
 
     void SetBaseTransform(const glm::mat4& baseTransform);

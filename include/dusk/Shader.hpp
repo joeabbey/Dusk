@@ -21,6 +21,8 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Shader);
 
+    static void LuaSetup(sol::state& lua);
+
     Shader() = default;
 
     Shader(const std::string& filename)
@@ -75,6 +77,8 @@ public:
     /// Class Boilerplate
 
     DISALLOW_COPY_AND_ASSIGN(ShaderProgram);
+
+    static void LuaSetup(sol::state& lua);
 
     ShaderProgram() = default;
     ShaderProgram(const std::vector<std::string>& filenames);

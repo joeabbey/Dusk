@@ -17,6 +17,8 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(Texture);
 
+    static void LuaSetup(sol::state& lua);
+
     Texture() = default;
     Texture(const std::string& filename)
     {
