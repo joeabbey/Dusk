@@ -150,7 +150,7 @@ SET(Dusk_INCLUDES
     include/dusk/Model.hpp
     #include/dusk/Platform.hpp
     #include/dusk/Scene.hpp
-    #include/dusk/ScriptHost.hpp
+    include/dusk/ScriptHost.hpp
     include/dusk/Shader.hpp
     include/dusk/Shader.inc.hpp
     #include/dusk/Sound.hpp
@@ -187,7 +187,7 @@ SET(Dusk_SOURCES
     src/dusk/Mesh.cpp
     src/dusk/Model.cpp
     #src/dusk/Scene.cpp
-    #src/dusk/ScriptHost.cpp
+    src/dusk/ScriptHost.cpp
     src/dusk/Shader.cpp
     #src/dusk/Sound.cpp
     src/dusk/Texture.cpp

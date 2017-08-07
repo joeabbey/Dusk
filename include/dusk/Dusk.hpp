@@ -10,6 +10,7 @@
 #include <dusk/Model.hpp>
 #include <dusk/Mesh.hpp>
 #include <dusk/Util.hpp>
+#include <dusk/ScriptHost.hpp>
 //#include <dusk/Platform.hpp>
 //#include <dusk/Timer.hpp>
 //#include <dusk/UI.hpp>

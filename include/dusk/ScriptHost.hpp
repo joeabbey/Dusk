@@ -3,6 +3,7 @@
 
 #include <dusk/Config.hpp>
 
+#include <dusk/Event.hpp>
 #include <unordered_map>
 #include <memory>
 
@@ -17,24 +18,26 @@ public:
     ScriptHost();
     virtual ~ScriptHost();
 
-    bool Load();
-    void Free();
+    void RunFile(const std::string& filename)
+    {
+        _lua.script_file(filename);
+    }
 
-    bool RunFile(const std::string& filename);
-    bool RunString(const std::string& code);
+    void RunCode(const std::string& code)
+    {
+        _lua.script(code);
+    }
 
-    lua_State * GetLuaState() const { return _luaState; }
+    lua_State * GetLuaState()
+    {
+        return _lua.lua_state();
+    }
 
-    static bool AddFunction(const std::string& funcName, lua_CFunction function);
+    Event<> EvtCleanup;
 
 private:
 
-    static std::vector<ScriptHost *> _ScriptHosts;
-    static std::unordered_map<std::string, lua_CFunction> _Functions;
-
-    bool _loaded = false;
-
-    lua_State * _luaState;
+    sol::state _lua;
 
 }; // class ScriptHost
 

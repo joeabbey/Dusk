@@ -17,6 +17,70 @@ std::function<void(unsigned int)>       App::_CharFunc;
 std::function<void(int, const char **)> App::_DropFunc;
 std::function<void(int, int)>           App::_WindowSizeFunc;
 
+void App::LuaSetup(sol::state& lua)
+{
+    DuskBenchStart();
+
+    lua.new_usertype<App>("App",
+        "Start", &App::Start,
+        "Stop", &App::Stop,
+        "LoadConfig", &App::LoadConfig,
+        "SaveConfig", &App::SaveConfig,
+        "GetWindowSize", &App::GetWindowSize,
+        "SetWindowSize", &App::SetWindowSize,
+        "GetWindowTitle", &App::GetWindowTitle,
+        "SetWindowTitle", &App::SetWindowTitle,
+        "GetAvailableWindowSizes", &App::GetAvailableWindowSizes,
+
+        "EvtStart", &App::EvtStart,
+        "EvtStop", &App::EvtStop,
+        "EvtUpdate", &App::EvtUpdate,
+        "EvtRender", &App::EvtRender,
+        "EvtKeyPress", &App::EvtKeyPress,
+        "EvtKeyRelease", &App::EvtKeyRelease,
+        "EvtMousePress", &App::EvtMousePress,
+        "EvtMouseRelease", &App::EvtMouseRelease,
+        "EvtMouseMove", &App::EvtMouseMove,
+        "EvtMouseScroll", &App::EvtMouseScroll,
+        "EvtWindowResize", &App::EvtWindowResize,
+        "EvtFileDrop", &App::EvtFileDrop
+    );
+
+    lua.new_usertype<UpdateContext>("UpdateContext",
+        "TargetFPS", &UpdateContext::TargetFPS,
+        "CurrentFPS", &UpdateContext::CurrentFPS,
+        "DeltaTime", &UpdateContext::DeltaTime,
+        "ElapsedTime", &UpdateContext::ElapsedTime,
+        "TotalTime", &UpdateContext::TotalTime
+    );
+    lua.new_usertype<RenderContext>("RenderContext",
+        "CurrentPass", &RenderContext::CurrentPass,
+        "CurrentShader", &RenderContext::CurrentShader,
+        "CurrentCamera", &RenderContext::CurrentCamera
+    );
+
+    lua.new_simple_usertype<glm::vec2>("glm::vec2",
+        "x", &glm::vec2::x,
+        "y", &glm::vec2::y
+    );
+    lua.new_simple_usertype<glm::ivec2>("glm::ivec2",
+        "x", &glm::ivec2::x,
+        "y", &glm::ivec2::y
+    );
+
+    Event<>::LuaSetup(lua, "Event<>");
+    Event<const UpdateContext&>::LuaSetup(lua, "Event<const UpdateContext&>");
+    Event<RenderContext&>::LuaSetup(lua, "Event<RenderContext&>");
+    Event<Key, Flags>::LuaSetup(lua, "Event<Key, Flags>");
+    Event<Button, Flags>::LuaSetup(lua, "Event<Button, Flags>");
+    Event<glm::vec2, glm::vec2>::LuaSetup(lua, "Event<glm::vec2, glm::vec2>");
+    Event<glm::vec2>::LuaSetup(lua, "Event<glm::vec2>");
+    Event<glm::ivec2>::LuaSetup(lua, "Event<glm::ivec2>");
+    Event<std::vector<std::string>>::LuaSetup(lua, "Event<std::vector<std::string>>");
+
+    DuskBenchEnd("App::LuaSetup");
+}
+
 App::App(int argc, char** argv)
 {
     DuskLogInfo("Starting Application");

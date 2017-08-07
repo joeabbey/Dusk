@@ -34,9 +34,6 @@
 // GSL
 #include <gsl/gsl>
 
-// Lua
-#include <lua.hpp>
-
 // SOL
 #include <sol/sol.hpp>
 

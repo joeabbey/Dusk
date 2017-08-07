@@ -44,6 +44,8 @@ public:
 
     DISALLOW_COPY_AND_ASSIGN(App);
 
+    static void LuaSetup(sol::state& lua);
+
     explicit App(int argc, char** argv);
     virtual ~App();
 
