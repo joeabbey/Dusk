@@ -23,7 +23,7 @@ public:
 
         std::vector<unsigned int> Indices = std::vector<unsigned int>();
 
-        std::shared_ptr<Material> Material = nullptr;
+        std::shared_ptr<dusk::Material> Material = nullptr;
 
         GLenum DrawMode = GL_TRIANGLES;
     };
@@ -66,6 +66,8 @@ public:
 
     bool IsLoaded() const { return _loaded; }
 
+    Box GetBounds() const { return _bounds; }
+
     void Render(RenderContext& ctx);
 
 private:
@@ -78,10 +80,14 @@ private:
         unsigned int count;
     };
 
+    Box ComputeBounds(const std::vector<glm::vec3>& verts);
+
     bool _loaded = false;
 
     GLuint _glVAO;
     GLuint _glVBOs[3];
+
+    Box _bounds;
 
     std::vector<RenderGroup> _renderGroups;
 };

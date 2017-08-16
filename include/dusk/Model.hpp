@@ -43,6 +43,8 @@ public:
 
     glm::mat4 GetTransform();
 
+    Box GetBounds() const { return _bounds; }
+
     virtual void Update(const UpdateContext& ctx);
     virtual void Render(RenderContext& ctx);
 
@@ -55,6 +57,8 @@ private:
     glm::vec3 _position;
     glm::vec3 _rotation;
     glm::vec3 _scale;
+
+    Box _bounds;
 
     std::vector<std::shared_ptr<Mesh>> _meshes;
 

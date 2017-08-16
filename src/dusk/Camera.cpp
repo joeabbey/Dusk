@@ -60,7 +60,7 @@ void Camera::Deserialize(nlohmann::json& data)
 
 	if (data.find("Aspect") != data.end())
 	{
-		SetAspect(data["Aspect"]);
+		SetAspect(data["Aspect"].get<float>());
 	}
 
 	if (data.find("Clip") != data.end())

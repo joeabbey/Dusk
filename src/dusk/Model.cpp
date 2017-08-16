@@ -36,6 +36,14 @@ Model::Model()
 void Model::AddMesh(std::shared_ptr<Mesh> mesh)
 {
     _meshes.push_back(mesh);
+    if (_meshes.size() == 1)
+    {
+        _bounds = mesh->GetBounds();
+    }
+    else
+    {
+        _bounds += mesh->GetBounds();
+    }
 }
 
 glm::mat4 Model::GetTransform()

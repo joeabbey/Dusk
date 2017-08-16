@@ -33,6 +33,7 @@ public:
 
     void SetAspect(float aspect);
     void SetAspect(float width, float height) { SetAspect(width / height); }
+    void SetAspect(const glm::vec2& size) { SetAspect(size.x / size.y); }
     float GetAspect() const { return _aspect; }
 
     void SetClip(const glm::vec2& clip);

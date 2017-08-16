@@ -7,6 +7,38 @@
 
 namespace dusk {
 
+struct Box
+{
+public:
+
+    glm::vec3 Max;
+    glm::vec3 Min;
+
+    Box() = default;
+    Box(glm::vec3 min, glm::vec3 max)
+        : Min(min)
+        , Max(max)
+    { }
+
+    glm::vec3 GetSize() { return Max - Min; }
+
+    Box operator+(const Box& rhs)
+    {
+        Box box;
+        box.Min = glm::min(Min, rhs.Min);
+        box.Max = glm::max(Max, rhs.Max);
+        return box;
+    }
+
+    Box& operator+=(const Box& rhs)
+    {
+        Min = glm::min(Min, rhs.Min);
+        Max = glm::max(Max, rhs.Max);
+        return *this;
+    }
+
+};
+
 size_t GetGLTypeSize(GLenum type);
 
 void CleanSlashes(std::string& path);

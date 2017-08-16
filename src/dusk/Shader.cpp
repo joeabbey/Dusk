@@ -332,7 +332,7 @@ void ShaderProgram::SetUniformBufferData(const std::string& name, GLvoid * data)
 {
     if (_UniformBuffers.find(name) == _UniformBuffers.end())
     {
-        DuskLogWarn("Attempt to set data to uknown UBO");
+        //DuskLogWarn("Attempt to set data to uknown UBO");
         return;
     }
 

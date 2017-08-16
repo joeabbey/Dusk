@@ -40,13 +40,12 @@ IF(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     ELSEIF(COMPILER_SUPPORTS_CXX1Y)
         SET(CMAKE_CXX_FLAGS "-std=c++1y")
     ELSE()
-        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++17 support")
+        MESSAGE(FATAL_ERROR "Compiler '${CMAKE_CXX_COMPILER}' has no C++14 support")
     ENDIF()
 
     ADD_DEFINITIONS(-D_XOPEN_SOURCE=700)
     ADD_COMPILE_OPTIONS(-Wall -Wextra -pedantic -Wno-unused-parameter
-        -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-braces
-        -Wno-gnu-statement-expression -Wno-keyword-macro -Wno-unused-function)
+        -Wno-missing-braces -Wno-unused-function)
 
 # VisualStudio
 ELSEIF(MSVC)
@@ -56,6 +55,12 @@ ELSEIF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS
         "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
 
+ENDIF()
+
+# Clang
+IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    ADD_COMPILE_OPTIONS(-Wno-gnu-zero-variadic-macro-arguments
+        -Wno-gnu-statement-expression -Wno-keyword-macro)
 ENDIF()
 
 ### Required packages

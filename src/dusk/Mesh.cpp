@@ -175,6 +175,8 @@ bool Mesh::LoadFromFile(const std::string& filename)
         offset += mesh.indices.size();
     }
 
+    _bounds = ComputeBounds(verts);
+
     glBindBuffer(GL_ARRAY_BUFFER, _glVBOs[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * verts.size(), (GLfloat *)verts.data(), GL_STATIC_DRAW);
 
@@ -215,6 +217,8 @@ bool Mesh::LoadFromData(const Data& data)
         DuskLogWarn("Cannot add empty mesh");
         return false;
     }
+
+    _bounds = ComputeBounds(data.Vertices);
 
     DuskLogLoad("Loading Mesh to OpenGL");
 
@@ -299,6 +303,19 @@ void Mesh::Render(RenderContext& ctx)
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+Box Mesh::ComputeBounds(const std::vector<glm::vec3>& verts)
+{
+    Box bounds;
+
+    for (const glm::vec3& v : verts)
+    {
+        bounds.Min = glm::min(bounds.Min, v);
+        bounds.Max = glm::max(bounds.Max, v);
+    }
+
+    return bounds;
 }
 
 } // namespace dusk
