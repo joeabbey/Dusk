@@ -87,7 +87,7 @@ namespace dusk {
 #   define DuskLogVerbose(M, ...)  do { } while(0)
 #else
 #   define DuskLogVerbose(M, ...) \
-        do { dusk::Log(dusk::LogLevel::LOG_VERBOSE, "[VERBOSE](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+        do { dusk::Log(dusk::LogLevel::LOG_VERBOSE, "[VERB](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 #endif
 
 #define DuskLogInfo(M, ...) \
@@ -97,7 +97,7 @@ namespace dusk {
     do { dusk::Log(dusk::LogLevel::LOG_WARN, "[WARN](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
 #define DuskLogError(M, ...) \
-    do { dusk::Log(dusk::LogLevel::LOG_ERROR, "[ERROR](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
+    do { dusk::Log(dusk::LogLevel::LOG_ERROR, "[ERRO](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)
 
 #define DuskLogPerf(M, ...) \
     do { dusk::Log(dusk::LogLevel::LOG_PERF, "[PERF](%s:%d) " M, dusk::GetBasename(__FILE__).c_str(), __LINE__, ##__VA_ARGS__); } while (0)

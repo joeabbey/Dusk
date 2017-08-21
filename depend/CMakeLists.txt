@@ -17,7 +17,7 @@ SET(JSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/depend/json/src" PARENT_SCOPE)
 ADD_CUSTOM_TARGET(json)
 ADD_DEPENDENCIES(depend json)
 
-### glm
+### gsl
 MESSAGE("Adding dependency: gsl")
 
 SET(GSL_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/depend/gsl/include" PARENT_SCOPE)
@@ -502,3 +502,59 @@ SET_TARGET_PROPERTIES(
     depend glm json lua zlib glfw openal ogg vorbis flatbuffers
     PROPERTIES FOLDER "depend"
 )
+
+### libnoise
+MESSAGE("Adding dependency: libnoise")
+
+SET(LIBNOISE_OPTIONS
+)
+
+IF(MSVC)
+    SET(LIBNOISE_OPTIONS
+        -DLIBNOISE_BUILD_AS_DLL=OFF
+        -DBUILD_SHARED_LIBS=OFF
+    )
+ENDIF()
+
+SET(LIBNOISE_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}/depend/libnoise/src"
+    "${CMAKE_BINARY_DIR}/depend/libnoise"
+    PARENT_SCOPE
+)
+
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/depend/libnoise)
+EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CMAKE_SOURCE_DIR}/depend/libnoise ${LIBNOISE_OPTIONS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/libnoise
+)
+
+IF (MSVC)
+    SET(LIBNOISE_LIBRARIES_DEBUG "${CMAKE_BINARY_DIR}/depend/libnoise/src/Debug/libnoise.lib")
+    SET(LIBNOISE_LIBRARIES_DEBUG "${LIBNOISE_LIBRARIES_DEBUG}" PARENT_SCOPE)
+    SET(LIBNOISE_LIBRARIES_RELEASE "${CMAKE_BINARY_DIR}/depend/libnoise/src/Release/libnoise.lib")
+    SET(LIBNOISE_LIBRARIES_RELEASE "${LIBNOISE_LIBRARIES_RELEASE}" PARENT_SCOPE)
+
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LIBNOISE_LIBRARIES_DEBUG}
+        COMMAND ${CMAKE_COMMAND} --build . --config Debug --target noise
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/libnoise
+    )
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LIBNOISE_LIBRARIES_RELEASE}
+        COMMAND ${CMAKE_COMMAND} --build . --config Release --target noise
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/libnoise
+    )
+    ADD_CUSTOM_TARGET(libnoise DEPENDS ${LIBNOISE_LIBRARIES_DEBUG} ${LIBNOISE_LIBRARIES_RELEASE})
+ELSE()
+    SET(LIBNOISE_LIBRARIES "${CMAKE_BINARY_DIR}/depend/libnoise/src/libnoise.so")
+    SET(LIBNOISE_LIBRARIES "${LIBNOISE_LIBRARIES}" PARENT_SCOPE)
+
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${LIBNOISE_LIBRARIES}
+        COMMAND ${CMAKE_COMMAND} --build . --target noise
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/depend/libnoise
+    )
+    ADD_CUSTOM_TARGET(libnoise DEPENDS ${LIBNOISE_LIBRARIES})
+ENDIF()
+ADD_DEPENDENCIES(depend libnoise)

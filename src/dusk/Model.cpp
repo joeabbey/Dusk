@@ -9,6 +9,7 @@ namespace dusk {
 
 void Model::LuaSetup(sol::state& lua)
 {
+    /*
     lua.new_usertype<Model>("Model",
         "AddMesh", &Model::AddMesh,
         "SetBaseTransform", &Model::SetBaseTransform,
@@ -22,6 +23,7 @@ void Model::LuaSetup(sol::state& lua)
         "Update", &Model::Update,
         "Render", &Model::Render
     );
+    */
 }
 
 Model::Model()

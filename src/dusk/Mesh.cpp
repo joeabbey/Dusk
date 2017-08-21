@@ -7,12 +7,14 @@ namespace dusk {
 
 void Mesh::LuaSetup(sol::state& lua)
 {
+    /*
     lua.new_usertype<Mesh>("Mesh",
         "new", sol::constructors<Mesh(), Mesh(const std::string& filename)>(),
         "LoadFromFile", &Mesh::LoadFromFile,
         "IsLoaded", &Mesh::IsLoaded,
         "Render", &Mesh::Render
     );
+    */
 }
 
 Mesh::~Mesh()

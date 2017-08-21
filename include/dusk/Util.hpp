@@ -11,8 +11,8 @@ struct Box
 {
 public:
 
-    glm::vec3 Max;
     glm::vec3 Min;
+    glm::vec3 Max;
 
     Box() = default;
     Box(glm::vec3 min, glm::vec3 max)

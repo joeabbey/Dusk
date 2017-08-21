@@ -48,3 +48,6 @@
 [submodule "depend/gsl"]
 	path = depend/gsl
 	url = https://github.com/Microsoft/GSL.git
+[submodule "depend/libnoise"]
+	path = depend/libnoise
+	url = https://github.com/qknight/libnoise

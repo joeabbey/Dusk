@@ -24,6 +24,7 @@ void App::LuaSetup(sol::state& lua)
 {
     DuskBenchStart();
 
+    /*
     lua.new_usertype<App>("App",
         "new", sol::no_constructor,
         "Start", &App::Start,
@@ -89,6 +90,8 @@ void App::LuaSetup(sol::state& lua)
     Texture::LuaSetup(lua);
     Shader::LuaSetup(lua);
     ShaderProgram::LuaSetup(lua);
+
+    */
 
     DuskBenchEnd("App::LuaSetup");
 }
@@ -334,6 +337,10 @@ void App::CreateWindow()
     _alContext = alcCreateContext(_alDevice, NULL);
     alcMakeContextCurrent(_alContext);
 
+    DuskLogInfo("OpenAL Version %s", alGetString(AL_VERSION));
+    DuskLogInfo("OpenAL Vendor %s", alGetString(AL_VENDOR));
+    DuskLogInfo("OpenAL Renderer %s", alGetString(AL_RENDERER));
+
     if (!glfwInit())
     {
         DuskLogError("Failed to initialize GLFW");
@@ -346,8 +353,9 @@ void App::CreateWindow()
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 #endif
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 16);
     glfwWindowHint(GLFW_VISIBLE, false);
 
@@ -370,9 +378,14 @@ void App::CreateWindow()
         return;
     }
 
+    DuskLogInfo("OpenGL Version %s", glGetString(GL_VERSION));
+    DuskLogInfo("GLSL Version %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    DuskLogInfo("OpenGL Vendor %s", glGetString(GL_VENDOR));
+    DuskLogInfo("OpenGL Renderer %s", glGetString(GL_RENDERER));
+
     int samples;
     glGetIntegerv(GL_SAMPLES, &samples);
-    DuskLogVerbose("Running %dx AA", samples);
+    DuskLogInfo("Anti-Aliasing %dx", samples);
 
     ShaderProgram::InitializeUniformBuffers();
 

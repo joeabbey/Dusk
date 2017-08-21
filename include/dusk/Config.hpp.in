@@ -52,6 +52,9 @@
 #include <stb/stb_rect_pack.h>
 #include <stb/stb_truetype.h>
 
+// LibNoise
+#include <noise/noise.h>
+
 #undef CreateWindow
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \

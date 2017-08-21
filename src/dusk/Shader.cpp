@@ -13,11 +13,13 @@ std::unordered_map<std::string, ShaderProgram::UniformBufferRecord> ShaderProgra
 
 void Shader::LuaSetup(sol::state& lua)
 {
+    /*
     lua.new_usertype<Shader>("Shader",
         "new", sol::constructors<Shader(), Shader(const std::string& filename)>(),
         "LoadFromFile", &Shader::LoadFromFile,
         "IsCompiled", &Shader::IsCompiled
     );
+    */
 }
 
 bool Shader::LoadFromFile(const std::string& filename)
@@ -41,7 +43,6 @@ bool Shader::LoadFromFile(const std::string& filename)
         type = GL_GEOMETRY_SHADER;
     }
     // Requires OpenGL 4.0+
-    /*
     else if (filename.find(".tcs.glsl") != std::string::npos)
     {
         type = GL_TESS_CONTROL_SHADER;
@@ -50,14 +51,11 @@ bool Shader::LoadFromFile(const std::string& filename)
     {
         type = GL_TESS_EVALUATION_SHADER;
     }
-    */
     // Requires OpenGL 4.3+
-    /*
     else if (filename.find(".cs.glsl") != std::string::npos)
     {
         type = GL_COMPUTE_SHADER;
     }
-    */
     else
     {
         DuskLogError("Unable to infer shader type for '%s'", filename.c_str());
@@ -90,19 +88,15 @@ std::string Shader::GetShaderTypeString(GLuint type)
         return "Geometry";
 
     // Requires OpenGL 4.0+
-    /*
     case GL_TESS_CONTROL_SHADER:
         return "Tessellation Control";
 
     case GL_TESS_EVALUATION_SHADER:
         return "Tessellation Evaluation";
-    */
 
     // Requires OpenGL 4.3+
-    /*
     case GL_COMPUTE_SHADER:
         return "Compute";
-    */
 
     default:
         break;
@@ -222,6 +216,7 @@ void Shader::PrintCode(const std::string& code)
 
 void ShaderProgram::LuaSetup(sol::state& lua)
 {
+    /*
     lua.new_usertype<ShaderProgram>("ShaderProgram",
         "new", sol::constructors<ShaderProgram(), ShaderProgram(const std::vector<std::string>& filenames)>(),
         "Attach", [](ShaderProgram * sp, Shader& shader) {
@@ -236,6 +231,7 @@ void ShaderProgram::LuaSetup(sol::state& lua)
         "HasUniform", &ShaderProgram::HasUniform
         // TODO: SetUniform
     );
+    */
 }
 
 ShaderProgram::ShaderProgram(const std::vector<std::string>& filenames)
